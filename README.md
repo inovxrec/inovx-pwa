@@ -19,29 +19,7 @@ Login with one of the fake accounts (real auth isn't wired yet):
 | member@inovx.club | demo | member |
 | faculty@inovx.club | demo | faculty |
 
-## What's already built (Varun's scope + covering Akash's screens after his laptop died)
 
-- `src/styles/tokens.css` — every color/spacing/font/motion-timing var. **Use these, don't hardcode hex.**
-- `src/components/` — `Button`, `Panel`, `Pill`, `Avatar`, `Toast` (`useToast()` hook), `Modal`, `ComingSoon`
-- `src/layouts/` — `AppShell`, `NavRail`, `BottomBar`, `Topbar`, `FrameDeco` (background atmosphere), routing/auth glue
-- `src/features/auth/Login.tsx` — done
-- `src/features/boot/BootSequence.tsx` — done, plays once per browser session after login
-- `src/store/` — `authStore.ts` + `AuthProvider.tsx` (fake login table — swap for a real API call later, keep the `Session` shape the same)
-
-## What you're building
-
-Each of your screens is a placeholder right now (`ComingSoon` component) at these paths — **replace the file, keep the export name and route the same** so nothing else breaks:
-
-| Screen | File | Owner |
-|---|---|---|
-| My Day | `src/features/myday/MyDay.tsx` | Laxmi Gayathri |
-| Command Deck | `src/features/deck/CommandDeck.tsx` | Laxmi Gayathri |
-| Oversight Deck | `src/features/oversight/OversightDeck.tsx` | Laxmi Gayathri |
-| Board (kanban) | `src/features/board/Board.tsx` | Bhuvaneshwaran |
-| Task Detail | `src/features/board/TaskDetail.tsx` | Bhuvaneshwaran |
-| Calendar | `src/features/calendar/Calendar.tsx` | ~~Akash D~~ Varun (covering) — done |
-| People | `src/features/people/People.tsx` | ~~Akash D~~ Varun (covering) — done |
-| Permissions | `src/features/permissions/Permissions.tsx` | ~~Akash D~~ Varun (covering) — done |
 
 ## Rules for building your screen
 
