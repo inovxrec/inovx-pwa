@@ -1,0 +1,66 @@
+.login-wrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+}
+.login-panel {
+  width: 340px;
+  padding: var(--sp-6);
+}
+.login-icon { display: flex; justify-content: center; margin-bottom: var(--sp-4); }
+.login-icon svg { width: 44px; height: 44px; }
+.login-word {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--chan-core);
+  text-align: center;
+  letter-spacing: .04em;
+  margin-bottom: var(--sp-5);
+}
+.field { margin-bottom: var(--sp-4); }
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  background: #04070A;
+  border: 1px solid var(--line-hot);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 9px 10px;
+  outline: none;
+}
+.field input:focus {
+  border-color: var(--chan-core);
+  box-shadow: 0 0 0 1px var(--chan-core);
+}
+.login-error {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--st-blocked);
+  margin-bottom: var(--sp-3);
+}
+.login-foot {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+  margin-top: var(--sp-5);
+}
+.login-under {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+  margin-top: var(--sp-4);
+}

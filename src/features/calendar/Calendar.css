@@ -1,0 +1,34 @@
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--line);
+}
+.cal-cell {
+  background: var(--panel);
+  min-height: 80px;
+  padding: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+.cal-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  margin-right: 2px;
+}
+.agenda-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.agenda-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  width: 60px;
+  flex-shrink: 0;
+}

@@ -1,0 +1,43 @@
+.deck-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+
+.deck-section { margin-bottom: var(--sp-6); }
+
+.task-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+}
+
+.due {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+}
+.due.blocked { color: var(--st-blocked); }
+
+.approval-row {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--st-proposed);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.approval-title { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+
+.approval-meta-row { display: flex; gap: var(--sp-2); margin-top: 4px; align-items: center; }
+
+.approval-actions { display: flex; gap: var(--sp-2); }

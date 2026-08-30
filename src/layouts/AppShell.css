@@ -1,0 +1,27 @@
+.shell {
+  display: flex;
+  height: 100%;
+}
+.shell.mobile-mode {
+  flex-direction: column;
+}
+
+.main-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.screen {
+  flex: 1;
+  overflow: auto;
+  padding: var(--sp-6);
+  position: relative;
+  z-index: 1; /* sit above the FrameDeco watermark/glow */
+  animation: screenIn var(--t-panel);
+}
+.shell.mobile-mode .screen {
+  padding: var(--sp-4);
+}

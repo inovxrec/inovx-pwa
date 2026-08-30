@@ -1,0 +1,58 @@
+/*
+  INOVX84 design tokens.
+  Do not hardcode hex values in component files — reference these vars.
+  If a screen needs a new channel/status color, add it here, not locally.
+*/
+:root {
+  /* surfaces */
+  --phosphor: #3DFF9E;
+  --void: #06090D;
+  --panel: #0A1017;
+  --panel-2: #0D141C;
+  --panel-3: #111A24;
+  --line: #18242F;
+  --line-2: #22323F;
+  --line-hot: #2C4354;
+
+  /* ink (text) */
+  --ink: #C9DCE7;
+  --ink-2: #93A9B8;
+  --ink-3: #6A8090;
+  --ink-4: #4A5D6B;
+
+  /* domain channels — a screen sets --chan to one of these to theme itself */
+  --chan-technical: #3DFF9E;
+  --chan-management: #9FA8FF;
+  --chan-events: #FF7A4A;
+  --chan-media: #5CE1FF;
+  --chan-design: #FFB347;
+  --chan-core: #DCEEF6;
+  --chan: var(--chan-design); /* default; override per-screen/domain */
+
+  /* task/approval status */
+  --st-todo: #6A8090;
+  --st-progress: #5CE1FF;
+  --st-review: #FFB347;
+  --st-done: #57F0A8;
+  --st-blocked: #FF5745;
+  --st-proposed: #9FA8FF;
+
+  /* spacing scale */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-7: 32px; --sp-8: 48px;
+
+  /* type */
+  --font-display: 'Anton', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* motion — see MOTION.md. Only these three timings exist in the product. */
+  --ease-panel: cubic-bezier(.2, .8, .2, 1);
+  --t-instant: 80ms linear;      /* press, checkbox, toggle */
+  --t-state: 180ms var(--ease-panel);   /* column move, pill colour, nav active */
+  --t-panel: 240ms var(--ease-panel);   /* drawer, modal, sheet enter */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

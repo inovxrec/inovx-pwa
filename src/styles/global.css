@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #000;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+a { color: inherit; }
+button { font-family: var(--font-body); cursor: pointer; }
+
+/* focus is never removed, only re-styled — see AA note in Permissions/accessibility pass */
+:focus-visible {
+  outline: 1px solid var(--chan);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(255, 179, 71, .35);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--chan);
+  margin-bottom: 4px;
+}
+
+h1.st {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-4);
+}
+
+.section-label {
+  display: inline-block;
+  background: var(--chan);
+  color: var(--void);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: 3px 8px;
+  margin-bottom: var(--sp-3);
+  font-weight: 600;
+}
+
+.statusline {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--chan);
+  margin-bottom: var(--sp-5);
+}
+
+/* shared panel-enter/leave animation — used by Toast, Modal, TaskDrawer, any sheet */
+@keyframes panelEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes panelLeave {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes glitchResolve {
+  0% { text-shadow: 2px 0 var(--st-blocked), -2px 0 var(--chan-media); opacity: .3; }
+  100% { text-shadow: none; opacity: 1; }
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  border: 1px dashed var(--line-2);
+  padding: var(--sp-6);
+  text-align: center;
+}
+.empty .l1 { color: var(--chan); margin-bottom: 4px; }
+
+@media (max-width: 720px) {
+  h1.st { font-size: 18px; }
+}

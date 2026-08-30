@@ -1,0 +1,45 @@
+.domain-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  margin-bottom: var(--sp-2);
+  border-left: 3px solid;
+  transition: background var(--t-state), border-color var(--t-state);
+}
+.domain-strip:not(.static):hover { background: var(--panel-2); border-color: var(--line-hot); }
+
+.domain-strip-label {
+  width: 90px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.mstrip {
+  height: 8px;
+  flex: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  position: relative;
+  overflow: hidden;
+}
+.mstrip-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  transition: width 350ms var(--ease-panel);
+}
+
+.domain-strip-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: right;
+}

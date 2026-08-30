@@ -1,0 +1,70 @@
+.app-frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.app-frame::before {
+  content: 'INOVX84';
+  position: absolute;
+  bottom: -34px; left: -14px;
+  z-index: 0;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 200px;
+  letter-spacing: .02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, .028);
+}
+.app-frame::after {
+  content: '';
+  position: absolute;
+  top: -120px; right: -90px;
+  width: 440px; height: 440px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle, var(--chan) 0%, transparent 70%);
+  opacity: .11;
+  filter: blur(6px);
+}
+@media (max-width: 720px) {
+  .app-frame::before { font-size: 90px; bottom: -10px; left: -6px; }
+}
+
+.frame-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.xhair { position: absolute; width: 15px; height: 15px; }
+.xhair::before, .xhair::after { content: ''; position: absolute; background: var(--chan); opacity: .55; }
+.xhair::before { width: 15px; height: 1px; top: 7px; left: 0; }
+.xhair::after { width: 1px; height: 15px; left: 7px; top: 0; }
+.xhair.tl { top: 8px; left: 8px; }
+.xhair.tr { top: 8px; right: 8px; }
+.xhair.bl { bottom: 8px; left: 8px; }
+.xhair.br { bottom: 8px; right: 8px; }
+
+.side-rail {
+  position: absolute;
+  right: 6px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.side-rail span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-4);
+  padding: 4px 5px;
+  writing-mode: vertical-rl;
+  letter-spacing: .05em;
+}
+.side-rail span.active { background: var(--chan); color: var(--void); }
+
+/* side rail is a desktop flourish only — clutters the narrow mobile frame */
+@media (max-width: 720px) {
+  .side-rail { display: none; }
+}

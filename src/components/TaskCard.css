@@ -1,0 +1,65 @@
+.task-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--chan);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  margin-bottom: var(--sp-3);
+  cursor: pointer;
+  transition: border-color var(--t-state), background var(--t-state);
+}
+.task-card:hover { border-color: var(--line-hot); background: var(--panel-2); }
+.task-card:focus-visible { outline: 1px solid var(--chan); outline-offset: 2px; }
+.task-card.overdue { background: rgba(255, 87, 69, 0.06); }
+
+.task-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+}
+
+.task-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.task-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.task-foot-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.due {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+}
+.due.blocked { color: var(--st-blocked); }
+
+.tinyavatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--panel-3);
+  border: 1px solid var(--line-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-2);
+  flex-shrink: 0;
+}
