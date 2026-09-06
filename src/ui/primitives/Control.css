@@ -1,0 +1,133 @@
+/*
+  §7.8 — Checkbox, Radio and Switch. All three keep a 44px minimum hit area even
+  though the visual is 20px, and the whole label is clickable.
+*/
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--on-paper);
+}
+
+.control--on-ink { color: var(--on-ink); }
+
+.control:has(.control__input:disabled) { opacity: 0.4; cursor: not-allowed; }
+
+/* The native input stays in place and focusable — never display:none. */
+.control__input {
+  position: absolute;
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: inherit;
+}
+
+.control__label { user-select: none; }
+
+/* Focus is drawn on the visual, since the input itself is transparent. */
+.control__input:focus-visible ~ .control__box,
+.control__input:focus-visible ~ .control__radio,
+.control__input:focus-visible ~ .control__track {
+  outline: var(--b-bold) solid var(--flame);
+  outline-offset: 2px;
+}
+
+/* ---------- CHECKBOX ---------- */
+.control__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 6px;
+  border: var(--b-bold) solid var(--ink);
+  background: transparent;
+  color: var(--paper);
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+.control--on-ink .control__box { border-color: var(--on-ink); color: var(--ink); }
+
+.control__box svg { width: 14px; height: 14px; }
+
+/* The tick is drawn on, not faded in (§7.8). */
+.control__tick {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset var(--t-fast) var(--ease);
+}
+
+.control__input:checked ~ .control__box { background: var(--ink); }
+.control--on-ink .control__input:checked ~ .control__box { background: var(--on-ink); }
+.control__input:checked ~ .control__box .control__tick { stroke-dashoffset: 0; }
+
+.control__bar {
+  width: 10px;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+}
+.control__box--mixed { background: var(--ink); }
+
+/* ---------- RADIO ---------- */
+.control__radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: var(--r-pill);
+  border: var(--b-bold) solid var(--ink);
+}
+
+.control--on-ink .control__radio { border-color: var(--on-ink); }
+
+.control__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  transform: scale(0);
+  transition: transform var(--t-fast) var(--ease);
+}
+
+.control--on-ink .control__dot { background: var(--on-ink); }
+.control__input:checked ~ .control__radio .control__dot { transform: scale(1); }
+
+/* ---------- SWITCH ---------- */
+.control__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 26px;
+  flex: none;
+  padding: 0 2px;
+  border-radius: var(--r-pill);
+  border: var(--b-bold) solid var(--ink);
+  background: var(--paper-lo);
+  transition: background-color var(--t-base) var(--ease),
+              border-color var(--t-base) var(--ease);
+}
+
+.control--on-ink .control__track { border-color: var(--ink-line-2); background: var(--ink-raised); }
+
+.control__knob {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.control__input:checked ~ .control__track {
+  background: var(--flame);
+  border-color: var(--flame);
+}
+
+.control__input:checked ~ .control__track .control__knob { transform: translateX(16px); }

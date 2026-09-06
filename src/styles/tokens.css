@@ -1,58 +1,145 @@
 /*
-  INOVX84 design tokens.
-  Do not hardcode hex values in component files — reference these vars.
-  If a screen needs a new channel/status color, add it here, not locally.
+  INOVX STUDIO — design tokens. FRONTEND_BUILD_PROMPT.md §3.
+
+  This file is the single source of truth for every colour, size, radius and
+  duration in the application. A raw hex or a magic pixel value anywhere else
+  in the codebase is a bug — see the §14 acceptance checklist, item 3.
+
+  Do not add a value here without it being in the build document.
 */
 :root {
-  /* surfaces */
-  --phosphor: #3DFF9E;
-  --void: #06090D;
-  --panel: #0A1017;
-  --panel-2: #0D141C;
-  --panel-3: #111A24;
-  --line: #18242F;
-  --line-2: #22323F;
-  --line-hot: #2C4354;
+  /* ---------- GROUND ---------- */
+  --ink:          #0B0B0B;   /* page background, primary text on paper */
+  --ink-raised:   #151515;   /* raised surface on black — nav, sticky bars */
+  --ink-sunken:   #050505;   /* image wells, video wells */
+  --ink-line:     rgba(244,239,224,0.14);  /* hairline on black */
+  --ink-line-2:   rgba(244,239,224,0.26);  /* stronger hairline on black */
 
-  /* ink (text) */
-  --ink: #C9DCE7;
-  --ink-2: #93A9B8;
-  --ink-3: #6A8090;
-  --ink-4: #4A5D6B;
+  /* ---------- PAPER (primary card stock) ---------- */
+  --paper:        #F4EFE0;
+  --paper-hi:     #FBF8F0;   /* inner surface on paper, input fields */
+  --paper-lo:     #E7E0CD;   /* pressed / selected paper */
+  --paper-line:   rgba(11,11,11,0.14);
+  --paper-line-2: rgba(11,11,11,0.30);
 
-  /* domain channels — a screen sets --chan to one of these to theme itself */
-  --chan-technical: #3DFF9E;
-  --chan-management: #9FA8FF;
-  --chan-events: #FF7A4A;
-  --chan-media: #5CE1FF;
-  --chan-design: #FFB347;
-  --chan-core: #DCEEF6;
-  --chan: var(--chan-design); /* default; override per-screen/domain */
+  /* ---------- MINT (secondary card stock) ---------- */
+  --mint:         #C3DDDC;
+  --mint-hi:      #D9EAE9;
+  --mint-lo:      #AFCFCE;
+  --mint-line:    rgba(11,11,11,0.16);
 
-  /* task/approval status */
-  --st-todo: #6A8090;
-  --st-progress: #5CE1FF;
-  --st-review: #FFB347;
-  --st-done: #57F0A8;
-  --st-blocked: #FF5745;
-  --st-proposed: #9FA8FF;
+  /* ---------- FLAME (the one accent) ---------- */
+  --flame:        #EF4E24;
+  --flame-hover:  #FF6033;
+  --flame-press:  #D63F18;
+  --flame-soft:   rgba(239,78,36,0.12);
 
-  /* spacing scale */
-  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
-  --sp-5: 20px; --sp-6: 24px; --sp-7: 32px; --sp-8: 48px;
+  /* ---------- TEXT ---------- */
+  --on-paper:      #0B0B0B;
+  --on-paper-mute: #6B655A;
+  --on-paper-faint:#948D80;
+  --on-ink:        #F4EFE0;
+  --on-ink-mute:   #9A958A;
+  --on-ink-faint:  #6E6A61;
+  --on-flame:      #FFFFFF;
 
-  /* type */
-  --font-display: 'Anton', sans-serif;
-  --font-body: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  /* ---------- DOMAIN CHANNELS (riso sticker stock) ---------- */
+  /* Always paired with --ink text. Never used for semantic state. */
+  --dom-technical:  #7FD1B9;
+  --dom-management: #9DB8F0;
+  --dom-events:     #FF9B6A;
+  --dom-media:      #F5A3C7;
+  --dom-design:     #F2C94C;
+  --dom-core:       #F4EFE0;   /* core team, committees, club-wide */
 
-  /* motion — see MOTION.md. Only these three timings exist in the product. */
-  --ease-panel: cubic-bezier(.2, .8, .2, 1);
-  --t-instant: 80ms linear;      /* press, checkbox, toggle */
-  --t-state: 180ms var(--ease-panel);   /* column move, pill colour, nav active */
-  --t-panel: 240ms var(--ease-panel);   /* drawer, modal, sheet enter */
+  /* ---------- SEMANTIC STATE ---------- */
+  --st-todo:      #8A857A;
+  --st-progress:  #2E6BE6;
+  --st-review:    #E0930A;
+  --st-done:      #1F9D5B;
+  --st-blocked:   #D62828;
+  --st-proposed:  #7A5AF8;
+  --st-cancelled: #948D80;
+
+  /* ---------- SPACE (the only allowed gaps) ---------- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 40px;
+  --s-9: 56px; --s-10: 72px;
+
+  /* ---------- RADIUS ---------- */
+  --r-xs: 8px;   /* tags, small chips */
+  --r-sm: 12px;  /* inputs, inner blocks, logo chip */
+  --r-md: 16px;  /* buttons, small cards */
+  --r-lg: 20px;  /* standard card */
+  --r-xl: 28px;  /* hero card, sheet, modal */
+  --r-pill: 999px;
+
+  /* ---------- BORDER ---------- */
+  --b-hair: 1px;
+  --b-bold: 2px;   /* outlined chips, focus, selected */
+
+  /* ---------- SCRIM ---------- */
+  /* §7.14 gives this value but §3 has no token for it. Added so modals,
+     sheets and drawers don't each hardcode the same rgba. */
+  --scrim: rgba(11,11,11,0.72);
+
+  /* ---------- THE ONE SHADOW ---------- */
+  --sticker-shadow: 4px 4px 0 var(--ink);
+
+  /* ---------- MOTION ---------- */
+  --t-fast:   90ms;
+  --t-base:   160ms;
+  --t-slow:   260ms;
+  --ease:     cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---------- LAYOUT ---------- */
+  --nav-rail:   232px;   /* desktop left rail */
+  --nav-bottom: 62px;    /* mobile bottom bar */
+  --header-h:   58px;
+  --content-max: 1360px;
+  --read-max:    68ch;
+  --z-nav: 40; --z-sticky: 50; --z-drawer: 60; --z-modal: 70; --z-toast: 80;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+/*
+  ---------- DENSITY (§5.4) ----------
+  Values from the density table. They live here rather than in each component
+  so that "no component reads a size except from a token" (§12) stays true even
+  for the values that change with breakpoint. Mobile is the base case.
+*/
+:root {
+  --d-page-x:      14px;
+  --d-card-pad:    16px;
+  --d-card-gap:    12px;
+  --d-list-row:    56px;
+  --d-table-row:   44px;
+  --d-section-top: 24px;
+  --d-btn-h:       44px;
+  --d-input-h:     46px;
+}
+
+/* Tablet — 640–1023 */
+@media (min-width: 640px) {
+  :root {
+    --d-page-x:      20px;
+    --d-card-pad:    18px;
+    --d-card-gap:    14px;
+    --d-section-top: 28px;
+    --d-btn-h:       42px;
+    --d-input-h:     44px;
+  }
+}
+
+/* Desktop — ≥1024 */
+@media (min-width: 1024px) {
+  :root {
+    --d-page-x:      28px;
+    --d-card-pad:    20px;
+    --d-card-gap:    16px;
+    --d-list-row:    48px;
+    --d-section-top: 32px;
+    --d-btn-h:       40px;
+    --d-input-h:     42px;
+  }
 }

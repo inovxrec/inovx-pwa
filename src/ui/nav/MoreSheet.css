@@ -1,0 +1,32 @@
+/* §7.18 — the remaining destinations, at the 52px sheet row height. */
+
+.more__list { list-style: none; margin: 0; padding: 0 0 var(--s-2); }
+
+.more__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  color: var(--on-paper);
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: left;
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+.more__item:hover { background: var(--paper-lo); }
+
+.more__item--active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.more__icon { display: inline-flex; width: 22px; height: 22px; flex: none; }
+.more__icon svg { width: 100%; height: 100%; }
+
+.more__label { flex: 1; min-width: 0; }

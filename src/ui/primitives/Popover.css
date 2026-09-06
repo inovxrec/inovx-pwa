@@ -1,0 +1,2 @@
+.popover { display: inline-flex; }
+.popover__body { padding: var(--s-2); }

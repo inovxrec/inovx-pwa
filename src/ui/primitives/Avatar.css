@@ -1,0 +1,56 @@
+/* §7.9 — square, --r-xs, three fixed sizes. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  flex: none;
+  border-radius: var(--r-xs);
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.avatar--initials {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  color: var(--ink);
+  /* Scales with the avatar so all three sizes read the same weight. */
+  font-size: calc(var(--avatar-size) * 0.4);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.avatar--unassigned {
+  border: var(--b-bold) dashed var(--paper-line-2);
+  color: var(--on-paper-mute);
+}
+
+.avatar--unassigned svg { width: 50%; height: 50%; }
+
+.surface-ink .avatar--unassigned {
+  border-color: var(--ink-line-2);
+  color: var(--on-ink-mute);
+}
+
+/* ---------- STACK ---------- */
+.avatar-stack { display: inline-flex; align-items: center; }
+
+.avatar-stack__item + .avatar-stack__item,
+.avatar-stack__more {
+  margin-left: -8px;
+}
+
+.avatar-stack__item { box-shadow: 0 0 0 2px var(--paper); }
+.surface-mint .avatar-stack__item { box-shadow: 0 0 0 2px var(--mint); }
+.surface-ink  .avatar-stack__item { box-shadow: 0 0 0 2px var(--ink); }
+
+.avatar-stack__more {
+  display: inline-flex;
+  align-items: center;
+  height: var(--avatar-size);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--paper-lo);
+  color: var(--on-paper);
+  box-shadow: 0 0 0 2px var(--paper);
+}

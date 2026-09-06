@@ -1,8 +1,10 @@
-# INOVX84 — Frontend
+# INOVX Ops — Frontend
 
-Vite + React + TypeScript. No Tailwind — plain CSS files per component using
-the design tokens in `src/styles/tokens.css`, same approach as the original
-HTML prototype.
+Vite + React + TypeScript. No Tailwind — plain CSS files per component, every
+value read from the tokens in `src/styles/tokens.css`.
+
+`INOVX-FRONTEND-BUILD-PROMPT.md` governs everything visual and interactive.
+Where anything here disagrees with it, that document wins.
 
 ## Run it
 
@@ -11,26 +13,81 @@ npm install
 npm run dev
 ```
 
-Login with one of the fake accounts (real auth isn't wired yet):
+The app opens on the signed-in shell at your role's landing screen.
+**/kitchen-sink** holds the Phase 1 review surface and the temporary role
+switcher.
 
-| Email | Password | Role |
+## Where the build is
+
+**Phases 1 and 2 of the §13 build order are done. Phase 2 stops here for review.**
+
+| | |
+|---|---|
+| ✅ Tokens | `src/styles/tokens.css` — §3 verbatim, plus the §5.4 density scale and a `--scrim` token §7.14 needed but §3 omitted |
+| ✅ Base styles | `src/styles/base.css` — reset, the §4.1 type scale, surfaces, focus ring, reduced motion |
+| ✅ Fonts | Anton · Inter · Instrument Serif, loaded in `index.html` |
+| ✅ Signature | `src/ui/signature/` — BrushStroke, Tape, Pin, Halftone |
+| ✅ Stickers | `src/ui/stickers/` — all nine from §6.2 |
+| ✅ Primitives | `src/ui/primitives/` — the full §12 list, every variant and all six states |
+| ✅ Kitchen sink | `/kitchen-sink`, on both a paper and an ink ground |
+| ✅ Nav chrome | `src/ui/nav/` — NavRail, BottomBar, Header, MoreSheet, AppShell |
+| ✅ Page transitions | 200ms fade + 8px rise, no horizontal slide (§10) |
+| ✅ Offline banner | `src/ui/nav/OfflineBanner.tsx` — §9.18 copy verbatim |
+| ✅ System screens | 404 · 403 · 500 in `src/screens/system/` |
+| ✅ Routing | Role-based landing redirect + permission gates (§9.4–9.6) |
+| ⬜ Phase 3 onward | Login, first run, onboarding, then the screens — not started |
+
+Every nav destination routes to a placeholder naming the phase and spec section
+that delivers it. Those are deleted as their real screens land.
+
+### Roles and landing screens
+
+| Role | Lands on | Nav |
 |---|---|---|
-| riya@inovx.club | demo | admin |
-| member@inovx.club | demo | member |
-| faculty@inovx.club | demo | faculty |
+| member | `/my-day` | no Deck, Insights or Admin |
+| admin | `/deck` | adds Deck, Insights, approvals |
+| super-admin | `/deck` | everything, including Admin |
+| faculty | `/oversight` | read-only; no My Day, no Admin |
 
+Permission-gated destinations are **absent from the nav**, not disabled (§14
+item 13). Hitting one directly renders the 403 screen.
 
+The previous INOVX84 CRT/terminal build was withdrawn by §0 and removed. It is
+still in git history if you need to look something up.
 
-## Rules for building your screen
+## Open questions
 
-1. **Don't touch `src/styles/tokens.css`, `src/components/`, or `src/layouts/`** without flagging it in the group chat first — everyone imports from these.
-2. Pull shared UI from `src/components/` (`<Button variant="primary">`, `<Panel bracket>`, `<Pill status="progress">`, `<Avatar initials="RS">`) instead of writing your own button/card markup.
-3. Need to show a toast? `const { toast } = useToast(); toast('MOVED — IN PROGRESS');`
-4. Need a delete/cancel confirmation? Use `<Modal>` — no destructive action should fire directly off one click, per the build doc.
-5. Your screen just needs to return JSX for the content area — `AppShell` already handles the nav rail / bottom bar / topbar / title for you. You don't need to touch layout files.
-6. If a screen needs a new domain accent color (e.g. Board should render in `--chan-design`), set it as an inline CSS var on your screen's root div: `style={{ '--chan': 'var(--chan-design)' }}`.
-7. Mobile: don't build separate mobile components. Add `@media (max-width: 720px)` rules to your own CSS file — the shell already switches nav-rail → bottom-bar at that breakpoint automatically.
+0. **Phase 2 asks for "the four system screens" but §9.18 specifies three**
+   (404, 403, 500) plus the offline banner and an update toast. The three are
+   built. Say what the fourth should be if one is missing.
+1. **The logo.** §2 expects `public/brand/inovx-logo.png`; it isn't in the repo.
+   The login and nav lockups use an Anton wordmark in the black chip as a
+   placeholder, and no PWA icons have been generated yet.
+2. **The brush at wide sizes.** The §6.1 paths stretch with
+   `preserveAspectRatio="none"`, so a full-width button flattens into a smooth
+   lozenge rather than reading as hand-painted. Worth a look on
+   `/kitchen-sink` before it ends up under every primary action.
+3. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+   have no My Day screen, so it now names whichever landing it actually goes
+   to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
-## Reference
+## Temporary scaffolding to delete in Phase 3
 
-The original static HTML prototype (`inovx84-screens.html`) is the source of truth for exact markup/copy per screen — copy structure and classnames from it, just split into components.
+`AuthProvider` seeds a session from `localStorage` and exposes `setRole`, and
+`/kitchen-sink` has a role switcher, because the shell needs a session and
+Login is Phase 3. All of it is marked `TEMP`.
+
+## Rules for building on this
+
+1. **No component reads a colour, size or duration except from a token.**
+   `grep` for a raw hex or an rgba outside `tokens.css` should come back empty.
+2. **No screen introduces a one-off styled element.** If a screen needs
+   something new, it becomes a component in `src/ui/` first.
+3. `useBreakpoint()` is the only place `window.matchMedia` is read. Every
+   mobile/desktop fork in §8 goes through it.
+4. Only Anton, Inter and Instrument Serif. Anton is uppercased in CSS, never by
+   typing in caps, so screen readers read words rather than letters.
+5. Focus rings are never removed.
+6. Permission-gated controls are absent from the DOM, not disabled — and a
+   hidden control is a courtesy, never security. The server decides.
+7. Check §14's 16-point list before calling a screen done.

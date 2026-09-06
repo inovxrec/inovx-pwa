@@ -1,0 +1,151 @@
+/* §7.6 — the trigger is an Input; the panel comes from Panel.css. */
+
+.select { display: flex; flex-direction: column; gap: 6px; }
+
+.select__label { color: var(--on-paper-mute); }
+.select--on-ink .select__label { color: var(--on-ink-mute); }
+
+.select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  height: var(--d-input-h);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  border: 1.5px solid var(--paper-line-2);
+  color: var(--on-paper);
+  text-align: left;
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+
+.select--on-ink .select__trigger {
+  background: var(--ink-raised);
+  border-color: var(--ink-line-2);
+  color: var(--on-ink);
+}
+
+.select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--flame);
+  border-width: var(--b-bold);
+  box-shadow: 0 0 0 3px var(--flame-soft);
+}
+
+.select__trigger:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.select--error .select__trigger {
+  border-color: var(--st-blocked);
+  border-width: var(--b-bold);
+}
+
+.select__value {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.select__single { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.select__placeholder { font-size: 15px; color: var(--on-paper-faint); }
+.select--on-ink .select__placeholder { color: var(--on-ink-faint); }
+
+/* Multi-select chips inside the trigger shrink to fit the row. */
+.select__value .chip { height: 26px; }
+
+.select__chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform var(--t-fast) var(--ease);
+}
+.select__chevron--open { transform: rotate(180deg); }
+
+.select__error { color: var(--st-blocked); }
+.select__hint  { color: var(--on-paper-mute); }
+.select--on-ink .select__hint { color: var(--on-ink-mute); }
+
+/* ---------- PANEL CONTENTS ---------- */
+.select__list { list-style: none; margin: 0; padding: 0; }
+
+.select__option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  color: var(--on-paper);
+  text-align: left;
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+/* Mobile rows are taller — the sheet fork in §7.6. */
+@media (max-width: 1023px) {
+  .select__option { height: 52px; }
+}
+
+.select__option--active { background: var(--paper-lo); }
+
+.select__option--selected {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.select__option:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.select__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select__icon { display: inline-flex; width: 18px; height: 18px; flex: none; }
+.select__icon svg { width: 100%; height: 100%; }
+
+.select__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+  flex: none;
+}
+
+.select__check { width: 14px; height: 14px; flex: none; }
+
+.select__group {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--s-3);
+  color: var(--on-paper-faint);
+}
+
+.select__none { padding: var(--s-3); color: var(--on-paper-mute); }
+
+.select__search { padding: 0 0 6px; }
+
+.select__search-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  border: 1.5px solid var(--paper-line-2);
+  font-size: 15px;
+  color: var(--on-paper);
+}
+
+.select__search-input:focus-visible {
+  outline: none;
+  border-color: var(--flame);
+  border-width: var(--b-bold);
+}

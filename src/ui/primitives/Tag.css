@@ -1,0 +1,13 @@
+/* §7.3 — solid fill, --ink text, 22px tall. Non-interactive by design. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-xs);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* The one fill dark enough to need light text. */
+.tag--flame { color: var(--on-flame); }

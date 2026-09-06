@@ -1,0 +1,28 @@
+/* §7.16 — centred on a paper card, 40px vertical padding, max-width 320px. */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-3);
+  max-width: 320px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-4);
+  color: var(--on-surface, var(--on-paper));
+}
+
+.empty__sticker { color: inherit; margin-bottom: var(--s-1); }
+
+.empty__title { color: inherit; }
+
+.empty__line {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--on-surface-mute, var(--on-paper-mute));
+}
+
+.empty__detail { color: var(--on-surface-faint, var(--on-paper-faint)); }
+
+.empty__action { margin-top: var(--s-2); }

@@ -1,0 +1,27 @@
+/* The authenticated frame. §7.18 fork; §5.4 density for the content gutter. */
+
+.shell { min-height: 100dvh; background: var(--ink); }
+
+/* Desktop: the fixed rail owns the left edge, so the frame is inset by it. */
+.shell--rail .shell__frame { margin-left: var(--nav-rail); }
+
+@media (max-width: 1199px) {
+  .shell--rail .shell__frame { margin-left: 68px; }
+}
+
+.shell__frame { display: flex; flex-direction: column; min-height: 100dvh; }
+
+.shell__main {
+  flex: 1;
+  max-width: var(--content-max);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--s-4) var(--d-page-x) var(--s-8);
+}
+
+/* Mobile: clear the fixed bottom bar, including the safe-area inset. */
+@media (max-width: 1023px) {
+  .shell__main {
+    padding-bottom: calc(var(--nav-bottom) + env(safe-area-inset-bottom) + var(--s-6));
+  }
+}

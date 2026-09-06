@@ -1,0 +1,4 @@
+.placeholder {
+  border-radius: var(--r-lg);
+  padding: var(--d-card-pad);
+}

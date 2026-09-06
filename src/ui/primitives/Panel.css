@@ -1,0 +1,80 @@
+/* §7.6 — the panel surface, shared by Select, Menu, Popover and DatePicker. */
+
+.panel {
+  position: fixed;
+  z-index: var(--z-drawer);
+  background: var(--paper);
+  color: var(--on-paper);
+}
+
+/* ---------- DESKTOP: anchored dropdown ---------- */
+.panel--drop {
+  border-radius: var(--r-md);
+  border: var(--b-bold) solid var(--ink);
+  box-shadow: var(--sticker-shadow);
+  padding: 6px;
+  max-height: 320px;
+  animation: panel-drop-in var(--t-base) var(--ease-out) both;
+}
+
+.panel--drop .panel__body {
+  max-height: calc(320px - 12px);
+  overflow-y: auto;
+}
+
+@keyframes panel-drop-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- MOBILE: bottom sheet ---------- */
+.panel-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  background: var(--scrim);
+  display: flex;
+  align-items: flex-end;
+  animation: panel-scrim-in var(--t-base) var(--ease-out) both;
+}
+
+.panel--sheet {
+  position: relative;
+  width: 100%;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: var(--s-3) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom));
+  animation: panel-sheet-in var(--t-slow) var(--ease-out) both;
+}
+
+.panel__handle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: var(--r-pill);
+  background: var(--paper-line-2);
+  flex: none;
+}
+
+.panel__title { color: var(--on-paper-mute); padding: var(--s-2) var(--s-1); }
+
+.panel--sheet .panel__body { overflow-y: auto; flex: 1; }
+
+@keyframes panel-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes panel-sheet-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Reduced motion keeps the fade, drops the travel (§10). */
+@media (prefers-reduced-motion: reduce) {
+  .panel--drop,
+  .panel--sheet { animation: none; }
+}

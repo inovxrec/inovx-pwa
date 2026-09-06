@@ -1,0 +1,16 @@
+/* §9.18 — a system screen is one paper card, centred, on the ink ground. */
+
+.system {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--s-6) 0;
+}
+
+.system__card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--r-xl);
+  padding: var(--s-4);
+}

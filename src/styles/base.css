@@ -1,0 +1,200 @@
+/*
+  INOVX STUDIO — base styles. §3 (theme), §4 (type scale), §10 (motion),
+  §11 (focus). Fonts are loaded from index.html so the <link rel=preconnect>
+  can sit in <head> ahead of the stylesheet.
+*/
+@import './tokens.css';
+
+/* ---------- RESET ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, h1, h2, h3, h4, p, figure, blockquote, dl, dd,
+ul, ol, fieldset, legend { margin: 0; padding: 0; }
+
+ul[role='list'], ol[role='list'] { list-style: none; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/*
+  Dark-grounded only — there is no light mode and no theme toggle (§3).
+  The ground is painted explicitly so nothing borrows a host background.
+*/
+:root { color-scheme: dark; }
+
+body {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, picture, svg, video, canvas { display: block; max-width: 100%; }
+
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button { background: none; border: none; padding: 0; cursor: pointer; }
+
+a { color: inherit; }
+
+/* Anton reads as words, not letters, because the caps come from CSS (§11). */
+[data-font='display'] { font-family: Anton, 'Arial Narrow', Impact, sans-serif; }
+
+/* ---------- FOCUS (§11) ---------- */
+/*
+  2px flame outline at 2px offset on every interactive element, on paper and on
+  ink alike. This is never removed — if a component needs a different shape it
+  overrides border-radius, not the ring itself.
+*/
+:focus-visible {
+  outline: var(--b-bold) solid var(--flame);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ---------- TYPE SCALE (§4.1) ---------- */
+/*
+  These ten classes are the entire type system. A font-size declared anywhere
+  else is a bug. Anton is uppercased here, never by typing in caps.
+*/
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.num-xl {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.display-1 {
+  font-size: clamp(40px, 9vw, 76px);
+  line-height: 0.88;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.display-2 {
+  font-size: clamp(28px, 5.5vw, 44px);
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.display-3 {
+  font-size: clamp(20px, 3.4vw, 28px);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.display-4 {
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+.num-xl {
+  font-size: clamp(32px, 6vw, 52px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.body-lg  { font-size: 17px;   line-height: 1.55; text-wrap: pretty; }
+.body     { font-size: 15px;   line-height: 1.55; text-wrap: pretty; }
+.body-sm  { font-size: 13.5px; line-height: 1.5;  text-wrap: pretty; }
+
+.label {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.micro {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Running text never exceeds the measure (§4.2). */
+.read-width { max-width: var(--read-max); }
+
+/* Any number in a column or a stat is tabular (§4.2). */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- SURFACES (§5.1) ---------- */
+/*
+  Setting a surface flips the local text colour, so children can use
+  --on-surface / --on-surface-mute without knowing which stock they sit on.
+*/
+.surface-paper {
+  background: var(--paper);
+  color: var(--on-paper);
+  --on-surface: var(--on-paper);
+  --on-surface-mute: var(--on-paper-mute);
+  --on-surface-faint: var(--on-paper-faint);
+  --surface-line: var(--paper-line);
+  --surface-line-2: var(--paper-line-2);
+}
+
+.surface-mint {
+  background: var(--mint);
+  color: var(--on-paper);
+  --on-surface: var(--on-paper);
+  --on-surface-mute: var(--on-paper-mute);
+  --on-surface-faint: var(--on-paper-faint);
+  --surface-line: var(--mint-line);
+  --surface-line-2: var(--paper-line-2);
+}
+
+.surface-ink {
+  background: var(--ink);
+  color: var(--on-ink);
+  --on-surface: var(--on-ink);
+  --on-surface-mute: var(--on-ink-mute);
+  --on-surface-faint: var(--on-ink-faint);
+  --surface-line: var(--ink-line);
+  --surface-line-2: var(--ink-line-2);
+}
+
+/* ---------- SCROLLERS ---------- */
+/* Chip rows and panels scroll without a visible scrollbar (§7.2, §7.6). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ---------- VISUALLY HIDDEN ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- REDUCED MOTION (§10) ---------- */
+/*
+  Hard requirement: every transform and transition is disabled. Opacity fades
+  of 100ms or less may remain, so components express fades as their own
+  animation and transforms separately.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

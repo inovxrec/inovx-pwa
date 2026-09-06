@@ -1,0 +1,19 @@
+/* §10 — 200ms, --ease-out, fade + 8px rise. */
+.page-transition {
+  animation: page-in 200ms var(--ease-out) both;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Reduced motion keeps a short fade and drops the travel (§10). */
+@media (prefers-reduced-motion: reduce) {
+  .page-transition { animation: page-in-reduced 100ms linear both; }
+
+  @keyframes page-in-reduced {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
