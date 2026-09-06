@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/cn';
+import { Logo } from '../brand/Logo';
 import { IconChevronLeft, IconSearch } from '../icons';
 import { IconButton } from '../primitives/IconButton';
 import { Menu, type MenuItem } from '../primitives/Menu';
@@ -43,8 +44,7 @@ export function Header({
             onClick={() => navigate(-1)}
           />
         ) : showLogo ? (
-          /* TODO(logo): public/brand/inovx-logo.png, min-width 88px (§2). */
-          <span className="header__mark display-4">INOVX</span>
+          <Logo size="sm" />
         ) : null}
       </div>
 

@@ -1,0 +1,37 @@
+/* §9.1 — the card's contents. The frame itself is AuthFrame.css. */
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.login__password {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.login__forgot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.login__reset {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  color: var(--on-paper-mute);
+}
+
+/*
+  --st-blocked on a --flame-soft block (§9.1). Both are readable on paper; the
+  copy also names the problem, so the colour is not carrying it alone (§11).
+*/
+.login__error {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--flame-soft);
+  color: var(--st-blocked);
+  font-weight: 600;
+}

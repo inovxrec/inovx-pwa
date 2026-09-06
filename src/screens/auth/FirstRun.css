@@ -1,0 +1,52 @@
+/* §9.2 — the card's contents, inside the shared entry frame. */
+
+.firstrun__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.firstrun__rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  list-style: none;
+}
+
+.firstrun__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--on-paper-mute);
+}
+
+.firstrun__mark {
+  flex: none;
+  width: var(--s-5);
+  height: var(--s-5);
+  color: var(--on-paper-faint);
+}
+
+.firstrun__mark svg { width: 100%; height: 100%; }
+
+/*
+  Outline circle at rest; a filled --st-done disc with a paper tick once the
+  rule passes (§9.2). Both halves cross-fade over --t-base.
+*/
+.firstrun__ring {
+  fill: transparent;
+  transition: fill var(--t-base) var(--ease);
+}
+
+.firstrun__tick {
+  opacity: 0;
+  transition: opacity var(--t-base) var(--ease);
+}
+
+.firstrun__rule--ok { color: var(--on-paper); }
+.firstrun__rule--ok .firstrun__mark { color: var(--st-done); }
+.firstrun__rule--ok .firstrun__ring { fill: var(--st-done); }
+.firstrun__rule--ok .firstrun__tick { opacity: 1; stroke: var(--paper-hi); }

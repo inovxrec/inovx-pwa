@@ -28,11 +28,6 @@
 
 .header__side--end { justify-content: flex-end; }
 
-.header__mark {
-  color: var(--on-ink);
-  letter-spacing: 0.18em;
-}
-
 .header__title {
   font-family: Anton, 'Arial Narrow', Impact, sans-serif;
   font-weight: 400;

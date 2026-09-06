@@ -9,6 +9,7 @@ import {
   StatePill, Switch, Tag, Textarea, Tooltip,
   type TaskState,
 } from '../../ui/primitives';
+import { Logo } from '../../ui/brand/Logo';
 import { BrushStroke, Halftone, Pin, Tape } from '../../ui/signature';
 import {
   StickerBell, StickerCalendar, StickerClipboard, StickerCloudOff, StickerCoffee,
@@ -117,8 +118,7 @@ export function KitchenSink() {
       <header className="ks-hero">
         <Halftone />
         <div className="ks-hero__inner">
-          {/* TODO(logo): swap for public/brand/inovx-logo.png in its black chip (§2). */}
-          <span className="ks-hero__mark display-4">INOVX</span>
+          <Logo size="md" />
           <h1 className="display-1">Kitchen sink</h1>
           <p className="ks-hero__sub">
             Phase 1 — tokens, type, the signature elements and every primitive.

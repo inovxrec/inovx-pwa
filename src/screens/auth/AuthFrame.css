@@ -1,0 +1,77 @@
+/* §9.1 — the entry frame. Ink ground, one paper card, max-width 420px. */
+
+.auth {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-7) var(--d-page-x);
+  overflow: hidden;                 /* crops the lock at the viewport edge */
+  background: var(--ink);
+}
+
+/* The texture sits behind the top third only (§9.1.1). */
+.auth__texture {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 33vh;
+  pointer-events: none;
+}
+
+/* Decorative, cropped by the viewport edge, 12% (§9.1.6). */
+.auth__deco {
+  position: absolute;
+  right: calc(var(--s-8) * -1);
+  bottom: calc(var(--s-8) * -1);
+  color: var(--on-ink);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.auth__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-6);
+}
+
+.auth__logo { margin-top: var(--s-4); }
+
+.auth__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  text-align: center;
+}
+
+.auth__title { color: var(--on-ink); }
+
+.auth__tagline {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  color: var(--on-ink-mute);
+}
+
+.auth__card {
+  width: 100%;
+  border-radius: var(--r-xl);
+  padding: var(--s-6);
+}
+
+.auth__foot {
+  max-width: 34ch;
+  text-align: center;
+  color: var(--on-ink-faint);
+  line-height: 1.5;
+}
+
+/* The 40px gap §9.1.2 asks for above the logo only exists once there is room. */
+@media (min-height: 720px) {
+  .auth__logo { margin-top: var(--s-8); }
+}

@@ -22,15 +22,8 @@
   gap: var(--s-3);
 }
 
-/* The logo's black chip (§2) — placeholder wordmark until the PNG lands. */
-.ks-hero__mark {
-  align-self: flex-start;
-  padding: 10px 14px;
-  border-radius: var(--r-sm);
-  background: var(--ink-raised);
-  color: var(--on-ink);
-  letter-spacing: 0.18em;
-}
+/* The hero is an ink ground, so the mark needs no chip (§2). */
+.ks-hero .logo { align-self: flex-start; }
 
 .ks-hero__sub {
   font-family: 'Instrument Serif', Georgia, serif;

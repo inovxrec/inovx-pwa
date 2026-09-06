@@ -1,0 +1,53 @@
+/* §2 — the wordmark and its black chip. */
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  /* Clear space on all sides is the height of the "I" — ~28% of the mark (§2). */
+  padding: 0.28em 0;
+  color: var(--on-ink);
+}
+
+.logo--sm { font-size: 12px; width: 88px; }
+.logo--md { font-size: 16px; width: 120px; }
+.logo--lg { font-size: 20px; width: 160px; }
+
+.logo__img { width: 100%; height: auto; }
+
+/*
+  The Anton fallback. It takes its size from the parent's font-size rather than
+  a .display-* class so that one size token drives both the image and the word.
+*/
+.logo__word {
+  display: block;
+  width: 100%;
+  font-size: 1em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  /* The tracking pushes a trailing gap after the X — pull the word back. */
+  text-indent: 0.18em;
+}
+
+/*
+  The X app mark. Hidden until a container narrower than 88px opts into it by
+  setting .logo--x on this element (§2).
+*/
+.logo__x {
+  display: none;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.logo--x { width: auto; }
+.logo--x .logo__img,
+.logo--x .logo__word { display: none; }
+.logo--x .logo__x { display: block; }
+
+/* The only shape the mark may sit inside, and only on paper (§2). */
+.logo--chip {
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+}

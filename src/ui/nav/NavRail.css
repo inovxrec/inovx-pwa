@@ -22,11 +22,6 @@
   padding: 0 var(--s-2);
 }
 
-.rail__mark {
-  color: var(--on-ink);
-  letter-spacing: 0.18em;
-}
-
 .rail__list {
   list-style: none;
   margin: 0;
@@ -101,8 +96,11 @@
 
   .rail__brand { justify-content: center; padding: 0; }
 
-  /* The wordmark can't fit; the X glyph is the app mark below 88px (§2). */
-  .rail__mark { font-size: 18px; letter-spacing: 0; }
+  /* The wordmark can't fit in 68px; the X glyph is the app mark below 88px (§2). */
+  .rail__brand .logo { width: auto; }
+  .rail__brand .logo__img,
+  .rail__brand .logo__word { display: none; }
+  .rail__brand .logo__x { display: block; }
 
   .rail__item { justify-content: center; padding: 0; gap: 0; }
 

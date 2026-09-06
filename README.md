@@ -13,13 +13,27 @@ npm install
 npm run dev
 ```
 
-The app opens on the signed-in shell at your role's landing screen.
-**/kitchen-sink** holds the Phase 1 review surface and the temporary role
-switcher.
+The app opens at `/login`. Auth is still faked in `AuthProvider`, so any of
+these work — all with the password `demo`:
+
+| Email | Role |
+|---|---|
+| riya@inovx.club | super-admin |
+| arjun@inovx.club | admin |
+| member@inovx.club | member |
+| faculty@inovx.club | faculty |
+
+Every account still holds its issued password, so the first sign-in goes
+through `/first-run` and then the tour, exactly as §9.2 requires. Those two
+are remembered per email in `localStorage` under `inovx.dev.entry` — clear
+that key to replay the flow.
+
+**/kitchen-sink** holds the Phase 1 review surface and a role switcher that
+jumps straight into the shell.
 
 ## Where the build is
 
-**Phases 1 and 2 of the §13 build order are done. Phase 2 stops here for review.**
+**Phases 1 to 3 of the §13 build order are done. Phase 3 stops here for review.**
 
 | | |
 |---|---|
@@ -35,7 +49,11 @@ switcher.
 | ✅ Offline banner | `src/ui/nav/OfflineBanner.tsx` — §9.18 copy verbatim |
 | ✅ System screens | 404 · 403 · 500 in `src/screens/system/` |
 | ✅ Routing | Role-based landing redirect + permission gates (§9.4–9.6) |
-| ⬜ Phase 3 onward | Login, first run, onboarding, then the screens — not started |
+| ✅ Login | `/login` — §9.1, one error for both halves, lockout after five tries |
+| ✅ First run | `/first-run` — §9.2, live checklist, unavoidable until done |
+| ✅ Onboarding | `/welcome` — §9.3, four slides, swipe on mobile, arrows on desktop |
+| ✅ Install card | `src/ui/patterns/InstallCard.tsx` — §9.16, iOS / Android / desktop |
+| ⬜ Phase 4 onward | My Day, Board, Task detail, then the decks — not started |
 
 Every nav destination routes to a placeholder naming the phase and spec section
 that delivers it. Those are deleted as their real screens land.
@@ -61,21 +79,29 @@ still in git history if you need to look something up.
    (404, 403, 500) plus the offline banner and an update toast. The three are
    built. Say what the fourth should be if one is missing.
 1. **The logo.** §2 expects `public/brand/inovx-logo.png`; it isn't in the repo.
-   The login and nav lockups use an Anton wordmark in the black chip as a
-   placeholder, and no PWA icons have been generated yet.
+   `src/ui/brand/Logo.tsx` renders it everywhere and falls back to the word set
+   in Anton until it lands, so dropping the file in is the whole fix. The PWA
+   icons §2 asks to generate from it are still outstanding, and belong with
+   Phase 8's manifest work.
 2. **The brush at wide sizes.** The §6.1 paths stretch with
    `preserveAspectRatio="none"`, so a full-width button flattens into a smooth
    lozenge rather than reading as hand-painted. Worth a look on
    `/kitchen-sink` before it ends up under every primary action.
-3. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+3. **"Forgot password" has no destination.** §9.1 asks for the control but
+   names no screen, and §15 says not to invent one. It currently reveals a line
+   saying to ask a core team member, since accounts are issued by hand. Say if
+   a real reset flow is wanted.
+4. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
-## Temporary scaffolding to delete in Phase 3
+## Temporary scaffolding
 
-`AuthProvider` seeds a session from `localStorage` and exposes `setRole`, and
-`/kitchen-sink` has a role switcher, because the shell needs a session and
-Login is Phase 3. All of it is marked `TEMP`.
+`AuthProvider` fakes `login` against a hardcoded table and remembers the entry
+flags in `localStorage`; `setRole` and the `/kitchen-sink` switcher jump into
+the shell as another role without signing out. All of it is marked `TEMP` and
+goes when `/api/auth/login` lands — the `Session` shape should not need to
+change.
 
 ## Rules for building on this
 

@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/cn';
 import type { NavItem } from '../../lib/navConfig';
+import { Logo } from '../brand/Logo';
 import { Tag } from '../primitives/Tag';
 import './NavRail.css';
 
@@ -21,8 +22,7 @@ export function NavRail({ items, counts = {} }: NavRailProps) {
   return (
     <nav className="rail" aria-label="Main">
       <div className="rail__brand">
-        {/* TODO(logo): public/brand/inovx-logo.png in its black chip (§2). */}
-        <span className="rail__mark display-4">INOVX</span>
+        <Logo size="sm" />
       </div>
 
       <ul className="rail__list">

@@ -1,27 +1,52 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './store/AuthProvider';
-import { useAuth } from './store/authStore';
+import { useAuth, type Session } from './store/authStore';
 import { usePermissionCheck } from './hooks/usePermission';
 import { LANDING_BY_ROLE, NAV_ITEMS } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Placeholder } from './screens/placeholder/Placeholder';
+import { Login } from './screens/auth/Login';
+import { FirstRun } from './screens/auth/FirstRun';
+import { Welcome } from './screens/onboarding/Welcome';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
 
 /**
- * Sends each role to its own landing screen — §9.4 My Day for members, §9.5 the
- * Command Deck for admins, §9.6 the Oversight Deck for faculty.
+ * Where a signed-in person belongs right now. The entry flow is a queue: set
+ * the issued password (§9.2), then the tour (§9.3), then the role's own landing
+ * screen (§9.4–9.6). Every gate reads this so they cannot disagree.
  */
+function destinationFor(session: Session): string {
+  if (session.mustSetPassword) return '/first-run';
+  if (!session.hasOnboarded) return '/welcome';
+  return LANDING_BY_ROLE[session.role];
+}
+
 function LandingRedirect() {
   const { session } = useAuth();
   if (!session) return <Navigate to="/login" replace />;
-  return <Navigate to={LANDING_BY_ROLE[session.role]} replace />;
+  return <Navigate to={destinationFor(session)} replace />;
 }
 
 /**
- * Route-level gate. A missing session goes to login; a missing permission
- * renders the 403 screen rather than a blank page, so the person is told why.
+ * The shell's gate. No session goes to login; an unfinished entry flow goes
+ * back to the step it is on, which is what makes /first-run unavoidable (§9.2).
+ */
+function RequireSession({ children }: { children: React.ReactNode }) {
+  const { session } = useAuth();
+  if (!session) return <Navigate to="/login" replace />;
+
+  const destination = destinationFor(session);
+  if (destination === '/first-run' || destination === '/welcome') {
+    return <Navigate to={destination} replace />;
+  }
+  return <>{children}</>;
+}
+
+/**
+ * Route-level permission gate. A missing permission renders the 403 screen
+ * rather than a blank page, so the person is told why.
  *
  * This is a courtesy, not security — the server decides (§12).
  */
@@ -32,10 +57,7 @@ function Require({
   permission?: PermissionKey;
   children: React.ReactNode;
 }) {
-  const { session } = useAuth();
   const can = usePermissionCheck();
-
-  if (!session) return <Navigate to="/login" replace />;
   if (permission && !can(permission)) return <Forbidden />;
   return <>{children}</>;
 }
@@ -76,11 +98,20 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingRedirect /> },
 
+      // The entry flow (§9.1–9.3). No nav chrome renders on any of these.
+      { path: 'login', element: <Login /> },
+      { path: 'first-run', element: <FirstRun /> },
+      { path: 'welcome', element: <Welcome /> },
+
       // Phase 1's review surface. Outside the shell — it is not a product screen.
       { path: 'kitchen-sink', element: <KitchenSink /> },
 
       {
-        element: <AppShell />,
+        element: (
+          <RequireSession>
+            <AppShell />
+          </RequireSession>
+        ),
         children: [
           ...shellRoutes,
           // Reachable directly so the states can be reviewed before the screens
