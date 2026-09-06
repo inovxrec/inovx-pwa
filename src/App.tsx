@@ -16,6 +16,9 @@ import { Welcome } from './screens/onboarding/Welcome';
 import { MyDay } from './screens/my-day/MyDay';
 import { Board } from './screens/board/Board';
 import { TaskDetail } from './screens/task/TaskDetail';
+import { CommandDeck } from './screens/deck/CommandDeck';
+import { OversightDeck } from './screens/oversight/OversightDeck';
+import { Insights } from './screens/insights/Insights';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
 
 /**
@@ -70,12 +73,9 @@ function Require({
 
 /** Which phase and spec section each placeholder is standing in for. */
 const PENDING: Record<string, { screen: string; phase: string; section: string; permission?: PermissionKey }> = {
-  deck: { screen: 'Command deck', phase: 'Phase 5', section: '§9.5' },
-  oversight: { screen: 'Oversight deck', phase: 'Phase 5', section: '§9.6' },
   calendar: { screen: 'Calendar', phase: 'Phase 6', section: '§9.9' },
   people: { screen: 'People', phase: 'Phase 6', section: '§9.10' },
   meetings: { screen: 'Meetings', phase: 'Phase 6', section: '§9.11', permission: 'meetings.view' },
-  insights: { screen: 'Insights', phase: 'Phase 5', section: '§9.12', permission: 'analytics.view' },
   notifications: { screen: 'Alerts', phase: 'Phase 6', section: '§9.13' },
   admin: { screen: 'Admin', phase: 'Phase 7', section: '§9.15', permission: 'admin.members' },
   settings: { screen: 'Settings', phase: 'Phase 6', section: '§9.14' },
@@ -120,6 +120,23 @@ const router = createBrowserRouter([
           </RequireSession>
         ),
         children: [
+          // ---------- PHASE 5 ----------
+          {
+            path: '/deck',
+            handle: { title: 'Deck' } satisfies RouteHandle,
+            element: <CommandDeck />,
+          },
+          {
+            path: '/oversight',
+            handle: { title: 'Oversight' } satisfies RouteHandle,
+            element: <OversightDeck />,
+          },
+          {
+            path: '/insights',
+            handle: { title: 'Insights' } satisfies RouteHandle,
+            element: <Require permission="analytics.view"><Insights /></Require>,
+          },
+
           // ---------- PHASE 4 ----------
           {
             path: '/my-day',

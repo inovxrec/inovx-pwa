@@ -11,3 +11,6 @@
 
 /* The one fill dark enough to need light text. */
 .tag--flame { color: var(--on-flame); }
+
+/* §9.12 — leaderboard ranks 2 and 3. */
+.tag--ink { color: var(--paper); }

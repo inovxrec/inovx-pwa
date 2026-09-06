@@ -42,3 +42,12 @@ export type { DrawerProps } from './Drawer';
 
 export { Toast } from './Toast';
 export type { ToastProps } from './Toast';
+
+export { StatCard } from './StatCard';
+export type { StatCardProps } from './StatCard';
+
+export { DataView } from './DataView';
+export type { DataViewProps, Column } from './DataView';
+
+export { DomainStrip } from './DomainStrip';
+export type { DomainStripProps } from './DomainStrip';

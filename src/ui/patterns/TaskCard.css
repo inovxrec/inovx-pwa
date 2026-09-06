@@ -87,10 +87,18 @@
 /*
   One row, 56px, for dense lists. Domain bar, title, state, due — no avatars.
 */
+/*
+  Wraps rather than crushing the title. The title is the only shrinkable item
+  in the row, so in a narrow container — the Command Deck's side column — it
+  was collapsing to nothing and leaving a row that said "In review, overdue"
+  about no task in particular. Below its basis the meta drops to a second line
+  instead.
+*/
 .task-card--compact {
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2) var(--s-3);
   min-height: var(--d-list-row);
   padding: var(--s-2) var(--s-3) var(--s-2) calc(var(--s-3) + var(--s-2));
 }
@@ -100,7 +108,7 @@
 }
 
 .task-card__title--compact {
-  flex: 1;
+  flex: 1 1 55%;
   min-width: 0;
   -webkit-line-clamp: 1;
   line-clamp: 1;

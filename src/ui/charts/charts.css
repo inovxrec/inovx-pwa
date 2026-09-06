@@ -1,0 +1,143 @@
+/*
+  §9.12 — 1.5px lines, no gradients, no 3D, no drop shadows. Grid lines are 1px
+  --paper-line, axis labels use the `label` token.
+
+  Charts only ever sit on a paper or mint card, so every colour here reads off
+  the surface tokens the card sets.
+*/
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+/* Sized in real pixels by the component; the box just must not scroll. */
+.chart__svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Solid hairlines, one shade off the surface — never dashed (anti-pattern). */
+.chart__grid {
+  stroke: var(--surface-line, var(--paper-line));
+  stroke-width: 1;
+}
+
+.chart__axis {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: var(--on-surface-faint, var(--on-paper-faint));
+}
+
+.chart__line {
+  fill: none;
+  stroke: var(--on-surface, var(--on-paper));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart__end { fill: var(--on-surface, var(--on-paper)); }
+
+/* The last value is direct-labelled, so it never needs a hover to be read. */
+.chart__end-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--on-surface, var(--on-paper));
+}
+
+.chart__crosshair {
+  stroke: var(--surface-line-2, var(--paper-line-2));
+  stroke-width: 1;
+}
+
+/* Hit areas are wider than the marks they stand for. */
+.chart__hit { fill: transparent; cursor: pointer; }
+
+.chart__readout {
+  min-height: 20px;
+  color: var(--on-surface, var(--on-paper));
+  font-weight: 600;
+}
+
+.chart__readout--idle {
+  color: var(--on-surface-faint, var(--on-paper-faint));
+  font-weight: 400;
+}
+
+/* ---------- BARS ---------- */
+
+.bars { margin: 0; }
+
+.bars__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+}
+
+.bars__row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 28px;
+}
+
+@media (min-width: 1024px) {
+  .bars__row { grid-template-columns: 116px 1fr auto; }
+}
+
+.bars__label {
+  color: var(--on-surface-mute, var(--on-paper-mute));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bars__track {
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--paper-lo);
+  overflow: hidden;
+}
+
+.surface-mint .bars__track { background: var(--mint-lo); }
+
+.bars__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--bar);
+  transition: width var(--t-base) var(--ease);
+}
+
+/* Reserved for a row that is actually in trouble, never for "series 4". */
+.bars__fill--risk { background: var(--st-blocked); }
+
+.bars__value {
+  color: var(--on-surface, var(--on-paper));
+  white-space: nowrap;
+}
+
+/* ---------- SPARKLINE (§7.11) ---------- */
+
+.spark { width: 72px; height: 22px; }
+
+.spark__line {
+  fill: none;
+  stroke: var(--on-surface, var(--on-paper));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spark__end { fill: var(--on-surface, var(--on-paper)); }
+
+.spark--risk .spark__line { stroke: var(--st-blocked); }
+.spark--risk .spark__end  { fill: var(--st-blocked); }

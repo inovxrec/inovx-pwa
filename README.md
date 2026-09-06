@@ -36,7 +36,7 @@ few or no tasks, so their My Day is mostly the empty state.
 
 ## Where the build is
 
-**Phases 1 to 4 of the §13 build order are done. Phase 4 stops here for review.**
+**Phases 1 to 5 of the §13 build order are done. Phase 5 stops here for review.**
 
 | | |
 |---|---|
@@ -60,7 +60,11 @@ few or no tasks, so their My Day is mostly the empty state.
 | ✅ Board | `/board/:slug` — §9.7, Kanban with drag and drop on desktop, grouped list on mobile |
 | ✅ Task detail | §9.8 — a 480px drawer on desktop, a full-screen route on mobile |
 | ✅ TaskCard | §7.10 — full and compact, overdue, cancelled, drag, realtime flash |
-| ⬜ Phase 5 onward | Command Deck, Oversight Deck, Insights and charts — not started |
+| ✅ Command Deck | `/deck` — §9.5, stat row, domain strips, approval queue, attention list |
+| ✅ Oversight Deck | `/oversight` — §9.6, read-only, prose summary, DataView table |
+| ✅ Insights | `/insights` — §9.12, charts and the permission-gated leaderboard |
+| ✅ Charts | `src/ui/charts/` — line, bars and sparkline, all inline SVG |
+| ⬜ Phase 6 onward | Calendar, People, Meetings, Notifications, Settings — not started |
 
 Every nav destination routes to a placeholder naming the phase and spec section
 that delivers it. Those are deleted as their real screens land.
@@ -105,7 +109,11 @@ still in git history if you need to look something up.
 5. **The compact task card shows a state word, not just a dot.** §7.10 says
    dot alone; §14 item 11 rules out colour-only information. The word rides
    with the dot.
-6. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+6. **Red bars.** A domain or member with an overdue task draws its bar in
+   `--st-blocked` instead of its domain colour. The value label always says
+   "· N late" alongside, so the colour is never the only signal — but say if
+   you would rather the bar always kept its domain colour.
+7. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
@@ -116,6 +124,23 @@ flags in `localStorage`; `setRole` and the `/kitchen-sink` switcher jump into
 the shell as another role without signing out. All of it is marked `TEMP` and
 goes when `/api/auth/login` lands — the `Session` shape should not need to
 change.
+
+## About the charts
+
+`src/lib/analytics.ts` derives everything it can from the task list, so the
+decks and the board can never disagree; only history the store does not keep
+(twelve weeks of completions, attendance, minutes) is seeded.
+
+**The domain channel palette fails as a series palette.** Run through the
+standard six checks against `--paper`, the five `--dom-*` tokens fail the
+lightness band and the chroma floor, sit at ΔE 11.6 between Events and Media
+for normal vision (below the 15 floor), and all five land under 3:1 against the
+surface. §3 forbids any colour outside the token list and §9.12 names these as
+the series colours, so they stay — and every chart is instead built so that
+**colour is never the encoding**: each bar carries its own name beside it, the
+activity chart is a single series with a direct end label and no legend, and no
+chart asks anyone to tell two domain hues apart. Worth a decision if you want
+real multi-series charts later.
 
 ## Where the data comes from
 

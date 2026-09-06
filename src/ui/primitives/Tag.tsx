@@ -15,6 +15,8 @@ export interface TagProps {
   state?: TagState;
   /** The flame tag — rank 1 on the leaderboard, and nothing else. */
   flame?: boolean;
+  /** Solid ink with paper text — leaderboard ranks 2 and 3 (§9.12). */
+  ink?: boolean;
   className?: string;
 }
 
@@ -22,10 +24,12 @@ export interface TagProps {
  * §7.3 — smaller than a Chip and never interactive. Domain labels on task
  * cards, counts on nav items.
  */
-export function Tag({ children, channel, state, flame, className }: TagProps) {
+export function Tag({ children, channel, state, flame, ink, className }: TagProps) {
   const background = flame
     ? 'var(--flame)'
-    : channel
+    : ink
+      ? 'var(--ink)'
+      : channel
       ? `var(--dom-${channel})`
       : state
         ? `var(--st-${state})`
@@ -33,7 +37,7 @@ export function Tag({ children, channel, state, flame, className }: TagProps) {
 
   return (
     <span
-      className={cn('tag', 'micro', flame && 'tag--flame', className)}
+      className={cn('tag', 'micro', flame && 'tag--flame', ink && 'tag--ink', className)}
       style={{ background }}
     >
       {children}
