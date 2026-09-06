@@ -93,10 +93,16 @@ export function MyDay({ loading = false }: MyDayProps) {
     });
   }
 
+  /*
+    §9.4's example line reads "3 due today · 1 overdue · 2 awaiting review".
+    The third count is the person's OWN submitted work, not other people's
+    approvals — a member has no permission to see those, and a greeting must
+    not count things the screen below it will not show.
+  */
   const counts = [
     `${groups.dueToday.length} due today`,
     groups.overdue.length > 0 ? `${groups.overdue.length} overdue` : null,
-    `${groups.awaitingApproval.length} awaiting review`,
+    `${groups.inReview.length} awaiting review`,
   ].filter(Boolean);
 
   /*

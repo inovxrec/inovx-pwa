@@ -1,8 +1,15 @@
 /* §9.4 — the member landing screen. */
 
+/*
+  Capped rather than run to the full content width. A compact row is a title at
+  one end and a due date at the other; stretched across 1200px the two stop
+  reading as one row, which is the opposite of the confident density §5.4 asks
+  for. The cards keep their own internal alignment at every width below this.
+*/
 .myday {
   display: flex;
   flex-direction: column;
+  max-width: 880px;
 }
 
 /* Block 1 sits on the ink ground, not a card (§9.4). */

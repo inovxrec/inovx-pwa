@@ -103,12 +103,21 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
               onClick={onBack}
             />
           )}
+          {/*
+            §9.8 asks for `Domain / Board`. On a domain's own board those are
+            the same word, so the duplicate crumb is dropped — it only earns its
+            place on a committee board, where they differ.
+          */}
           <Breadcrumb
             tone="ink"
-            items={[
-              { label: DOMAIN_LABELS[task.domain], to: `/board/${task.boardSlug}` },
-              { label: task.boardName },
-            ]}
+            items={
+              task.boardName === DOMAIN_LABELS[task.domain]
+                ? [{ label: task.boardName }]
+                : [
+                    { label: DOMAIN_LABELS[task.domain], to: `/board/${task.boardSlug}` },
+                    { label: task.boardName },
+                  ]
+            }
           />
           <span className="task__number micro">{task.number}</span>
         </div>
