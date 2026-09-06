@@ -1,0 +1,46 @@
+/* §9.7 — one Kanban column. Desktop only. */
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 300px;
+  flex: 1;
+}
+
+.column__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--b-bold) solid var(--state);
+}
+
+.column__title { color: var(--on-ink); }
+
+.column__count {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-raised);
+  color: var(--on-ink-mute);
+}
+
+.column__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  /* The drop target has to stay hittable when the column is empty. */
+  min-height: 80px;
+  border-radius: var(--r-lg);
+  border: var(--b-bold) dashed transparent;
+  padding: 2px;
+  transition: border-color var(--t-base) var(--ease);
+}
+
+/* Faint while a drag is in flight, solid flame under the pointer (§9.7). */
+.column__body--armed { border-color: var(--ink-line); }
+.column--over .column__body { border-color: var(--flame); }

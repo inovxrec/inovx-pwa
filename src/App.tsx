@@ -1,15 +1,21 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './store/AuthProvider';
+import { TaskProvider } from './store/taskStore';
+import { ToastProvider } from './hooks/useToast';
 import { useAuth, type Session } from './store/authStore';
 import { usePermissionCheck } from './hooks/usePermission';
 import { LANDING_BY_ROLE, NAV_ITEMS } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
+import { BOARDS } from './lib/mockTasks';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Placeholder } from './screens/placeholder/Placeholder';
 import { Login } from './screens/auth/Login';
 import { FirstRun } from './screens/auth/FirstRun';
 import { Welcome } from './screens/onboarding/Welcome';
+import { MyDay } from './screens/my-day/MyDay';
+import { Board } from './screens/board/Board';
+import { TaskDetail } from './screens/task/TaskDetail';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
 
 /**
@@ -64,10 +70,8 @@ function Require({
 
 /** Which phase and spec section each placeholder is standing in for. */
 const PENDING: Record<string, { screen: string; phase: string; section: string; permission?: PermissionKey }> = {
-  'my-day': { screen: 'My day', phase: 'Phase 4', section: '§9.4' },
   deck: { screen: 'Command deck', phase: 'Phase 5', section: '§9.5' },
   oversight: { screen: 'Oversight deck', phase: 'Phase 5', section: '§9.6' },
-  board: { screen: 'Boards', phase: 'Phase 4', section: '§9.7', permission: 'board.view' },
   calendar: { screen: 'Calendar', phase: 'Phase 6', section: '§9.9' },
   people: { screen: 'People', phase: 'Phase 6', section: '§9.10' },
   meetings: { screen: 'Meetings', phase: 'Phase 6', section: '§9.11', permission: 'meetings.view' },
@@ -77,8 +81,11 @@ const PENDING: Record<string, { screen: string; phase: string; section: string; 
   settings: { screen: 'Settings', phase: 'Phase 6', section: '§9.14' },
 };
 
-/** Every nav destination, wired to its placeholder and its title. */
-const shellRoutes = NAV_ITEMS.map((item) => {
+/**
+ * The nav destinations that are still placeholders. My Day and Boards have
+ * shipped (Phase 4) and are declared explicitly below.
+ */
+const shellRoutes = NAV_ITEMS.filter((item) => PENDING[item.id]).map((item) => {
   const pending = PENDING[item.id];
   return {
     path: item.path,
@@ -113,6 +120,28 @@ const router = createBrowserRouter([
           </RequireSession>
         ),
         children: [
+          // ---------- PHASE 4 ----------
+          {
+            path: '/my-day',
+            handle: { title: 'My day' } satisfies RouteHandle,
+            element: <MyDay />,
+          },
+          // /board lands on the first board the person can see.
+          {
+            path: '/board',
+            element: <Require permission="board.view"><BoardIndex /></Require>,
+          },
+          {
+            path: '/board/:slug',
+            handle: { title: 'Board' } satisfies RouteHandle,
+            element: <Require permission="board.view"><Board /></Require>,
+          },
+          {
+            path: '/task/:id',
+            handle: { title: 'Task' } satisfies RouteHandle,
+            element: <TaskDetail />,
+          },
+
           ...shellRoutes,
           // Reachable directly so the states can be reviewed before the screens
           // that throw them exist.
@@ -125,10 +154,19 @@ const router = createBrowserRouter([
   },
 ]);
 
+/** §9.7's board index — there is no all-boards screen, so pick the first one. */
+function BoardIndex() {
+  return <Navigate to={`/board/${BOARDS[0].slug}`} replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <TaskProvider>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </TaskProvider>
     </AuthProvider>
   );
 }

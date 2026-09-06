@@ -31,9 +31,12 @@ that key to replay the flow.
 **/kitchen-sink** holds the Phase 1 review surface and a role switcher that
 jumps straight into the shell.
 
+`member@inovx.club` is the account with real work on it — the other three own
+few or no tasks, so their My Day is mostly the empty state.
+
 ## Where the build is
 
-**Phases 1 to 3 of the §13 build order are done. Phase 3 stops here for review.**
+**Phases 1 to 4 of the §13 build order are done. Phase 4 stops here for review.**
 
 | | |
 |---|---|
@@ -53,7 +56,11 @@ jumps straight into the shell.
 | ✅ First run | `/first-run` — §9.2, live checklist, unavoidable until done |
 | ✅ Onboarding | `/welcome` — §9.3, four slides, swipe on mobile, arrows on desktop |
 | ✅ Install card | `src/ui/patterns/InstallCard.tsx` — §9.16, iOS / Android / desktop |
-| ⬜ Phase 4 onward | My Day, Board, Task detail, then the decks — not started |
+| ✅ My Day | `/my-day` — §9.4, swipe to advance with undo, long-press for the state sheet |
+| ✅ Board | `/board/:slug` — §9.7, Kanban with drag and drop on desktop, grouped list on mobile |
+| ✅ Task detail | §9.8 — a 480px drawer on desktop, a full-screen route on mobile |
+| ✅ TaskCard | §7.10 — full and compact, overdue, cancelled, drag, realtime flash |
+| ⬜ Phase 5 onward | Command Deck, Oversight Deck, Insights and charts — not started |
 
 Every nav destination routes to a placeholder naming the phase and spec section
 that delivers it. Those are deleted as their real screens land.
@@ -91,7 +98,14 @@ still in git history if you need to look something up.
    names no screen, and §15 says not to invent one. It currently reveals a line
    saying to ask a core team member, since accounts are issued by hand. Say if
    a real reset flow is wanted.
-4. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+4. **Two decorations on My Day.** §9.4 asks for tape on the overdue card *and*
+   a pin on the announcement, but §6.3 caps a screen at one of the two. The
+   tape goes to the overdue block when there is one, otherwise the pin marks
+   the announcement. Say which you would rather have.
+5. **The compact task card shows a state word, not just a dot.** §7.10 says
+   dot alone; §14 item 11 rules out colour-only information. The word rides
+   with the dot.
+6. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
@@ -102,6 +116,16 @@ flags in `localStorage`; `setRole` and the `/kitchen-sink` switcher jump into
 the shell as another role without signing out. All of it is marked `TEMP` and
 goes when `/api/auth/login` lands — the `Session` shape should not need to
 change.
+
+## Where the data comes from
+
+`src/lib/tasks.ts` holds the model, the legal state transitions and the date
+helpers; `src/lib/mockTasks.ts` holds the seed, with dates generated relative
+to today so the My Day groupings stay meaningful. `src/store/taskStore.tsx`
+applies every mutation locally and immediately — the swipe-to-advance needs the
+row to move before any round trip — and each mutation returns an `undo` the
+toast can call. Swapping the seed for `GET /me/day` and `GET /board/:slug`
+should not change a single screen.
 
 ## Rules for building on this
 

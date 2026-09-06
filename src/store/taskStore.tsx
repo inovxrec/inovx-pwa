@@ -1,335 +1,171 @@
-import { createContext, useContext, useCallback, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext, useCallback, useContext, useMemo, useState, type ReactNode,
+} from 'react';
+import { MOCK_TASKS } from '../lib/mockTasks';
+import type { ChecklistItem, Deliverable, Person, Task, TaskState } from '../lib/tasks';
+import { STATE_LABELS } from '../lib/tasks';
 
-export type Domain = 'technical' | 'management' | 'events' | 'media' | 'design' | 'core';
-export type TaskStatus = 'todo' | 'progress' | 'review' | 'done' | 'blocked' | 'proposed';
-export type Priority = 'urgent' | 'high' | 'medium' | 'low';
+/**
+ * The task layer every Phase 4 screen reads.
+ *
+ * TEMP: seeded from lib/mockTasks. Once the backend exists, replace the seed
+ * with a fetch and the mutations with calls into lib/api — the shapes here are
+ * what the screens are written against, so they should not need to change.
+ *
+ * Mutations are applied locally and immediately (§9.4's swipe-to-advance needs
+ * the row to move before any round trip); each returns an `undo` so the caller
+ * can put it back from a toast.
+ */
 
-export interface ChecklistItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export interface Assignee {
-  name: string;
-  initials: string;
-}
-
-export interface Task {
-  id: string;
-  taskNumber: string;
-  title: string;
-  description: string;
-  domain: Domain;
-  status: TaskStatus;
-  priority: Priority;
-  assignee: Assignee;
-  dueLabel: string;
-  isOverdue?: boolean;
-  isBlocked?: boolean;
-  blockedReason?: string;
-  committee?: string;
-  tags?: string[];
-  checklist: ChecklistItem[];
-  activityLogs: string[];
-  createdAt: string;
-}
-
-export interface Occasion {
-  id: string;
-  name: string;
-  avatarText: string;
-}
-
-export const DOMAIN_COLORS: Record<Domain, string> = {
-  technical: 'var(--chan-technical)',
-  management: 'var(--chan-management)',
-  events: 'var(--chan-events)',
-  media: 'var(--chan-media)',
-  design: 'var(--chan-design)',
-  core: 'var(--chan-core)',
-};
-
-export const DOMAIN_LABELS: Record<Domain, string> = {
-  technical: 'Technical',
-  management: 'Management',
-  events: 'Events',
-  media: 'Media',
-  design: 'Design',
-  core: 'Core Ops',
-};
-
-// TEMP: mock seed data merged from the Board prototype and the deck prototypes.
-// Swap for a real fetch via lib/api.ts once the backend endpoint exists — keep
-// the Task shape the same so screens barely have to change.
-const INITIAL_TASKS: Task[] = [
-  {
-    id: 't-0117', taskNumber: '#0117',
-    title: 'Confirm auditorium booking and get written approval',
-    description: 'Coordinate with Campus Admin for the main-stage auditorium reservation. Requires a formal signature and stamped requisition slip.',
-    domain: 'events', status: 'blocked', priority: 'urgent',
-    assignee: { name: 'Karan M.', initials: 'KM' },
-    dueLabel: 'OVERDUE 3D · 19 AUG', isOverdue: true, isBlocked: true,
-    blockedReason: "Admin office pending Dean's stamp", committee: 'TECHFEST',
-    checklist: [
-      { id: 'c1', text: 'Submit requisition form', completed: true },
-      { id: 'c2', text: 'Get Dean endorsement', completed: true },
-      { id: 'c3', text: 'Receive written confirmation & stamp', completed: false },
-    ],
-    activityLogs: ['19 Aug 10:00 — Flagged as BLOCKED: Admin office pending Dean stamp', '18 Aug 16:30 — Dean endorsement acquired'],
-    createdAt: '2026-08-15',
-  },
-  {
-    id: 't-0142', taskNumber: '#0142',
-    title: 'Birthday poster — Ananya Rao',
-    description: 'Design a phosphor-styled birthday card for the People page and the announcement feed.',
-    domain: 'design', status: 'progress', priority: 'medium',
-    assignee: { name: 'Ananya R.', initials: 'AR' },
-    dueLabel: 'DUE TODAY', committee: 'OCCASION', tags: ['OCCASION'],
-    checklist: [
-      { id: 'c4', text: 'Pull photo from directory', completed: true },
-      { id: 'c5', text: 'Draft layout', completed: false },
-      { id: 'c6', text: 'Get review from lead', completed: false },
-    ],
-    activityLogs: ['28 Aug 09:00 — Task spawned automatically by Occasion Engine', '28 Aug 11:15 — Directory photo asset attached'],
-    createdAt: '2026-08-20',
-  },
-  {
-    id: 't-0188', taskNumber: '#0188',
-    title: 'Techfest key visual — v2',
-    description: 'Incorporate typography revisions and render 4K variants for the print banner and Instagram story formats.',
-    domain: 'design', status: 'review', priority: 'high',
-    assignee: { name: 'Isha S.', initials: 'IS' },
-    dueLabel: 'SUBMITTED 20 AUG', committee: 'TECHFEST',
-    checklist: [
-      { id: 'c7', text: 'Revise grid typography', completed: true },
-      { id: 'c8', text: 'Export 9:16 reels canvas', completed: true },
-      { id: 'c9', text: 'Export 300dpi print poster', completed: true },
-    ],
-    activityLogs: ['20 Aug 18:20 — Submitted for review by Isha S.'],
-    createdAt: '2026-08-10',
-  },
-  {
-    id: 't-0201', taskNumber: '#0201',
-    title: 'Redesign the People page avatar grid',
-    description: 'Implement dynamic domain-accented borders and a monospace initials grid with fallback avatars.',
-    domain: 'technical', status: 'todo', priority: 'medium',
-    assignee: { name: 'Mayank K.', initials: 'MK' },
-    dueLabel: 'DUE 30 AUG',
-    checklist: [
-      { id: 'c10', text: 'Wireframe responsive CSS grid', completed: false },
-      { id: 'c11', text: 'Implement domain color mapping', completed: false },
-    ],
-    activityLogs: ['24 Aug 14:00 — Task created by Lead'],
-    createdAt: '2026-08-24',
-  },
-  {
-    id: 't-0203', taskNumber: '#0203',
-    title: 'Onam poster set',
-    description: 'Create multi-language celebratory banners for the club social media handles.',
-    domain: 'design', status: 'todo', priority: 'medium',
-    assignee: { name: 'Rahul L.', initials: 'RL' },
-    dueLabel: 'DUE 02 SEP', committee: 'OCCASION', tags: ['OCCASION'],
-    checklist: [{ id: 'c12', text: 'Select color palette and vector motifs', completed: false }],
-    activityLogs: ['25 Aug 10:00 — Scheduled via Occasion Engine'],
-    createdAt: '2026-08-25',
-  },
-  {
-    id: 't-0150', taskNumber: '#0150',
-    title: 'Orientation banner',
-    description: 'Main atrium backdrop for fresher welcome week.',
-    domain: 'design', status: 'done', priority: 'high',
-    assignee: { name: 'Mayank K.', initials: 'MK' },
-    dueLabel: '25 AUG',
-    checklist: [{ id: 'c14', text: 'Finalize vector graphic', completed: true }],
-    activityLogs: ['25 Aug 17:00 — Marked as DONE by Mayank K.'],
-    createdAt: '2026-08-18',
-  },
-  {
-    id: 't-0301', taskNumber: '#0301',
-    title: 'Reel for orientation week',
-    description: 'Fast-paced club intro reel showcasing hackathon wins, workshops, and the recruitment timeline.',
-    domain: 'media', status: 'proposed', priority: 'high',
-    assignee: { name: 'Sanya D.', initials: 'SD' },
-    dueLabel: 'WAITING 4D',
-    checklist: [{ id: 'c16', text: 'Compile archive footage', completed: true }],
-    activityLogs: ['24 Aug 11:00 — Proposed by Media team'],
-    createdAt: '2026-08-24',
-  },
-  {
-    id: 't-0302', taskNumber: '#0302',
-    title: 'Sponsorship tier brochure update',
-    description: 'Update the sponsor deliverables table and footfall stats for Techfest sponsor pitching.',
-    domain: 'management', status: 'proposed', priority: 'high',
-    assignee: { name: 'Tanya P.', initials: 'TP' },
-    dueLabel: 'WAITING 2D',
-    checklist: [{ id: 'c18', text: 'Verify alumni sponsor packages', completed: true }],
-    activityLogs: ['26 Aug 15:30 — Proposed by Management team'],
-    createdAt: '2026-08-26',
-  },
-  {
-    id: 't-0088', taskNumber: '#0088',
-    title: 'Setup container cluster for hackathon CI/CD',
-    description: 'Configure autoscaling runners on the campus server node to run sandboxed code evaluation for the 36-hour hackathon.',
-    domain: 'technical', status: 'todo', priority: 'urgent',
-    assignee: { name: 'Alex Rivera', initials: 'AR' },
-    dueLabel: 'DUE 01 SEP', tags: ['DOCKER', 'INFRA'],
-    checklist: [
-      { id: 'c20', text: 'Isolate network namespaces for sandboxes', completed: false },
-      { id: 'c21', text: 'Test load with 500 concurrent evaluations', completed: false },
-    ],
-    activityLogs: ['22 Aug 09:00 — Task created'],
-    createdAt: '2026-08-22',
-  },
-];
-
-const INITIAL_OCCASIONS: Occasion[] = [
-  { id: 'occ-1', name: 'Ananya Rao — birthday tomorrow, 04 Sep', avatarText: '🎂' },
-  { id: 'occ-2', name: 'Techfest 2026 — 06 Sep', avatarText: '🚀' },
-  { id: 'occ-3', name: 'Founding Day — 14 Sep', avatarText: '🏛' },
-];
-
-const ALL_DOMAINS: Domain[] = ['technical', 'management', 'events', 'media', 'design', 'core'];
-
-interface TaskContextValue {
+export interface TaskContextValue {
   tasks: Task[];
-  occasions: Occasion[];
-  overdueTasks: Task[];
-  dueTodayTasks: Task[];
-  awaitingReviewTasks: Task[];
-  proposedTasks: Task[];
-  domainMetrics: { domain: Domain; label: string; completionRate: number; overdueCount: number; statusText: string }[];
-  kpis: { openTasks: number; overdueTasks: number; awaitingApproval: number; weeklyCompletionRate: number };
-  columns: Record<'todo' | 'progress' | 'review' | 'done', Task[]>;
-  getTask: (id: string) => Task | undefined;
-  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
-  submitForReview: (taskId: string) => void;
-  approveTask: (taskId: string) => void;
-  rejectTask: (taskId: string, reason?: string) => void;
-  deleteTask: (taskId: string) => void;
+  byId: (id: string) => Task | undefined;
+  byNumber: (number: string) => Task | undefined;
+  /** Everything on one board, in the order the board should show it. */
+  forBoard: (slug: string) => Task[];
+  /** Moves a task and returns a function that puts it back. */
+  setState: (id: string, state: TaskState) => () => void;
   toggleChecklistItem: (taskId: string, itemId: string) => void;
   addChecklistItem: (taskId: string, text: string) => void;
+  addDeliverable: (taskId: string, deliverable: Omit<Deliverable, 'id'>) => void;
+  removeDeliverable: (taskId: string, deliverableId: string) => void;
+  addComment: (taskId: string, author: Person, body: string) => void;
+  rename: (taskId: string, title: string) => void;
+  setDue: (taskId: string, due: string | null) => void;
 }
 
 const TaskContext = createContext<TaskContextValue | null>(null);
 
-/**
- * Wraps the authed part of the app once. Any feature screen calls useTasks()
- * to read/mutate the shared task list — no prop drilling between My Day,
- * Board, Task Detail, Command Deck and Oversight Deck.
- */
+/** Ordering within a board column and within a My Day group. */
+const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
+
+function compareTasks(a: Task, b: Task): number {
+  const priority = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+  if (priority !== 0) return priority;
+  if (a.due && b.due) return a.due.localeCompare(b.due);
+  if (a.due) return -1;
+  if (b.due) return 1;
+  return a.number.localeCompare(b.number);
+}
+
+let sequence = 0;
+function nextId(prefix: string): string {
+  sequence += 1;
+  return `${prefix}-${Date.now().toString(36)}-${sequence}`;
+}
+
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
 
-  const logAndUpdate = useCallback((taskId: string, patch: Partial<Task>, logMsg?: string) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? { ...t, ...patch, activityLogs: logMsg ? [logMsg, ...t.activityLogs] : t.activityLogs }
-          : t
-      )
-    );
+  /** Applies `patch` to one task and leaves the rest untouched. */
+  const patch = useCallback((id: string, apply: (task: Task) => Task) => {
+    setTasks((current) => current.map((task) => (task.id === id ? apply(task) : task)));
   }, []);
 
-  const updateTaskStatus = useCallback(
-    (taskId: string, status: TaskStatus) => logAndUpdate(taskId, { status }, `Status changed to ${status.toUpperCase()}`),
-    [logAndUpdate]
+  const byId = useCallback((id: string) => tasks.find((t) => t.id === id), [tasks]);
+  const byNumber = useCallback((n: string) => tasks.find((t) => t.number === n), [tasks]);
+
+  const forBoard = useCallback(
+    (slug: string) => tasks.filter((t) => t.boardSlug === slug).sort(compareTasks),
+    [tasks],
   );
-  const submitForReview = useCallback((taskId: string) => updateTaskStatus(taskId, 'review'), [updateTaskStatus]);
-  const approveTask = useCallback((taskId: string) => updateTaskStatus(taskId, 'done'), [updateTaskStatus]);
-  const rejectTask = useCallback(
-    (taskId: string, reason?: string) => logAndUpdate(taskId, { status: 'todo' }, `RETURNED: ${reason || 'Needs revision'}`),
-    [logAndUpdate]
+
+  const setState = useCallback(
+    (id: string, state: TaskState) => {
+      const previous = tasks.find((t) => t.id === id)?.state;
+
+      patch(id, (task) => ({
+        ...task,
+        state,
+        activity: [
+          { id: nextId('v'), text: `moved to ${STATE_LABELS[state]}`, at: new Date().toISOString() },
+          ...task.activity,
+        ],
+      }));
+
+      // The undo drops the activity entry the move added, so an undone move
+      // leaves no trace — it did not happen.
+      return () => {
+        if (!previous) return;
+        patch(id, (task) => ({ ...task, state: previous, activity: task.activity.slice(1) }));
+      };
+    },
+    [patch, tasks],
   );
-  const deleteTask = useCallback((taskId: string) => setTasks((prev) => prev.filter((t) => t.id !== taskId)), []);
 
-  const toggleChecklistItem = useCallback((taskId: string, itemId: string) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? { ...t, checklist: t.checklist.map((c) => (c.id === itemId ? { ...c, completed: !c.completed } : c)) }
-          : t
-      )
-    );
-  }, []);
+  const toggleChecklistItem = useCallback(
+    (taskId: string, itemId: string) => {
+      patch(taskId, (task) => ({
+        ...task,
+        checklist: task.checklist.map((item) =>
+          item.id === itemId ? { ...item, done: !item.done } : item,
+        ),
+      }));
+    },
+    [patch],
+  );
 
-  const addChecklistItem = useCallback((taskId: string, text: string) => {
-    if (!text.trim()) return;
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? { ...t, checklist: [...t.checklist, { id: `c_${Date.now().toString().slice(-5)}`, text: text.trim(), completed: false }] }
-          : t
-      )
-    );
-  }, []);
+  const addChecklistItem = useCallback(
+    (taskId: string, text: string) => {
+      const item: ChecklistItem = { id: nextId('c'), text, done: false };
+      patch(taskId, (task) => ({ ...task, checklist: [...task.checklist, item] }));
+    },
+    [patch],
+  );
 
-  const getTask = useCallback((id: string) => tasks.find((t) => t.id === id), [tasks]);
+  const addDeliverable = useCallback(
+    (taskId: string, deliverable: Omit<Deliverable, 'id'>) => {
+      patch(taskId, (task) => ({
+        ...task,
+        deliverables: [...task.deliverables, { ...deliverable, id: nextId('d') }],
+      }));
+    },
+    [patch],
+  );
 
-  const overdueTasks = useMemo(() => tasks.filter((t) => t.isOverdue || t.status === 'blocked'), [tasks]);
-  const dueTodayTasks = useMemo(() => tasks.filter((t) => t.dueLabel.includes('TODAY') || t.status === 'progress'), [tasks]);
-  const awaitingReviewTasks = useMemo(() => tasks.filter((t) => t.status === 'review'), [tasks]);
-  const proposedTasks = useMemo(() => tasks.filter((t) => t.status === 'proposed'), [tasks]);
+  const removeDeliverable = useCallback(
+    (taskId: string, deliverableId: string) => {
+      patch(taskId, (task) => ({
+        ...task,
+        deliverables: task.deliverables.filter((d) => d.id !== deliverableId),
+      }));
+    },
+    [patch],
+  );
 
-  const columns = useMemo(
+  const addComment = useCallback(
+    (taskId: string, author: Person, body: string) => {
+      patch(taskId, (task) => ({
+        ...task,
+        comments: [
+          ...task.comments,
+          { id: nextId('m'), author, body, at: new Date().toISOString() },
+        ],
+      }));
+    },
+    [patch],
+  );
+
+  const rename = useCallback(
+    (taskId: string, title: string) => patch(taskId, (task) => ({ ...task, title })),
+    [patch],
+  );
+
+  const setDue = useCallback(
+    (taskId: string, due: string | null) => patch(taskId, (task) => ({ ...task, due })),
+    [patch],
+  );
+
+  const value = useMemo(
     () => ({
-      todo: tasks.filter((t) => t.status === 'todo' || t.status === 'proposed'),
-      progress: tasks.filter((t) => t.status === 'progress'),
-      review: tasks.filter((t) => t.status === 'review'),
-      done: tasks.filter((t) => t.status === 'done'),
+      tasks, byId, byNumber, forBoard, setState, toggleChecklistItem, addChecklistItem,
+      addDeliverable, removeDeliverable, addComment, rename, setDue,
     }),
-    [tasks]
+    [
+      tasks, byId, byNumber, forBoard, setState, toggleChecklistItem, addChecklistItem,
+      addDeliverable, removeDeliverable, addComment, rename, setDue,
+    ],
   );
-
-  const domainMetrics = useMemo(
-    () =>
-      ALL_DOMAINS.map((domain) => {
-        const dTasks = tasks.filter((t) => t.domain === domain);
-        const total = dTasks.length;
-        const done = dTasks.filter((t) => t.status === 'done').length;
-        const overdueCount = dTasks.filter((t) => t.isOverdue || t.status === 'blocked').length;
-        const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
-        return {
-          domain,
-          label: DOMAIN_LABELS[domain],
-          completionRate,
-          overdueCount,
-          statusText: overdueCount > 0 ? `${overdueCount} overdue` : `${completionRate}%`,
-        };
-      }),
-    [tasks]
-  );
-
-  const kpis = useMemo(
-    () => ({
-      openTasks: tasks.filter((t) => t.status !== 'done').length,
-      overdueTasks: overdueTasks.length,
-      awaitingApproval: proposedTasks.length,
-      weeklyCompletionRate:
-        tasks.length > 0 ? Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100) : 0,
-    }),
-    [tasks, overdueTasks, proposedTasks]
-  );
-
-  const value: TaskContextValue = {
-    tasks,
-    occasions: INITIAL_OCCASIONS,
-    overdueTasks,
-    dueTodayTasks,
-    awaitingReviewTasks,
-    proposedTasks,
-    domainMetrics,
-    kpis,
-    columns,
-    getTask,
-    updateTaskStatus,
-    submitForReview,
-    approveTask,
-    rejectTask,
-    deleteTask,
-    toggleChecklistItem,
-    addChecklistItem,
-  };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 }

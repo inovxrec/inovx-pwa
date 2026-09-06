@@ -12,6 +12,7 @@ import { Header } from './Header';
 import { MoreSheet } from './MoreSheet';
 import { OfflineBanner } from './OfflineBanner';
 import { PageTransition } from './PageTransition';
+import { TaskDrawer } from '../../screens/task/TaskDetail';
 import './AppShell.css';
 
 /** Route handles carry their own title so the header doesn't map paths itself. */
@@ -41,7 +42,7 @@ export function AppShell() {
 
   const handle = (matches[matches.length - 1]?.handle ?? {}) as RouteHandle;
 
-  // Counts are mock until the Phase 4 data layer exists.
+  // TEMP: the alert count is mock until the notifications endpoint exists.
   const counts = { notifications: 3 };
 
   const items = session ? visibleNavItems(session.role, can) : [];
@@ -78,6 +79,14 @@ export function AppShell() {
             <Outlet />
           </PageTransition>
         </main>
+
+        {/*
+          §9.8's desktop drawer lives at the shell level, driven by a ?task=
+          search param, so the screen behind it stays mounted and interactive.
+          It renders nothing when the param is absent, and nothing on mobile,
+          where the task is a route of its own.
+        */}
+        {isDesktop && <TaskDrawer />}
       </div>
 
       {!isDesktop && (

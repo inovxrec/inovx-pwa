@@ -1,0 +1,30 @@
+/* §7.19 — the `label` token with `/` separators. */
+
+.crumbs__list {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  list-style: none;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.crumbs__item {
+  min-width: 0;
+  color: var(--on-paper-mute);
+}
+
+.crumbs--on-ink .crumbs__item { color: var(--on-ink-mute); }
+
+.crumbs__item--current { color: var(--on-paper); }
+.crumbs--on-ink .crumbs__item--current { color: var(--on-ink); }
+
+.crumbs__link {
+  text-decoration: none;
+  border-radius: var(--r-xs);
+}
+
+.crumbs__link:hover { text-decoration: underline; }
+
+.crumbs__sep { color: var(--on-paper-faint); }
+.crumbs--on-ink .crumbs__sep { color: var(--on-ink-faint); }

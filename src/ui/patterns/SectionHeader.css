@@ -1,0 +1,25 @@
+/* §7.11 — 24px above, 12px below, a hairline rule beneath. */
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 32px;
+  margin-top: var(--d-section-top);
+  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--b-hair) solid var(--ink-line);
+}
+
+/* The first section on a screen sits under the header already (§14 item 4). */
+.section-head:first-child { margin-top: 0; }
+
+.section-head--on-paper {
+  border-bottom-color: var(--paper-line);
+}
+
+.section-head--on-ink .section-head__title { color: var(--on-ink); }
+.section-head--on-paper .section-head__title { color: var(--on-paper); }
+
+.section-head__action { flex: none; }

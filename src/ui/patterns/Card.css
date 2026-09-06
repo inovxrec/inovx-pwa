@@ -1,0 +1,41 @@
+/* §5.2 — no border, no shadow. Contrast against the black ground does the work. */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--d-card-pad);
+  border-radius: var(--r-lg);
+}
+
+/* A tape or pin overflows the corner by ~8px, so it must not be clipped (§6.3). */
+.card--decorated { overflow: visible; }
+
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 22px;
+}
+
+.card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.card__eyebrow { color: var(--on-surface-mute); }
+.card__title { color: var(--on-surface); }
+
+.card__aside {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+/* 12px above the bottom edge (§5.2). */
+.card__action { margin-top: var(--s-1); }

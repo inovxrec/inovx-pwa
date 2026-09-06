@@ -1,0 +1,156 @@
+/* §9.7 — the board header is shared; the two forks below it are not. */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-height: 0;
+}
+
+.board__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.board__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.board__title { color: var(--on-ink); }
+.board__members { color: var(--on-ink-faint); }
+
+/* The 4px underline in the domain channel colour (§9.7). */
+.board__rule {
+  width: 64px;
+  height: 4px;
+  border-radius: var(--r-pill);
+}
+
+.board__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+@media (min-width: 1024px) {
+  .board__controls {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--s-4);
+  }
+
+  .board__search { width: 280px; flex: none; }
+}
+
+/* Chip rows scroll on mobile and never wrap to a third line (§7.2). */
+.board__filters {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.board__filters > * { scroll-snap-align: start; flex: none; }
+
+.board__empty { align-self: stretch; }
+
+/* ---------- DESKTOP: Kanban ---------- */
+.board__columns {
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: var(--s-3);
+}
+
+/* ---------- MOBILE: grouped list ---------- */
+.board__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.board__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* Sticky group headers, under the app header (§9.7). */
+.board__group-head {
+  position: sticky;
+  top: var(--header-h);
+  z-index: var(--z-sticky);
+  margin: 0;
+  background: var(--ink);
+}
+
+.board__group-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s-2) 0;
+  border-bottom: var(--b-bold) solid var(--state);
+  text-align: left;
+}
+
+.board__group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--state);
+  flex: none;
+}
+
+.board__group-name {
+  flex: 1;
+  color: var(--on-ink);
+}
+
+.board__group-count {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-raised);
+  color: var(--on-ink-mute);
+}
+
+.board__group-chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--on-ink-mute);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.board__group-chevron--closed { transform: rotate(-90deg); }
+
+.board__group-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+}
+
+/* The nested control on a compact card — it must not open the task. */
+.board__group-move {
+  flex: none;
+  padding: 6px var(--s-2);
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--paper-line-2);
+  color: var(--on-paper-mute);
+}
+
+.board__group-move:hover {
+  border-color: var(--ink);
+  color: var(--on-paper);
+}

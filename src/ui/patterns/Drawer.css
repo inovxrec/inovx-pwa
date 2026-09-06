@@ -1,0 +1,43 @@
+/* §7.14 — 480px from the right, for task detail on desktop. */
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--scrim);
+  animation: drawer-scrim-in var(--t-base) var(--ease-out) both;
+}
+
+.drawer {
+  position: relative;
+  width: min(480px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: var(--b-hair) solid var(--ink-line);
+  animation: drawer-in var(--t-slow) var(--ease-out) both;
+}
+
+/* Persistent, and above the content it floats over. */
+.drawer__close {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  z-index: 1;
+}
+
+@keyframes drawer-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes drawer-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer { animation: none; }
+}

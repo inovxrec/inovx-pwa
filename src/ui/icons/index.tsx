@@ -148,3 +148,63 @@ export const IconCloudOff = () => (
     <path d="M3 3l18 18" />
   </Icon>
 );
+
+/* ---------- PHASE 4 ---------- */
+
+export const IconChevronDown = () => (
+  <Icon>
+    <path d="M5 9l7 7 7-7" />
+  </Icon>
+);
+
+export const IconChevronRight = () => (
+  <Icon>
+    <path d="M9 4l8 8-8 8" />
+  </Icon>
+);
+
+export const IconPlus = () => (
+  <Icon>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+/** The `⋯` overflow trigger on a card or a task header. */
+export const IconEllipsis = () => (
+  <Icon>
+    <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+/** Trailing glyph on a LinkChip — the link leaves the app. */
+export const IconExternal = () => (
+  <Icon>
+    <path d="M14 4h6v6" />
+    <path d="M20 4l-9 9" />
+    <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+  </Icon>
+);
+
+/** A deliverable link we could not confirm is open to anyone with it. */
+export const IconWarning = () => (
+  <Icon>
+    <path d="M12 4.5L21 19.5H3L12 4.5Z" />
+    <path d="M12 10v4" />
+    <circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+export const IconCheck = () => (
+  <Icon>
+    <path d="M4.5 12.5l5 5L20 7" />
+  </Icon>
+);
+
+/** Filter bar trigger. */
+export const IconFilter = () => (
+  <Icon>
+    <path d="M3 6h18M7 12h10M10 18h4" />
+  </Icon>
+);
