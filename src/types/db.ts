@@ -51,7 +51,7 @@ export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 // Canonical Table Entities
 // ------------------------------------------------------------------------------
 
-export interface Tenure {
+export type Tenure = {
   id: string;
   name: string;
   start_date: string;
@@ -59,9 +59,9 @@ export interface Tenure {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Domain {
+export type Domain = {
   id: string;
   tenure_id: string;
   slug: string;
@@ -71,9 +71,9 @@ export interface Domain {
   description: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface User {
+export type User = {
   id: string;
   tenure_id: string | null;
   email: string;
@@ -89,9 +89,9 @@ export interface User {
   phone: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface UserPermission {
+export type UserPermission = {
   id: string;
   tenure_id: string;
   user_id: string;
@@ -99,9 +99,9 @@ export interface UserPermission {
   effect: TriState;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Committee {
+export type Committee = {
   id: string;
   tenure_id: string;
   name: string;
@@ -110,9 +110,9 @@ export interface Committee {
   description: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface CommitteeMember {
+export type CommitteeMember = {
   id: string;
   tenure_id: string;
   committee_id: string;
@@ -120,9 +120,9 @@ export interface CommitteeMember {
   role: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Task {
+export type Task = {
   id: string;
   tenure_id: string;
   task_number: string;
@@ -142,9 +142,9 @@ export interface Task {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface TaskAssignee {
+export type TaskAssignee = {
   id: string;
   tenure_id: string;
   task_id: string;
@@ -152,9 +152,9 @@ export interface TaskAssignee {
   is_primary: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface TaskActivity {
+export type TaskActivity = {
   id: string;
   tenure_id: string;
   task_id: string;
@@ -163,9 +163,9 @@ export interface TaskActivity {
   details: Json;
   message: string | null;
   created_at: string;
-}
+};
 
-export interface TaskComment {
+export type TaskComment = {
   id: string;
   tenure_id: string;
   task_id: string;
@@ -173,9 +173,9 @@ export interface TaskComment {
   content: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface TaskLink {
+export type TaskLink = {
   id: string;
   tenure_id: string;
   task_id: string;
@@ -184,9 +184,9 @@ export interface TaskLink {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface TaskChecklistItem {
+export type TaskChecklistItem = {
   id: string;
   tenure_id: string;
   task_id: string;
@@ -195,9 +195,9 @@ export interface TaskChecklistItem {
   position: number;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface RecurringRule {
+export type RecurringRule = {
   id: string;
   tenure_id: string;
   title: string;
@@ -213,9 +213,9 @@ export interface RecurringRule {
   next_run_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface MemberDirectory {
+export type MemberDirectory = {
   id: string;
   tenure_id: string;
   name: string;
@@ -230,9 +230,9 @@ export interface MemberDirectory {
   metadata: Json;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Meeting {
+export type Meeting = {
   id: string;
   tenure_id: string;
   title: string;
@@ -244,9 +244,9 @@ export interface Meeting {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Attendance {
+export type Attendance = {
   id: string;
   tenure_id: string;
   meeting_id: string;
@@ -256,9 +256,9 @@ export interface Attendance {
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Announcement {
+export type Announcement = {
   id: string;
   tenure_id: string;
   title: string;
@@ -268,9 +268,9 @@ export interface Announcement {
   published_at: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Notification {
+export type Notification = {
   id: string;
   tenure_id: string;
   user_id: string;
@@ -282,9 +282,9 @@ export interface Notification {
   type: string;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface NotificationPrefs {
+export type NotificationPrefs = {
   id: string;
   tenure_id: string;
   user_id: string;
@@ -297,9 +297,9 @@ export interface NotificationPrefs {
   announcements: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface PushSubscription {
+export type PushSubscription = {
   id: string;
   user_id: string;
   endpoint: string;
@@ -308,9 +308,9 @@ export interface PushSubscription {
   user_agent: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface AuditLog {
+export type AuditLog = {
   id: string;
   tenure_id: string | null;
   actor_id: string | null;
@@ -321,9 +321,9 @@ export interface AuditLog {
   new_values: Json | null;
   ip_address: string | null;
   created_at: string;
-}
+};
 
-export interface FeatureFlag {
+export type FeatureFlag = {
   id: string;
   key: string;
   name: string;
@@ -333,9 +333,9 @@ export interface FeatureFlag {
   rules: Json;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface PendingImport {
+export type PendingImport = {
   id: string;
   tenure_id: string | null;
   batch_id: string;
@@ -349,7 +349,7 @@ export interface PendingImport {
   processed_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 // ------------------------------------------------------------------------------
 // Generic Supabase Schema Definition for Typed Client
@@ -362,116 +362,139 @@ export interface Database {
         Row: Tenure;
         Insert: Partial<Tenure> & Pick<Tenure, 'name' | 'start_date' | 'end_date'>;
         Update: Partial<Tenure>;
+        Relationships: [];
       };
       domains: {
         Row: Domain;
         Insert: Partial<Domain> & Pick<Domain, 'tenure_id' | 'slug' | 'name'>;
         Update: Partial<Domain>;
+        Relationships: [];
       };
       users: {
         Row: User;
         Insert: Partial<User> & Pick<User, 'id' | 'email' | 'name'>;
         Update: Partial<User>;
+        Relationships: [];
       };
       user_permissions: {
         Row: UserPermission;
         Insert: Partial<UserPermission> & Pick<UserPermission, 'tenure_id' | 'user_id' | 'permission_key' | 'effect'>;
         Update: Partial<UserPermission>;
+        Relationships: [];
       };
       committees: {
         Row: Committee;
         Insert: Partial<Committee> & Pick<Committee, 'tenure_id' | 'name' | 'slug'>;
         Update: Partial<Committee>;
+        Relationships: [];
       };
       committee_members: {
         Row: CommitteeMember;
         Insert: Partial<CommitteeMember> & Pick<CommitteeMember, 'tenure_id' | 'committee_id' | 'user_id'>;
         Update: Partial<CommitteeMember>;
+        Relationships: [];
       };
       tasks: {
         Row: Task;
         Insert: Partial<Task> & Pick<Task, 'tenure_id' | 'task_number' | 'title' | 'context_type' | 'context_id'>;
         Update: Partial<Task>;
+        Relationships: [];
       };
       task_assignees: {
         Row: TaskAssignee;
         Insert: Partial<TaskAssignee> & Pick<TaskAssignee, 'tenure_id' | 'task_id' | 'user_id'>;
         Update: Partial<TaskAssignee>;
+        Relationships: [];
       };
       task_activity: {
         Row: TaskActivity;
         Insert: Partial<TaskActivity> & Pick<TaskActivity, 'tenure_id' | 'task_id' | 'action'>;
-        Update: never; // Immutable: no updates allowed!
+        Update: Partial<TaskActivity>; // Note: DB trigger prevents updates at runtime
+        Relationships: [];
       };
       task_comments: {
         Row: TaskComment;
         Insert: Partial<TaskComment> & Pick<TaskComment, 'tenure_id' | 'task_id' | 'user_id' | 'content'>;
         Update: Partial<TaskComment>;
+        Relationships: [];
       };
       task_links: {
         Row: TaskLink;
         Insert: Partial<TaskLink> & Pick<TaskLink, 'tenure_id' | 'task_id' | 'title' | 'url'>;
         Update: Partial<TaskLink>;
+        Relationships: [];
       };
       task_checklist: {
         Row: TaskChecklistItem;
         Insert: Partial<TaskChecklistItem> & Pick<TaskChecklistItem, 'tenure_id' | 'task_id' | 'text'>;
         Update: Partial<TaskChecklistItem>;
+        Relationships: [];
       };
       recurring_rules: {
         Row: RecurringRule;
         Insert: Partial<RecurringRule> & Pick<RecurringRule, 'tenure_id' | 'title' | 'context_type' | 'context_id' | 'frequency'>;
         Update: Partial<RecurringRule>;
+        Relationships: [];
       };
       member_directory: {
         Row: MemberDirectory;
         Insert: Partial<MemberDirectory> & Pick<MemberDirectory, 'tenure_id' | 'name'>;
         Update: Partial<MemberDirectory>;
+        Relationships: [];
       };
       meetings: {
         Row: Meeting;
         Insert: Partial<Meeting> & Pick<Meeting, 'tenure_id' | 'title' | 'scheduled_at'>;
         Update: Partial<Meeting>;
+        Relationships: [];
       };
       attendance: {
         Row: Attendance;
         Insert: Partial<Attendance> & Pick<Attendance, 'tenure_id' | 'meeting_id' | 'status'>;
         Update: Partial<Attendance>;
+        Relationships: [];
       };
       announcements: {
         Row: Announcement;
         Insert: Partial<Announcement> & Pick<Announcement, 'tenure_id' | 'title' | 'body'>;
         Update: Partial<Announcement>;
+        Relationships: [];
       };
       notifications: {
         Row: Notification;
         Insert: Partial<Notification> & Pick<Notification, 'tenure_id' | 'user_id' | 'title' | 'body'>;
         Update: Partial<Notification>;
+        Relationships: [];
       };
       notification_prefs: {
         Row: NotificationPrefs;
         Insert: Partial<NotificationPrefs> & Pick<NotificationPrefs, 'tenure_id' | 'user_id'>;
         Update: Partial<NotificationPrefs>;
+        Relationships: [];
       };
       push_subscriptions: {
         Row: PushSubscription;
         Insert: Partial<PushSubscription> & Pick<PushSubscription, 'user_id' | 'endpoint' | 'p256dh' | 'auth'>;
         Update: Partial<PushSubscription>;
+        Relationships: [];
       };
       audit_log: {
         Row: AuditLog;
         Insert: Partial<AuditLog> & Pick<AuditLog, 'action' | 'entity_type'>;
-        Update: never;
+        Update: Partial<AuditLog>;
+        Relationships: [];
       };
       feature_flags: {
         Row: FeatureFlag;
         Insert: Partial<FeatureFlag> & Pick<FeatureFlag, 'key' | 'name'>;
         Update: Partial<FeatureFlag>;
+        Relationships: [];
       };
       pending_imports: {
         Row: PendingImport;
         Insert: Partial<PendingImport> & Pick<PendingImport, 'batch_id' | 'name' | 'email' | 'domain' | 'role'>;
         Update: Partial<PendingImport>;
+        Relationships: [];
       };
     };
     Views: {
