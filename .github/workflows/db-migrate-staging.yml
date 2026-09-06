@@ -1,0 +1,45 @@
+name: Staging Database Migrations
+
+on:
+  push:
+    branches:
+      - integration
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+concurrency:
+  group: db-migrate-staging
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Push Migrations to Supabase Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Staging Project and Push Migrations
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "::warning ::SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD secret is not configured."
+            echo "To enable automated migration push, add SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD to GitHub Actions secrets."
+            echo "Skipping automated push step in CI until secrets are provided."
+            exit 0
+          fi
+
+          echo "Linking Supabase staging project ljtreitmsvzseqspiocq..."
+          supabase link --project-ref ljtreitmsvzseqspiocq --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          
+          echo "Pushing migrations to staging..."
+          supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
