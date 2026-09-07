@@ -99,7 +99,7 @@ export function Insights() {
 
         {/* Core team and faculty only (§9.12). Absent otherwise, not disabled. */}
         {can('leaderboard.view') && (
-          <Card surface="mint" title="Leaderboard" className="insights__wide">
+          <Card surface="mint" title="Leaderboard" className="insights__wide sleeve">
             <ol className="insights__board" role="list">
               {LEADERBOARD.slice(0, LEADERBOARD_MAX).map((row, index) => (
                 <li className="insights__board-row" key={row.person.id}>
@@ -109,7 +109,9 @@ export function Insights() {
                   ) : index < 3 ? (
                     <Tag ink>{index + 1}</Tag>
                   ) : (
-                    <span className="insights__rank micro tnum">{index + 1}</span>
+                    <span className="insights__rank micro track-no">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                   )}
 
                   <Avatar

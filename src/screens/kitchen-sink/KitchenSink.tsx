@@ -10,7 +10,7 @@ import {
   type TaskState,
 } from '../../ui/primitives';
 import { Logo } from '../../ui/brand/Logo';
-import { BrushStroke, Halftone, Pin, Tape } from '../../ui/signature';
+import { BrushStroke, Grooves, Halftone, Pin, Tape, Waveform } from '../../ui/signature';
 import {
   StickerBell, StickerCalendar, StickerClipboard, StickerCloudOff, StickerCoffee,
   StickerLock, StickerPin, StickerRocket, StickerTrophy,
@@ -117,12 +117,14 @@ export function KitchenSink() {
     <div className="ks">
       <header className="ks-hero">
         <Halftone />
+        <Grooves origin={{ x: 78, y: 30 }} />
         <div className="ks-hero__inner">
           <Logo size="md" />
           <h1 className="display-1">Kitchen sink</h1>
           <p className="ks-hero__sub">
             Phase 1 — tokens, type, the signature elements and every primitive.
           </p>
+          <Waveform seed="kitchen sink" bars={44} variant="rule" className="ks-hero__wave" />
         </div>
       </header>
 

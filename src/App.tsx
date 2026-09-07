@@ -1,12 +1,12 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './store/AuthProvider';
 import { TaskProvider } from './store/taskStore';
+import { CommitteeProvider } from './store/committeeStore';
 import { ToastProvider } from './hooks/useToast';
 import { useAuth, type Session } from './store/authStore';
 import { usePermissionCheck } from './hooks/usePermission';
 import { LANDING_BY_ROLE, NAV_ITEMS } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
-import { BOARDS } from './lib/mockTasks';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Placeholder } from './screens/placeholder/Placeholder';
@@ -176,13 +176,19 @@ const router = createBrowserRouter([
             element: <MyDay />,
           },
           // /board lands on the first board the person can see.
+          // /board lands on every domain's work at once, not one domain's.
           {
             path: '/board',
-            element: <Require permission="board.view"><BoardIndex /></Require>,
+            element: <Navigate to="/board/all" replace />,
           },
           {
             path: '/board/:slug',
             handle: { title: 'Board' } satisfies RouteHandle,
+            element: <Require permission="board.view"><Board /></Require>,
+          },
+          {
+            path: '/committee/:id',
+            handle: { title: 'Committee' } satisfies RouteHandle,
             element: <Require permission="board.view"><Board /></Require>,
           },
           {
@@ -203,18 +209,15 @@ const router = createBrowserRouter([
   },
 ]);
 
-/** §9.7's board index — there is no all-boards screen, so pick the first one. */
-function BoardIndex() {
-  return <Navigate to={`/board/${BOARDS[0].slug}`} replace />;
-}
-
 export default function App() {
   return (
     <AuthProvider>
       <TaskProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <CommitteeProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </CommitteeProvider>
       </TaskProvider>
     </AuthProvider>
   );

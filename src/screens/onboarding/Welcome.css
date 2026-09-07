@@ -115,3 +115,9 @@
 @media (prefers-reduced-motion: reduce) {
   .welcome__slide { animation: none; }
 }
+
+/* One phrase of waveform under each slide's headline. */
+.welcome__wave {
+  width: 160px;
+  color: var(--on-paper-faint);
+}

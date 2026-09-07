@@ -134,6 +134,26 @@ the shell as another role without signing out. All of it is marked `TEMP` and
 goes when `/api/auth/login` lands — the `Session` shape should not need to
 change.
 
+## The record-sleeve motifs
+
+The system leans on a modern-retro record aesthetic on top of the §1 direction —
+static, monochrome, and inside the existing token list, since none of it touches
+colour:
+
+- **`Waveform`** (`src/ui/signature/`) — a symmetric soundwave, mirrored about a
+  centre line, seeded from a string so a screen draws the same wave every render
+  but two screens do not look stamped. Used as a rule under a lockup or headline.
+- **`Grooves`** — concentric record grooves running off a hero's edge, the
+  companion to `Halftone` (§6.4) and used the same way: on `--ink` only, never on
+  paper, never animated.
+- **`.sleeve`** — registration marks at a card's two opposite corners, the way a
+  printed sleeve carries crop marks. Not a border: §5.2 is explicit that cards
+  have none, so these are four short rules that stop well short of meeting.
+- **`.track-no`** — leading-zero tabular numerals, as a sleeve lists its tracks.
+
+Nothing here animates. §10 allows exactly one looping animation in the product
+and it is the skeleton pulse.
+
 ## About the charts
 
 `src/lib/analytics.ts` derives everything it can from the task list, so the

@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { Logo } from '../../ui/brand/Logo';
+import { Grooves } from '../../ui/signature/Grooves';
 import { Halftone } from '../../ui/signature/Halftone';
+import { Waveform } from '../../ui/signature/Waveform';
 import { StickerLock } from '../../ui/stickers';
 import './AuthFrame.css';
 
@@ -37,6 +39,8 @@ export function AuthFrame({
     <div className="auth">
       <div className="auth__texture">
         <Halftone />
+        {/* Pressed behind the halftone, spindle just off the top-left. */}
+        <Grooves origin={{ x: 22, y: 8 }} />
       </div>
 
       {/* Wrapped, because the sticker's own fade-in animates opacity to 1. */}
@@ -50,6 +54,8 @@ export function AuthFrame({
         <div className="auth__head">
           <h1 className={cn('auth__title', size)}>{title}</h1>
           {tagline && <p className="auth__tagline body-lg">{tagline}</p>}
+          {/* The sleeve's waveform, in place of a rule under the lockup. */}
+          <Waveform seed={title} bars={34} variant="rule" className="auth__wave" />
         </div>
 
         <div className="auth__card surface-paper">{children}</div>

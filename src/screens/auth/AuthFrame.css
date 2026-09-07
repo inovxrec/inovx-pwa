@@ -75,3 +75,9 @@
 @media (min-height: 720px) {
   .auth__logo { margin-top: var(--s-8); }
 }
+
+/* The waveform under the lockup — the sleeve's own rule. */
+.auth__wave {
+  width: 240px;
+  color: var(--on-ink-mute);
+}

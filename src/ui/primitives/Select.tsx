@@ -17,6 +17,8 @@ export interface SelectOption {
 
 export interface SelectProps {
   label: string;
+  /** Hides the label visually but keeps it for screen readers (§11). */
+  labelHidden?: boolean;
   options: SelectOption[];
   /** Single-select value, or the array for multi. */
   value: string | string[];
@@ -41,6 +43,7 @@ export interface SelectProps {
  */
 export function Select({
   label,
+  labelHidden = false,
   options,
   value,
   onChange,
@@ -150,7 +153,9 @@ export function Select({
 
   return (
     <div className={cn('select', `select--on-${tone}`, error && 'select--error', className)}>
-      <label className="select__label label" htmlFor={id}>{label}</label>
+      <label className={cn('select__label label', labelHidden && 'sr-only')} htmlFor={id}>
+        {label}
+      </label>
 
       <button
         id={id}

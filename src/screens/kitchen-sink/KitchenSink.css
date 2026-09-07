@@ -157,3 +157,8 @@
   text-decoration: none;
 }
 .ks-link:hover { background: var(--paper-lo); }
+
+.ks-hero__wave {
+  width: 260px;
+  color: var(--on-ink-faint);
+}

@@ -54,7 +54,7 @@ export function OversightDeck() {
         §9.6 asks for plain-language sentences rather than a metric wall — the
         figures are the same ones every other screen reads, written out.
       */}
-      <Card className="oversight__hero">
+      <Card className="oversight__hero sleeve">
         <p className="body-lg read-width">{summary}</p>
       </Card>
 

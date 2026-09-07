@@ -154,3 +154,14 @@
   border-color: var(--ink);
   color: var(--on-paper);
 }
+
+/* The board switcher and the committee action share the control row. */
+.board__switcher { width: 100%; }
+
+@media (min-width: 1024px) {
+  .board__switcher { width: 240px; flex: none; }
+  .board__new { margin-left: auto; }
+}
+
+/* Across every board there is no domain to name, so the rule stays short. */
+.board__rule { width: 64px; }

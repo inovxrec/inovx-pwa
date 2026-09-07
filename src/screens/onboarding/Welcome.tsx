@@ -9,6 +9,7 @@ import { IconButton } from '../../ui/primitives/IconButton';
 import { IconChevronLeft } from '../../ui/icons';
 import { InstallCard } from '../../ui/patterns/InstallCard';
 import { Halftone } from '../../ui/signature/Halftone';
+import { Waveform } from '../../ui/signature/Waveform';
 import {
   StickerBell, StickerClipboard, StickerRocket, StickerTrophy,
 } from '../../ui/stickers';
@@ -151,6 +152,7 @@ export function Welcome() {
           <div className="welcome__sticker">{slide.sticker}</div>
 
           <h1 className="display-2">{slide.title}</h1>
+          <Waveform seed={slide.id} bars={28} variant="rule" className="welcome__wave" />
 
           <div className="welcome__lines">
             <p className="body-lg">{slide.lines[0]}</p>
