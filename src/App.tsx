@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './store/AuthProvider';
 import { TaskProvider } from './store/taskStore';
@@ -10,6 +11,7 @@ import { LANDING_BY_ROLE } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { UpdatePrompt } from './ui/nav/UpdatePrompt';
+import { LogoIntro } from './ui/brand/LogoIntro';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Login } from './screens/auth/Login';
 import { FirstRun } from './screens/auth/FirstRun';
@@ -232,6 +234,15 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
+  /*
+    The opening title runs on every load of the document — which is what
+    "opening the app" means for an installed PWA — and not on client-side
+    navigation. The app renders underneath it the whole time, so nothing is
+    waiting on the animation to finish.
+  */
+  const [introDone, setIntroDone] = useState(false);
+  const dismiss = useCallback(() => setIntroDone(true), []);
+
   return (
     <AuthProvider>
       <TaskProvider>
@@ -239,6 +250,7 @@ export default function App() {
           <GrantProvider>
             <ToastProvider>
               <UpdatePrompt />
+              {!introDone && <LogoIntro onDone={dismiss} />}
               <RouterProvider router={router} />
             </ToastProvider>
           </GrantProvider>

@@ -1,0 +1,174 @@
+/*
+  The opening title.
+
+  Retro-techy without the CRT: §0 withdrew the INOVX84 terminal look, so this
+  borrows from the record sleeve the rest of the system already uses — pressed
+  grooves, the halftone, a played waveform — and adds one machine-like scan of a
+  flame rule. No scanlines, no glow, no gradient.
+*/
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-toast) + 10);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--ink);
+  /* Any tap ends it, so the whole surface has to be hittable. */
+  cursor: pointer;
+}
+
+.intro__texture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: intro-texture 700ms var(--ease-out) both;
+}
+
+@keyframes intro-texture {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.intro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-5);
+  padding: 0 var(--d-page-x);
+}
+
+/* ---------- THE LOCKUP ---------- */
+
+/*
+  One height variable drives every length below, so the whole lockup scales by
+  changing this alone.
+
+  Sized off the viewport rather than fixed: the five glyphs come to about 2.58
+  times the height, so 24vw puts the lockup at roughly 62% of a phone's width.
+  The ceiling stops it becoming a billboard on a desktop monitor.
+*/
+.intro__lockup {
+  --h: clamp(56px, 24vw, 132px);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--h) * 0.07);
+}
+
+/*
+  Each letter is a window onto the real wordmark: a box of that glyph's own
+  aspect, with the whole image inside it scaled to the box height and shifted
+  left by the glyph's offset. Nothing here is typeset, so there is no second
+  copy of the logo to keep in step with the first.
+*/
+.intro__glyph {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  flex: none;
+  height: var(--h);
+  width: calc(var(--h) * (var(--glyph-w) / 198));
+  animation: intro-letter 420ms var(--ease-out) both;
+}
+
+.intro__glyph-img {
+  position: absolute;
+  top: 0;
+  left: calc(var(--h) * (var(--glyph-x) / -198));
+  height: 100%;
+  width: calc(var(--h) * (561 / 198));
+  max-width: none;
+}
+
+/* A slight overshoot on the way in, so each letter lands rather than appears. */
+@keyframes intro-letter {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.86); }
+  70%  { opacity: 1; transform: translateY(0) scale(1.04); }
+  100% { opacity: 1; transform: none; }
+}
+
+.intro__wave {
+  width: min(300px, 70vw);
+  color: var(--on-ink-mute);
+  animation: intro-texture 500ms var(--ease-out) 700ms both;
+}
+
+/* ---------- THE LANDING ---------- */
+/*
+  I N O V retract to nothing and the X grows into the mark the app icon uses.
+  The letters collapse their own width, so the X is carried to the centre by the
+  flex row rather than by a translate that would have to be recalculated.
+*/
+.intro--land .intro__glyph:not(.intro__glyph--x),
+.intro--out .intro__glyph:not(.intro__glyph--x) {
+  animation: intro-retract 380ms var(--ease) both;
+}
+
+@keyframes intro-retract {
+  from { opacity: 1; width: calc(var(--h) * (var(--glyph-w) / 198)); }
+  to   { opacity: 0; width: 0; }
+}
+
+.intro--land .intro__glyph--x,
+.intro--out .intro__glyph--x {
+  animation: intro-land 420ms var(--ease-out) both;
+}
+
+@keyframes intro-land {
+  from { transform: none; }
+  to   { transform: scale(1.55); }
+}
+
+.intro--land .intro__wave,
+.intro--out .intro__wave {
+  animation: intro-wave-out 300ms var(--ease) both;
+}
+
+@keyframes intro-wave-out {
+  from { opacity: 1; transform: scaleX(1); }
+  to   { opacity: 0; transform: scaleX(0.2); }
+}
+
+/* ---------- THE SCAN ---------- */
+
+.intro__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--flame);
+  transform-origin: left center;
+  pointer-events: none;
+  animation: intro-scan 900ms var(--ease-out) 120ms both;
+}
+
+@keyframes intro-scan {
+  0%   { opacity: 0; transform: translateY(0) scaleX(0); }
+  18%  { opacity: 1; transform: translateY(0) scaleX(1); }
+  82%  { opacity: 1; transform: translateY(100vh) scaleX(1); }
+  100% { opacity: 0; transform: translateY(100vh) scaleX(1); }
+}
+
+/* ---------- OUT ---------- */
+
+.intro--out {
+  animation: intro-out 300ms var(--ease) both;
+  pointer-events: none;
+}
+
+@keyframes intro-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/*
+  Under reduced motion the component does not render at all — see the note in
+  LogoIntro.tsx. This is only here so that a partially-run intro interrupted by
+  the setting changing mid-flight cannot be left frozen over the app.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+}

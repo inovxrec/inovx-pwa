@@ -144,6 +144,34 @@ the shell as another role without signing out. All of it is marked `TEMP` and
 goes when `/api/auth/login` lands — the `Session` shape should not need to
 change.
 
+## The opening title
+
+`ui/brand/LogoIntro` runs on every load of the document — which is what
+"opening the app" means for an installed PWA, and not on client-side
+navigation. The wordmark builds letter by letter, holds, then I N O V retract
+and the X grows into the mark the app icon and favicon use, so the thing you
+tapped is the thing you land on.
+
+The letters are **cropped out of the real wordmark, not typeset**: five windows
+onto the same file, each showing one glyph. The offsets in `ui/brand/glyphs.ts`
+were measured by scanning the source's columns for the empty gutters between
+letters, not by eye — if the asset is replaced, remeasure rather than nudge
+them. There is no second copy of the logo to keep in step with the first.
+
+Retro-techy without the CRT, since §0 withdrew the INOVX84 terminal look: it
+borrows the record vocabulary already in the system — pressed grooves, the
+halftone, a played waveform — and adds one machine-like scan of a flame rule.
+No scanlines, no glow, no gradient.
+
+The app renders underneath the whole time, so nothing waits on the animation.
+**It is skippable by any tap or key**, and it does not run at all under
+`prefers-reduced-motion` — someone who has asked for less movement should not
+be made to sit through the one screen that is nothing but movement.
+
+It is about 1.9 seconds. For a tool §1.1 says people open eight times a day
+between classes, that is real friction; the skip is the mitigation, and the
+timings are one table at the top of the component if you want it shorter.
+
 ## The record-sleeve motifs
 
 The system leans on a modern-retro record aesthetic on top of the §1 direction —
