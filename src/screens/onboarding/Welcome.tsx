@@ -152,7 +152,7 @@ export function Welcome() {
           <div className="welcome__sticker">{slide.sticker}</div>
 
           <h1 className="display-2">{slide.title}</h1>
-          <Waveform seed={slide.id} bars={28} variant="rule" className="welcome__wave" />
+          <Waveform seed={slide.id} bars={28} variant="rule" animate className="welcome__wave" />
 
           <div className="welcome__lines">
             <p className="body-lg">{slide.lines[0]}</p>

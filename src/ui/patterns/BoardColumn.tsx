@@ -53,7 +53,7 @@ export function BoardColumn({
         <span className="column__count tnum micro">{count}</span>
       </header>
 
-      <div className={cn('column__body', dragActive && 'column__body--armed')}>
+      <div className={cn('column__body stagger', dragActive && 'column__body--armed')}>
         {children}
         {footer}
       </div>

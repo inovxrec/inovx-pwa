@@ -120,3 +120,22 @@
   letter-spacing: 0.08em;
   color: var(--on-surface-faint, var(--on-paper-faint));
 }
+
+/*
+  The waveform plays in once on mount — bars growing out of the centre line,
+  left to right, like a needle finding the groove. One-shot: §10 allows exactly
+  one looping animation in the product and it is the skeleton pulse.
+*/
+.wave--play rect {
+  transform-origin: center;
+  animation: wave-play 260ms var(--ease-out) both;
+}
+
+@keyframes wave-play {
+  from { transform: scaleY(0.08); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave--play rect { animation: none; }
+}

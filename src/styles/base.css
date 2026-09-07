@@ -198,3 +198,31 @@ a { color: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- LIST STAGGER (§10) ---------- */
+/*
+  Lists stagger their children by 20ms each, capped at 6, then render the rest
+  at once. Put .stagger on the list; every direct child takes part.
+
+  The cap is what keeps a long board column from taking a second to appear —
+  past the sixth card the delay stops growing.
+*/
+.stagger > * {
+  animation: stagger-in 200ms var(--ease-out) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 20ms; }
+.stagger > *:nth-child(3) { animation-delay: 40ms; }
+.stagger > *:nth-child(4) { animation-delay: 60ms; }
+.stagger > *:nth-child(5) { animation-delay: 80ms; }
+.stagger > *:nth-child(n+6) { animation-delay: 100ms; }
+
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * { animation: none; }
+}

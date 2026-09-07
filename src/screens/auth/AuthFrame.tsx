@@ -55,7 +55,7 @@ export function AuthFrame({
           <h1 className={cn('auth__title', size)}>{title}</h1>
           {tagline && <p className="auth__tagline body-lg">{tagline}</p>}
           {/* The sleeve's waveform, in place of a rule under the lockup. */}
-          <Waveform seed={title} bars={34} variant="rule" className="auth__wave" />
+          <Waveform seed={title} bars={34} variant="rule" animate className="auth__wave" />
         </div>
 
         <div className="auth__card surface-paper">{children}</div>

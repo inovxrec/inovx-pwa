@@ -63,7 +63,7 @@ export function BoardList({
             </h3>
 
             {!isCollapsed && (
-              <ul id={`group-${state}`} className="board__group-list" role="list">
+              <ul id={`group-${state}`} className="board__group-list stagger" role="list">
                 {tasks.map((task) => (
                   <li key={task.id}>
                     <LongPressCard

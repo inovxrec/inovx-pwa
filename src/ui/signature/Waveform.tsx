@@ -11,6 +11,12 @@ export interface WaveformProps {
   bars?: number;
   /** `block` spans its container; `rule` is the short divider form. */
   variant?: 'block' | 'rule';
+  /**
+   * Plays the bars in left to right on mount, once. Off by default — a wave
+   * that redraws every time its screen re-renders would read as ambient
+   * movement, which §10 forbids.
+   */
+  animate?: boolean;
   className?: string;
 }
 
@@ -23,7 +29,9 @@ export interface WaveformProps {
  *
  * Decorative. It carries no data and is always aria-hidden.
  */
-export function Waveform({ seed = 'inovx', bars = 48, variant = 'block', className }: WaveformProps) {
+export function Waveform({
+  seed = 'inovx', bars = 48, variant = 'block', animate = false, className,
+}: WaveformProps) {
   // A small deterministic hash — the same seed always draws the same wave.
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
@@ -45,7 +53,7 @@ export function Waveform({ seed = 'inovx', bars = 48, variant = 'block', classNa
 
   return (
     <svg
-      className={cn('wave', `wave--${variant}`, className)}
+      className={cn('wave', `wave--${variant}`, animate && 'wave--play', className)}
       viewBox="0 0 100 24"
       preserveAspectRatio="none"
       aria-hidden="true"
@@ -59,6 +67,13 @@ export function Waveform({ seed = 'inovx', bars = 48, variant = 'block', classNa
           width={width}
           height={height * 24}
           rx={width / 2}
+          /*
+            8ms a bar, so the whole phrase lands inside ~300ms however many
+            bars there are. This is one element revealing itself, not a list
+            staggering its children, so §10's 20ms-capped-at-6 rule is not
+            the one that applies.
+          */
+          style={animate ? { animationDelay: `${index * 8}ms` } : undefined}
         />
       ))}
     </svg>

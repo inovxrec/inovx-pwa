@@ -151,8 +151,23 @@ colour:
   have none, so these are four short rules that stop well short of meeting.
 - **`.track-no`** — leading-zero tabular numerals, as a sleeve lists its tracks.
 
-Nothing here animates. §10 allows exactly one looping animation in the product
-and it is the skeleton pulse.
+Three motions come with them, all one-shot and all off under
+`prefers-reduced-motion`:
+
+- **The playhead** — a flame hairline draws once across the top of a screen as
+  it arrives, the way a track scrubs. §10's "nothing slides horizontally"
+  governs the page's own content, which still only fades and rises; this is a
+  rule in the chrome above it.
+- **The waveform plays in** — bars grow out of the centre line, 8ms apart, so
+  the phrase lands inside ~300ms however many bars there are. Opt-in per usage:
+  a wave that redrew on every re-render would be ambient movement, which §10
+  forbids.
+- **The list stagger §10 already asked for** — 20ms a child, capped at six,
+  then the rest at once. It was specified from the start and had never been
+  built; it is now on the board columns, the mobile board groups and My Day.
+
+§10 still allows exactly one *looping* animation in the product, and it is
+still the skeleton pulse. Nothing added here repeats.
 
 ## About the charts
 

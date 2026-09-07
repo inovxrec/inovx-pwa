@@ -176,7 +176,7 @@ export function MyDay({ loading = false }: MyDayProps) {
               decoration={tapeOnOverdue ? <Tape channel="events" corner="top-right" /> : undefined}
               aside={<Tag state="blocked">{groups.overdue.length}</Tag>}
             >
-              <ul className="myday__rows" role="list">
+              <ul className="myday__rows stagger" role="list">
                 {groups.overdue.map((task) => (
                   <SwipeRow key={task.id} task={task} {...rowProps} />
                 ))}
@@ -186,7 +186,7 @@ export function MyDay({ loading = false }: MyDayProps) {
 
           {groups.dueToday.length > 0 && (
             <Card title="Due today">
-              <ul className="myday__rows" role="list">
+              <ul className="myday__rows stagger" role="list">
                 {groups.dueToday.map((task) => (
                   <SwipeRow key={task.id} task={task} {...rowProps} />
                 ))}
@@ -201,7 +201,7 @@ export function MyDay({ loading = false }: MyDayProps) {
               title="Awaiting your approval"
               aside={<Tag state="review">{groups.awaitingApproval.length}</Tag>}
             >
-              <ul className="myday__rows" role="list">
+              <ul className="myday__rows stagger" role="list">
                 {groups.awaitingApproval.map((task) => (
                   <SwipeRow key={task.id} task={task} {...rowProps} />
                 ))}
@@ -211,7 +211,7 @@ export function MyDay({ loading = false }: MyDayProps) {
 
           {groups.inReview.length > 0 && (
             <Card title="In review">
-              <ul className="myday__rows" role="list">
+              <ul className="myday__rows stagger" role="list">
                 {groups.inReview.map((task) => (
                   <li key={task.id} className="myday__waiting">
                     <TaskCard task={task} variant="compact" onOpen={openTask} />
@@ -239,7 +239,7 @@ export function MyDay({ loading = false }: MyDayProps) {
                 )
               }
             >
-              <ul className="myday__rows" role="list">
+              <ul className="myday__rows stagger" role="list">
                 {(showAllUpcoming ? groups.upcoming : groups.upcoming.slice(0, NEXT_PREVIEW))
                   .map((task) => (
                     <SwipeRow key={task.id} task={task} {...rowProps} />
