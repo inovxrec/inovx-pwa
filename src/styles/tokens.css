@@ -99,7 +99,14 @@
   --header-h:   58px;
   --content-max: 1360px;
   --read-max:    68ch;
-  --z-nav: 40; --z-sticky: 50; --z-drawer: 60; --z-modal: 70; --z-toast: 80;
+  /*
+    --z-popover sits ABOVE --z-modal on purpose. A Select, Menu or DatePicker
+    is routinely opened from inside a modal, and its panel portals to the body
+    rather than into the dialog — below the modal it renders behind it, which
+    reads as the control doing nothing at all.
+  */
+  --z-nav: 40; --z-sticky: 50; --z-drawer: 60; --z-modal: 70;
+  --z-popover: 75; --z-toast: 80;
 }
 
 /*

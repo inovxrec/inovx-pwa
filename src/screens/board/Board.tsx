@@ -150,7 +150,7 @@ export function Board() {
     <div className="board">
       <header className="board__head">
         <div className="board__title-row">
-          <h2 className="display-2 board__title">{title}</h2>
+          <h2 className="display-2 board__title title-reveal">{title}</h2>
 
           {committee ? (
             <>

@@ -203,8 +203,18 @@ screens: no wave inside the signed-in app plays, so the rule still holds
 everywhere someone is trying to get work done. It stops dead under
 `prefers-reduced-motion`.
 
-Three further motions, all one-shot and all off under
-`prefers-reduced-motion`:
+Five further motions, all off under `prefers-reduced-motion`:
+
+- **The title reveal** — a screen's headline wipes up into place behind a hard
+  edge, the way a title card resolves. Clip-path only, no fade or drift, and
+  opted into per headline with `.title-reveal` rather than matched by position
+  in the tree, which would silently stop working the moment a wrapper moved.
+- **The tab rule travels** — one indicator slides between tabs instead of each
+  tab growing its own underline, so the change reads as a single object moving
+  rather than two separate fades. It measures with `offsetLeft`, not client
+  rects, because the strip scrolls.
+- **The rail's flame bar** grows out of its own centre on a destination change.
+
 
 - **The playhead** — a flame hairline draws once across the top of a screen as
   it arrives, the way a track scrubs. §10's "nothing slides horizontally"

@@ -232,3 +232,31 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .stagger > * { animation: none; }
 }
+
+/* ---------- TITLE REVEAL ---------- */
+/*
+  A screen's headline wipes up into place behind a hard edge, the way a title
+  card resolves — no fade, no drift, just the mask moving. It is the one piece
+  of motion on arrival that is doing something other than easing an opacity.
+
+  Opted into per headline rather than matched by position in the tree: a screen
+  knows which of its headings is *the* title, and a structural selector would
+  have to guess at nesting depth and would silently stop matching the moment a
+  wrapper moved.
+
+  Clip-path only. A transform here would fight the page transition's own rise,
+  and clipping the page container itself would make it a containing block for
+  anything fixed inside it.
+*/
+.title-reveal {
+  animation: title-reveal 520ms var(--ease-out) 60ms both;
+}
+
+@keyframes title-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 -12% 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-reveal { animation: none; clip-path: none; }
+}

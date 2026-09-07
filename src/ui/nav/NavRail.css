@@ -59,7 +59,11 @@
   color: var(--ink);
 }
 
-/* The 4px flame bar on the active item's left edge. */
+/*
+  The 4px flame bar on the active item's left edge. It grows out of its own
+  centre when the destination changes, rather than appearing at full height —
+  the same idea as the tab rule, at a smaller scale.
+*/
 .rail__item--active::before {
   content: '';
   position: absolute;
@@ -70,6 +74,7 @@
   height: 24px;
   border-radius: var(--r-pill);
   background: var(--flame);
+  animation: rail-bar var(--t-slow) var(--ease-out) both;
 }
 
 .rail__icon { display: inline-flex; width: 20px; height: 20px; flex: none; }
@@ -120,4 +125,13 @@
     height: 16px;
     padding: 0 4px;
   }
+}
+
+@keyframes rail-bar {
+  from { transform: translateY(-50%) scaleY(0.1); opacity: 0; }
+  to   { transform: translateY(-50%) scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__item--active::before { animation: none; }
 }

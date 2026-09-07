@@ -132,7 +132,7 @@ export function MyDay({ loading = false }: MyDayProps) {
         immediately from the session — it never waits on the day's data.
       */}
       <header className="myday__greeting">
-        <h2 className="display-3">
+        <h2 className="display-3 title-reveal">
           {greeting()}, {session?.name.split(' ')[0] ?? 'there'}
         </h2>
         <p className="myday__counts body-sm">

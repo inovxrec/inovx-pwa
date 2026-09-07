@@ -262,7 +262,7 @@ export function MeetingDetail() {
     <div className="meeting">
       <header className="meeting__head">
         <p className="label meeting__context">{source.context}</p>
-        <h2 className="display-2 meeting__title">{source.title}</h2>
+        <h2 className="display-2 meeting__title title-reveal">{source.title}</h2>
         <p className="body-sm meeting__meta">
           {formatDate(source.date)} · {source.invited.length} invited · {present} present
         </p>

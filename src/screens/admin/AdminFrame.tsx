@@ -78,7 +78,7 @@ export function AdminPage({ screen, actions, children }: AdminPageProps) {
     <div className="admin-page">
       <header className="admin-page__head">
         <div className="admin-page__heading">
-          <h2 className="display-2 admin-page__title">{screen.label}</h2>
+          <h2 className="display-2 admin-page__title title-reveal">{screen.label}</h2>
           <p className="body-sm admin-page__desc">{screen.description}</p>
         </div>
         {actions && <div className="admin-page__actions">{actions}</div>}

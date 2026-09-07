@@ -1,6 +1,7 @@
 /* §7.13 — Anton uppercase, 40px tall, 2px flame underline on the active tab. */
 
 .tabs {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: var(--s-4);
@@ -26,22 +27,26 @@
   transition: color var(--t-base) var(--ease);
 }
 
-.tabs__tab::after {
-  content: '';
+/*
+  One rule for the whole strip, travelling to whichever tab is active. It slides
+  a little slower than a state change so the movement reads as deliberate rather
+  than as a snap.
+*/
+.tabs__rule {
   position: absolute;
   left: 0;
-  right: 0;
   bottom: -1px;
   height: var(--b-bold);
   background: var(--flame);
-  transform: scaleX(0);
-  transition: transform var(--t-base) var(--ease);
+  border-radius: var(--r-pill);
+  transition:
+    transform var(--t-slow) var(--ease-out),
+    width var(--t-slow) var(--ease-out);
+  pointer-events: none;
 }
 
 .tabs__tab:hover { color: var(--on-surface, var(--on-paper)); }
-
 .tabs__tab--on { color: var(--on-surface, var(--on-paper)); }
-.tabs__tab--on::after { transform: scaleX(1); }
 
 .tabs__count {
   font-family: Inter, system-ui, sans-serif;
