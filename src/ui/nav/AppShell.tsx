@@ -68,6 +68,9 @@ export function AppShell() {
 
   return (
     <div className={isDesktop ? 'shell shell--rail' : 'shell'}>
+      {/* §11 — the first stop for a keyboard, before the whole nav. */}
+      <a className="shell__skip" href="#main">Skip to content</a>
+
       {isDesktop && <NavRail items={items} counts={counts} />}
 
       <div className="shell__frame">
@@ -81,7 +84,7 @@ export function AppShell() {
 
         {!online && <OfflineBanner lastSyncedAt="14:02" />}
 
-        <main className="shell__main" id="main">
+        <main className="shell__main" id="main" tabIndex={-1}>
           <PageTransition routeKey={pathname}>
             <Outlet />
           </PageTransition>

@@ -194,6 +194,12 @@ a { color: inherit; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /*
+      Delays too. A staggered child whose animation is collapsed to nothing but
+      whose delay survives would sit at its from-state — invisible — for the
+      length of that delay.
+    */
+    animation-delay: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

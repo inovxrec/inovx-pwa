@@ -8,6 +8,7 @@ import { usePermissionCheck } from './hooks/usePermission';
 import { LANDING_BY_ROLE } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
 import { AppShell, type RouteHandle } from './ui/nav';
+import { UpdatePrompt } from './ui/nav/UpdatePrompt';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Login } from './screens/auth/Login';
 import { FirstRun } from './screens/auth/FirstRun';
@@ -235,6 +236,7 @@ export default function App() {
       <TaskProvider>
         <CommitteeProvider>
           <ToastProvider>
+            <UpdatePrompt />
             <RouterProvider router={router} />
           </ToastProvider>
         </CommitteeProvider>

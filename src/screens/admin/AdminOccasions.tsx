@@ -11,7 +11,8 @@ import { Chip } from '../../ui/primitives/Chip';
 import { DatePicker } from '../../ui/primitives/DatePicker';
 import { Select } from '../../ui/primitives/Select';
 import { Tag } from '../../ui/primitives/Tag';
-import { Accordion, Card } from '../../ui/patterns';
+import { Accordion, Card, EmptyState } from '../../ui/patterns';
+import { StickerCalendar } from '../../ui/stickers';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
@@ -109,7 +110,15 @@ export function AdminOccasions() {
         ))}
       </div>
 
-      <Card className="admin__accordions">
+      <Card className={visible.length === 0 ? undefined : 'admin__accordions'}>
+        {visible.length === 0 && (
+          <EmptyState
+            sticker={<StickerCalendar size="empty" />}
+            title="No occasions of that kind"
+            line="try another type, or add one"
+          />
+        )}
+
         {visible.map((rule) => (
           <Accordion
             key={rule.id}

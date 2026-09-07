@@ -11,7 +11,8 @@ import { Input } from '../../ui/primitives/Input';
 import { Select } from '../../ui/primitives/Select';
 import { Switch } from '../../ui/primitives/Switch';
 import { Tag } from '../../ui/primitives/Tag';
-import { Card } from '../../ui/patterns';
+import { Card, EmptyState } from '../../ui/patterns';
+import { StickerCalendar } from '../../ui/stickers';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
@@ -141,6 +142,14 @@ export function AdminRecurring() {
       </div>
 
       <Card title="Existing rules">
+        {rules.length === 0 && (
+          <EmptyState
+            sticker={<StickerCalendar size="empty" />}
+            title="No rules yet"
+            line="nothing is raised on a schedule — build one above"
+          />
+        )}
+
         <ul className="admin__rules" role="list">
           {rules.map((rule) => (
             <li className="admin__rule" key={rule.id}>

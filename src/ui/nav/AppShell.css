@@ -25,3 +25,25 @@
     padding-bottom: calc(var(--nav-bottom) + env(safe-area-inset-bottom) + var(--s-6));
   }
 }
+
+/*
+  §11 — the skip link. Off screen until focused, then the first thing on it,
+  so a keyboard does not walk the whole rail to reach the screen.
+*/
+.shell__skip {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  z-index: calc(var(--z-modal) + 1);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--t-fast) var(--ease-out);
+}
+
+.shell__skip:focus-visible { transform: none; }

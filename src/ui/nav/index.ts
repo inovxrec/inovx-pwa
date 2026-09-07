@@ -6,3 +6,4 @@ export { Header } from './Header';
 export { MoreSheet } from './MoreSheet';
 export { OfflineBanner } from './OfflineBanner';
 export { PageTransition } from './PageTransition';
+export { UpdatePrompt } from './UpdatePrompt';

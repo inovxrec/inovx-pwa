@@ -1,6 +1,31 @@
 import { cn } from '../../lib/cn';
 import './signature.css';
 
+/**
+ * The bar heights for a seed, as a pure function of it. Kept out of the
+ * component so nothing is reassigned across a render — the same seed always
+ * gives the same wave, which is the whole point of seeding it.
+ */
+function buildWave(seed: string, bars: number): number[] {
+  let state = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    state = (state * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+
+  const heights: number[] = [];
+  for (let index = 0; index < bars; index += 1) {
+    state = (state * 1_664_525 + 1_013_904_223) >>> 0;
+    const noise = (state % 1000) / 1000;
+
+    // An envelope that swells in the middle, so it reads as a played phrase
+    // rather than as static.
+    const envelope = Math.sin((index / (bars - 1)) * Math.PI);
+    heights.push(0.12 + noise * 0.55 * (0.35 + envelope));
+  }
+
+  return heights;
+}
+
 export interface WaveformProps {
   /**
    * Seeds the bar heights, so the same screen draws the same wave every render
@@ -32,21 +57,7 @@ export interface WaveformProps {
 export function Waveform({
   seed = 'inovx', bars = 48, variant = 'block', animate = false, className,
 }: WaveformProps) {
-  // A small deterministic hash — the same seed always draws the same wave.
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-
-  const heights = Array.from({ length: bars }, (_, index) => {
-    hash = (hash * 1_664_525 + 1_013_904_223) >>> 0;
-    const noise = (hash % 1000) / 1000;
-
-    // An envelope that swells in the middle, so it reads as a played phrase
-    // rather than as static.
-    const envelope = Math.sin((index / (bars - 1)) * Math.PI);
-    return 0.12 + noise * 0.55 * (0.35 + envelope);
-  });
+  const heights = buildWave(seed, bars);
 
   const step = 100 / bars;
   const width = step * 0.55;

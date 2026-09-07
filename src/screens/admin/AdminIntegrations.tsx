@@ -3,7 +3,8 @@ import { useToast } from '../../hooks/useToast';
 import { HEALTH_LABELS, INTEGRATIONS, type Integration } from '../../lib/admin';
 import { relativeTime } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
-import { Card } from '../../ui/patterns';
+import { Card, EmptyState } from '../../ui/patterns';
+import { StickerCloudOff } from '../../ui/stickers';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
@@ -46,6 +47,16 @@ export function AdminIntegrations() {
         </Button>
       }
     >
+      {integrations.length === 0 && (
+        <Card>
+          <EmptyState
+            sticker={<StickerCloudOff size="empty" />}
+            title="Nothing connected"
+            line="INOVX is not syncing with anything yet"
+          />
+        </Card>
+      )}
+
       {integrations.map((integration) => (
         <Card
           key={integration.id}

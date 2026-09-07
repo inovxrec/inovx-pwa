@@ -157,7 +157,12 @@ export function AdminPermissions() {
                 <span className="body-sm perm__member-name">{each.name}</span>
                 <span className="micro perm__member-title">{each.title}</span>
               </span>
-              <Tag ink={roleOf(each) !== 'member'}>{roleOf(each).replace('-', ' ')}</Tag>
+              {/*
+                Not the ink stock: this list sits on the ink ground, where an
+                ink tag is black on black. The default paper fill reads on both
+                the ground and the selected row.
+              */}
+              <Tag>{roleOf(each).replace('-', ' ')}</Tag>
             </button>
           </li>
         ))}

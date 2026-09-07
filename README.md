@@ -36,7 +36,7 @@ few or no tasks, so their My Day is mostly the empty state.
 
 ## Where the build is
 
-**Phases 1 to 7 of the §13 build order are done. Phase 7 stops here for review.**
+**All eight phases of the §13 build order are done.**
 
 | | |
 |---|---|
@@ -71,7 +71,8 @@ few or no tasks, so their My Day is mostly the empty state.
 | ✅ Settings | `/settings` — §9.14, accordion sections, the notification matrix, sign out |
 | ✅ Admin | `/admin/*` — §9.15, all eight screens, each gated on its own key |
 | ✅ Permissions | `/admin/permissions` — §9.17, two panes, live preview, save bar |
-| ⬜ Phase 8 | PWA manifest and service worker, the a11y, responsive and reduced-motion passes |
+| ✅ PWA | `public/manifest.webmanifest` + `public/sw.js` — installable, boots offline |
+| ✅ Passes | Accessibility, responsive at all four widths, reduced motion |
 
 Every screen in §9 is now built; the placeholder component and its route
 wiring are gone. What is left is Phase 8 — the manifest, the service worker,
@@ -125,7 +126,12 @@ still in git history if you need to look something up.
    a "Core" tag both vanished on a paper card. Both now carry a hairline so
    they still read as a chip — but the token itself is the underlying problem,
    and §3 fixes its value, so it is worth a decision.
-8. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+8. **Loading states are designed but unexercised.** Every screen reads from a
+   synchronous store, so nothing ever spends a frame loading. `SkeletonTaskCard`
+   exists and My Day takes a `loading` prop, but until the store becomes a real
+   fetch there is nothing to trigger them. Worth wiring properly the moment the
+   API lands, rather than faking a delay now.
+9. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
@@ -188,6 +194,49 @@ the series colours, so they stay — and every chart is instead built so that
 activity chart is a single series with a direct end label and no legend, and no
 chart asks anyone to tell two domain hues apart. Worth a decision if you want
 real multi-series charts later.
+
+## The PWA
+
+`public/manifest.webmanifest` and `public/sw.js`, registered by
+`ui/nav/UpdatePrompt` at the app level rather than inside the shell — the shell
+only mounts for someone signed in, and the login screen is exactly where an
+offline boot matters.
+
+**The service worker deliberately does not cache API responses.** Task data
+that is quietly hours stale is worse than data that is honestly absent: the
+offline banner states when the last sync was, and that promise only holds if
+nothing is being served from a cache behind it. The shell and the hashed build
+assets are cached; navigations are network-first and fall back to the cached
+shell.
+
+A waiting worker raises §9.18's "A new version is ready" toast, which persists
+until acted on because it carries an action.
+
+**The icons are placeholders.** §2 says to generate them from
+`public/brand/inovx-logo.png`, which is still not in the repo, so
+`scripts/generate-icons.mjs` draws the "X" app mark §2 itself falls back to
+below 88px. Drop the real logo in and rerun `node scripts/generate-icons.mjs` —
+the sizes, padding and filenames are the ones §2 specifies and should not
+change.
+
+## What Phase 8's passes found
+
+- **Responsive.** Checked at 375, 768, 1024 and 1440 by loading the app in a
+  same-origin iframe, since this environment cannot resize the browser window.
+  An iframe gets its own viewport, so `matchMedia` and the media queries inside
+  it respond to the frame rather than the window. Every §8 fork was confirmed
+  taking its mobile half: bottom bar, the grouped board list, the agenda and
+  its jump strip, the Permissions two-step, the per-event notification
+  accordion, and DataView's card stack.
+- **Accessibility.** A skip link ahead of the nav; `main` made focusable so the
+  skip actually moves focus; the shell now takes its title from the nearest
+  ancestor that names itself, so nested routes stop announcing the app name.
+  One `h1` per screen — the Header owns it inside the shell, and the three
+  screens outside it declare their own. `grep` for a raw hex outside
+  `tokens.css` comes back empty.
+- **Reduced motion.** The global rule now collapses `animation-delay` as well
+  as duration: a staggered child whose animation was cancelled but whose delay
+  survived would sit invisible at its from-state for up to 100ms.
 
 ## Where the data comes from
 
