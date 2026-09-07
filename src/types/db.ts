@@ -1,11 +1,8 @@
 /**
  * INOVX OPS — DATABASE TYPES (STREAM A CONTRACT)
  * 
- * Auto-generated / mirrored from Supabase PostgreSQL schema:
- * Migration 20260907000000_foundation_schema.sql
- * 
- * This is the official interface contract that Streams B, C, D, E, and F code against.
- * Treat any modifications to this file as breaking changes.
+ * Canonical TypeScript interfaces matching the approved PostgreSQL schema (Draft v1).
+ * Source: supabase/migrations/20260907000000_foundation_schema.sql
  */
 
 export type Json =
@@ -17,33 +14,60 @@ export type Json =
   | Json[];
 
 // ------------------------------------------------------------------------------
-// Domain Enums & Literals
+// Domain Enums & Literals (matching DDL exact enum types)
 // ------------------------------------------------------------------------------
 
-/**
- * 4 Recognized System Roles.
- * NOTE FOR FRONTEND TEAM: `src/layouts/navConfig.ts` currently only defines 3 roles.
- * 'super_admin' is introduced here as part of Stream A foundation.
- */
-export type UserRole = 'member' | 'admin' | 'super_admin' | 'faculty';
+export type UserRole = 'super_admin' | 'admin' | 'member' | 'faculty';
 
-export type UserStatus = 'active' | 'inactive' | 'suspended';
+export type UserStatus = 'active' | 'deactivated';
 
-export type TriState = 'grant' | 'revoke' | 'inherit';
-
-export type ContextType = 'domain' | 'committee';
-
-export type MeetingContextType = 'domain' | 'committee' | 'all';
-
-export type TaskStatus = 'todo' | 'progress' | 'review' | 'done' | 'blocked' | 'proposed';
+export type TaskStatus =
+  | 'todo'
+  | 'progress'
+  | 'review'
+  | 'done'
+  | 'blocked'
+  | 'cancelled'
+  | 'proposed';
 
 export type TaskPriority = 'urgent' | 'high' | 'medium' | 'low';
 
-export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
+export type TaskContext = 'domain' | 'committee';
 
-export type AttendanceStatus = 'present' | 'absent' | 'excused' | 'late';
+export type BoardVisibility = 'private' | 'club_visible' | 'shared_with';
 
-export type FeatureFlagTier = 'tier-1' | 'tier-2' | 'tier-3' | 'tier-4' | 'experimental';
+export type ScopeKind = 'club' | 'domain' | 'committee';
+
+export type RecurrenceFreq =
+  | 'daily'
+  | 'weekly'
+  | 'fortnightly'
+  | 'monthly'
+  | 'yearly'
+  | 'every_n_days';
+
+export type AssignmentStrategy =
+  | 'fixed'
+  | 'round_robin'
+  | 'whole_group'
+  | 'unassigned_queue';
+
+export type RecurringSource = 'interval' | 'data_driven';
+
+export type AttendanceStatus = 'present' | 'absent' | 'excused';
+
+export type NotificationChannel = 'in_app' | 'push' | 'email';
+
+export type TenureStatus = 'active' | 'archived';
+
+export type RetentionChoice = 'undecided' | 'retain' | 'delete';
+
+export type FeatureFlagTier =
+  | 'tier-1'
+  | 'tier-2'
+  | 'tier-3'
+  | 'tier-4'
+  | 'experimental';
 
 export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -53,273 +77,239 @@ export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export type Tenure = {
   id: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  label: string;
+  starts_on: string | null;
+  ends_on: string | null;
+  status: TenureStatus;
+  archived_at: string | null;
+  retention: RetentionChoice;
+  archive_export: Json | null;
 };
 
 export type Domain = {
   id: string;
-  tenure_id: string;
-  slug: string;
+  key: string;
   name: string;
   lead_user_id: string | null;
-  color: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
+  visibility: BoardVisibility;
+  archived: boolean;
+  tenure_id: string;
 };
 
 export type User = {
   id: string;
-  tenure_id: string | null;
   email: string;
   name: string;
   initials: string | null;
-  role: UserRole;
   domain_id: string | null;
-  domain: string | null;
+  role: UserRole;
   position_title: string | null;
   status: UserStatus;
   must_change_password: boolean;
-  avatar_url: string | null;
-  phone: string | null;
-  created_at: string;
-  updated_at: string;
+  tenure_id: string;
+};
+
+export type Permission = {
+  key: string;
+  label: string;
+  description: string | null;
+};
+
+export type RolePermissionMatrix = {
+  role: UserRole;
+  permission_key: string;
+  default_on: boolean;
 };
 
 export type UserPermission = {
   id: string;
-  tenure_id: string;
   user_id: string;
   permission_key: string;
-  effect: TriState;
-  created_at: string;
-  updated_at: string;
+  granted: boolean;
+  scope: Json | null;
+  set_by: string | null;
+  set_at: string;
 };
 
 export type Committee = {
   id: string;
-  tenure_id: string;
   name: string;
-  slug: string;
-  lead_user_id: string | null;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
+  purpose: string | null;
+  linked_event: string | null;
+  starts_on: string | null;
+  expected_end: string | null;
+  visibility: BoardVisibility;
+  archived: boolean;
+  tenure_id: string;
 };
 
 export type CommitteeMember = {
-  id: string;
-  tenure_id: string;
   committee_id: string;
   user_id: string;
-  role: string;
-  created_at: string;
-  updated_at: string;
+  is_coordinator: boolean;
+};
+
+export type RecurringRule = {
+  id: string;
+  title_template: string;
+  desc_template: string | null;
+  context_type: TaskContext;
+  context_id: string;
+  frequency: RecurrenceFreq;
+  weekdays: number[] | null;
+  every_n_days: number | null;
+  strategy: AssignmentStrategy;
+  assignee_pool: string[];
+  lead_time_days: number;
+  approval_required: boolean;
+  source_type: RecurringSource;
+  paused: boolean;
+  tenure_id: string;
 };
 
 export type Task = {
   id: string;
-  tenure_id: string;
-  task_number: string;
+  seq: number;
   title: string;
   description: string | null;
-  context_type: ContextType;
+  context_type: TaskContext;
   context_id: string;
-  domain_id: string | null;
-  status: TaskStatus;
   priority: TaskPriority;
-  due_date: string | null;
-  due_label: string | null;
-  is_overdue: boolean;
-  is_blocked: boolean;
+  due_at: string | null;
+  status: TaskStatus;
+  labels: string[];
+  creator_id: string | null;
+  approval_required: boolean;
   blocked_reason: string | null;
-  tags: string[];
-  created_by: string | null;
+  recurring_rule_id: string | null;
+  proposal_reason: string | null;
+  proposal_decided_by: string | null;
+  tenure_id: string;
   created_at: string;
-  updated_at: string;
 };
 
 export type TaskAssignee = {
-  id: string;
-  tenure_id: string;
   task_id: string;
   user_id: string;
-  is_primary: boolean;
-  created_at: string;
-  updated_at: string;
+  assigned_by: string | null;
+  assigned_at: string;
 };
 
 export type TaskActivity = {
   id: string;
-  tenure_id: string;
   task_id: string;
   actor_id: string | null;
   action: string;
-  details: Json;
-  message: string | null;
+  from_val: string | null;
+  to_val: string | null;
+  note: string | null;
   created_at: string;
 };
 
 export type TaskComment = {
   id: string;
-  tenure_id: string;
   task_id: string;
-  user_id: string;
-  content: string;
+  author_id: string | null;
+  body: string;
+  mentions: string[];
   created_at: string;
-  updated_at: string;
 };
 
 export type TaskLink = {
   id: string;
-  tenure_id: string;
   task_id: string;
-  title: string;
   url: string;
-  created_by: string | null;
+  label: string | null;
+  detected_provider: string | null;
+  added_by: string | null;
+  position: number;
+  last_checked_at: string | null;
+  alive: boolean | null;
   created_at: string;
-  updated_at: string;
 };
 
-export type TaskChecklistItem = {
+export type TaskChecklist = {
   id: string;
-  tenure_id: string;
   task_id: string;
   text: string;
   completed: boolean;
   position: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type RecurringRule = {
-  id: string;
-  tenure_id: string;
-  title: string;
-  description: string | null;
-  context_type: ContextType;
-  context_id: string;
-  frequency: RecurringFrequency;
-  cron_expression: string | null;
-  priority: TaskPriority;
-  default_assignee_id: string | null;
-  is_active: boolean;
-  last_run_at: string | null;
-  next_run_at: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 export type MemberDirectory = {
   id: string;
-  tenure_id: string;
+  external_key: string | null;
   name: string;
-  email: string | null;
-  phone: string | null;
-  domain_id: string | null;
-  domain_name: string | null;
-  role_label: string | null;
-  birthday: string | null;
-  avatar_url: string | null;
-  linked_user_id: string | null;
-  metadata: Json;
-  created_at: string;
-  updated_at: string;
+  dob: string | null;
+  team: string | null;
+  card_url: string | null;
+  photo_url: string | null;
+  conflict_flag: boolean;
+  synced_at: string | null;
 };
 
 export type Meeting = {
   id: string;
-  tenure_id: string;
+  scope: ScopeKind;
+  scope_id: string | null;
   title: string;
-  description: string | null;
-  scheduled_at: string;
-  location: string | null;
-  context_type: MeetingContextType | null;
-  context_id: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
+  held_at: string | null;
+  venue: string | null;
+  minutes: string | null;
+  published_at: string | null;
+  tenure_id: string;
 };
 
 export type Attendance = {
-  id: string;
-  tenure_id: string;
   meeting_id: string;
-  user_id: string | null;
-  directory_member_id: string | null;
+  user_id: string;
   status: AttendanceStatus;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
+  marked_by: string | null;
 };
 
 export type Announcement = {
   id: string;
-  tenure_id: string;
+  scope: ScopeKind;
+  scope_id: string | null;
   title: string;
-  body: string;
-  author_id: string | null;
-  is_pinned: boolean;
-  published_at: string;
+  body: string | null;
+  pinned: boolean;
+  expires_at: string | null;
+  sender_id: string | null;
   created_at: string;
-  updated_at: string;
 };
 
 export type Notification = {
   id: string;
-  tenure_id: string;
   user_id: string;
-  title: string;
-  body: string;
-  link: string | null;
-  is_read: boolean;
-  read_at: string | null;
   type: string;
+  payload: Json | null;
+  read_at: string | null;
   created_at: string;
-  updated_at: string;
 };
 
 export type NotificationPrefs = {
-  id: string;
-  tenure_id: string;
   user_id: string;
-  channel_email: boolean;
-  channel_inapp: boolean;
-  channel_push: boolean;
-  task_assigned: boolean;
-  task_status_changed: boolean;
-  meeting_reminder: boolean;
-  announcements: boolean;
-  created_at: string;
-  updated_at: string;
+  event_type: string;
+  channel: NotificationChannel;
+  enabled: boolean;
 };
 
 export type PushSubscription = {
   id: string;
   user_id: string;
   endpoint: string;
-  p256dh: string;
-  auth: string;
+  keys: Json;
   user_agent: string | null;
   created_at: string;
-  updated_at: string;
 };
 
 export type AuditLog = {
   id: string;
-  tenure_id: string | null;
   actor_id: string | null;
+  entity: string;
   action: string;
-  entity_type: string;
-  entity_id: string | null;
-  old_values: Json | null;
-  new_values: Json | null;
-  ip_address: string | null;
+  diff: Json | null;
   created_at: string;
 };
 
@@ -360,127 +350,139 @@ export interface Database {
     Tables: {
       tenures: {
         Row: Tenure;
-        Insert: Partial<Tenure> & Pick<Tenure, 'name' | 'start_date' | 'end_date'>;
+        Insert: Partial<Tenure> & Pick<Tenure, 'label'>;
         Update: Partial<Tenure>;
         Relationships: [];
       };
       domains: {
         Row: Domain;
-        Insert: Partial<Domain> & Pick<Domain, 'tenure_id' | 'slug' | 'name'>;
+        Insert: Partial<Domain> & Pick<Domain, 'key' | 'name' | 'tenure_id'>;
         Update: Partial<Domain>;
         Relationships: [];
       };
       users: {
         Row: User;
-        Insert: Partial<User> & Pick<User, 'id' | 'email' | 'name'>;
+        Insert: Partial<User> & Pick<User, 'id' | 'email' | 'name' | 'tenure_id'>;
         Update: Partial<User>;
+        Relationships: [];
+      };
+      permissions: {
+        Row: Permission;
+        Insert: Permission;
+        Update: Partial<Permission>;
+        Relationships: [];
+      };
+      role_permission_matrix: {
+        Row: RolePermissionMatrix;
+        Insert: RolePermissionMatrix;
+        Update: Partial<RolePermissionMatrix>;
         Relationships: [];
       };
       user_permissions: {
         Row: UserPermission;
-        Insert: Partial<UserPermission> & Pick<UserPermission, 'tenure_id' | 'user_id' | 'permission_key' | 'effect'>;
+        Insert: Partial<UserPermission> & Pick<UserPermission, 'user_id' | 'permission_key' | 'granted'>;
         Update: Partial<UserPermission>;
         Relationships: [];
       };
       committees: {
         Row: Committee;
-        Insert: Partial<Committee> & Pick<Committee, 'tenure_id' | 'name' | 'slug'>;
+        Insert: Partial<Committee> & Pick<Committee, 'name' | 'tenure_id'>;
         Update: Partial<Committee>;
         Relationships: [];
       };
       committee_members: {
         Row: CommitteeMember;
-        Insert: Partial<CommitteeMember> & Pick<CommitteeMember, 'tenure_id' | 'committee_id' | 'user_id'>;
+        Insert: CommitteeMember;
         Update: Partial<CommitteeMember>;
         Relationships: [];
       };
       tasks: {
         Row: Task;
-        Insert: Partial<Task> & Pick<Task, 'tenure_id' | 'task_number' | 'title' | 'context_type' | 'context_id'>;
+        Insert: Partial<Task> & Pick<Task, 'title' | 'context_type' | 'context_id' | 'tenure_id'>;
         Update: Partial<Task>;
         Relationships: [];
       };
       task_assignees: {
         Row: TaskAssignee;
-        Insert: Partial<TaskAssignee> & Pick<TaskAssignee, 'tenure_id' | 'task_id' | 'user_id'>;
+        Insert: TaskAssignee;
         Update: Partial<TaskAssignee>;
         Relationships: [];
       };
       task_activity: {
         Row: TaskActivity;
-        Insert: Partial<TaskActivity> & Pick<TaskActivity, 'tenure_id' | 'task_id' | 'action'>;
-        Update: Partial<TaskActivity>; // Note: DB trigger prevents updates at runtime
+        Insert: Partial<TaskActivity> & Pick<TaskActivity, 'task_id' | 'action'>;
+        Update: Partial<TaskActivity>;
         Relationships: [];
       };
       task_comments: {
         Row: TaskComment;
-        Insert: Partial<TaskComment> & Pick<TaskComment, 'tenure_id' | 'task_id' | 'user_id' | 'content'>;
+        Insert: Partial<TaskComment> & Pick<TaskComment, 'task_id' | 'body'>;
         Update: Partial<TaskComment>;
         Relationships: [];
       };
       task_links: {
         Row: TaskLink;
-        Insert: Partial<TaskLink> & Pick<TaskLink, 'tenure_id' | 'task_id' | 'title' | 'url'>;
+        Insert: Partial<TaskLink> & Pick<TaskLink, 'task_id' | 'url'>;
         Update: Partial<TaskLink>;
         Relationships: [];
       };
       task_checklist: {
-        Row: TaskChecklistItem;
-        Insert: Partial<TaskChecklistItem> & Pick<TaskChecklistItem, 'tenure_id' | 'task_id' | 'text'>;
-        Update: Partial<TaskChecklistItem>;
+        Row: TaskChecklist;
+        Insert: Partial<TaskChecklist> & Pick<TaskChecklist, 'task_id' | 'text'>;
+        Update: Partial<TaskChecklist>;
         Relationships: [];
       };
       recurring_rules: {
         Row: RecurringRule;
-        Insert: Partial<RecurringRule> & Pick<RecurringRule, 'tenure_id' | 'title' | 'context_type' | 'context_id' | 'frequency'>;
+        Insert: Partial<RecurringRule> & Pick<RecurringRule, 'title_template' | 'context_type' | 'context_id' | 'frequency' | 'tenure_id'>;
         Update: Partial<RecurringRule>;
         Relationships: [];
       };
       member_directory: {
         Row: MemberDirectory;
-        Insert: Partial<MemberDirectory> & Pick<MemberDirectory, 'tenure_id' | 'name'>;
+        Insert: Partial<MemberDirectory> & Pick<MemberDirectory, 'name'>;
         Update: Partial<MemberDirectory>;
         Relationships: [];
       };
       meetings: {
         Row: Meeting;
-        Insert: Partial<Meeting> & Pick<Meeting, 'tenure_id' | 'title' | 'scheduled_at'>;
+        Insert: Partial<Meeting> & Pick<Meeting, 'scope' | 'title' | 'tenure_id'>;
         Update: Partial<Meeting>;
         Relationships: [];
       };
       attendance: {
         Row: Attendance;
-        Insert: Partial<Attendance> & Pick<Attendance, 'tenure_id' | 'meeting_id' | 'status'>;
+        Insert: Attendance;
         Update: Partial<Attendance>;
         Relationships: [];
       };
       announcements: {
         Row: Announcement;
-        Insert: Partial<Announcement> & Pick<Announcement, 'tenure_id' | 'title' | 'body'>;
+        Insert: Partial<Announcement> & Pick<Announcement, 'scope' | 'title'>;
         Update: Partial<Announcement>;
         Relationships: [];
       };
       notifications: {
         Row: Notification;
-        Insert: Partial<Notification> & Pick<Notification, 'tenure_id' | 'user_id' | 'title' | 'body'>;
+        Insert: Partial<Notification> & Pick<Notification, 'user_id' | 'type'>;
         Update: Partial<Notification>;
         Relationships: [];
       };
       notification_prefs: {
         Row: NotificationPrefs;
-        Insert: Partial<NotificationPrefs> & Pick<NotificationPrefs, 'tenure_id' | 'user_id'>;
+        Insert: NotificationPrefs;
         Update: Partial<NotificationPrefs>;
         Relationships: [];
       };
       push_subscriptions: {
         Row: PushSubscription;
-        Insert: Partial<PushSubscription> & Pick<PushSubscription, 'user_id' | 'endpoint' | 'p256dh' | 'auth'>;
+        Insert: Partial<PushSubscription> & Pick<PushSubscription, 'user_id' | 'endpoint' | 'keys'>;
         Update: Partial<PushSubscription>;
         Relationships: [];
       };
       audit_log: {
         Row: AuditLog;
-        Insert: Partial<AuditLog> & Pick<AuditLog, 'action' | 'entity_type'>;
+        Insert: Partial<AuditLog> & Pick<AuditLog, 'entity' | 'action'>;
         Update: Partial<AuditLog>;
         Relationships: [];
       };
@@ -506,12 +508,18 @@ export interface Database {
     Enums: {
       user_role: UserRole;
       user_status: UserStatus;
-      tri_state: TriState;
-      context_type: ContextType;
       task_status: TaskStatus;
       task_priority: TaskPriority;
-      recurring_frequency: RecurringFrequency;
+      task_context: TaskContext;
+      board_visibility: BoardVisibility;
+      scope_kind: ScopeKind;
+      recurrence_freq: RecurrenceFreq;
+      assignment_strategy: AssignmentStrategy;
+      recurring_source: RecurringSource;
       attendance_status: AttendanceStatus;
+      notification_channel: NotificationChannel;
+      tenure_status: TenureStatus;
+      retention_choice: RetentionChoice;
       feature_flag_tier: FeatureFlagTier;
       import_status: ImportStatus;
     };

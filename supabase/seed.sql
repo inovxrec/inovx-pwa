@@ -1,212 +1,220 @@
 -- ==============================================================================
--- INOVX OPS — STREAM A: SEED DATA
+-- INOVX OPS — STREAM A: SEED DATA (Matching CTO Draft v1 Schema)
 -- supabase/seed.sql
---
--- Populates:
--- 1. 1 Active Academic Tenure (2026-2027)
--- 2. The 5 Official Domains + Core Ops
--- 3. Sample Users covering all 4 roles (member, admin, super_admin, faculty)
--- 4. Sample Committees (Techfest, Occasion Engine)
--- 5. Sample Tasks with checklists, assignees, and context
--- 6. Initial Feature Flags (including Tier-4 features shipped dark)
 -- ==============================================================================
 
--- 1. Tenure
-INSERT INTO tenures (id, name, start_date, end_date, is_active)
+-- 1. Active Tenure
+INSERT INTO tenures (id, label, starts_on, ends_on, status, retention)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
-  '2026-2027',
+  '2026-27',
   '2026-06-01',
   '2027-05-31',
-  TRUE
-) ON CONFLICT (name) DO UPDATE SET is_active = EXCLUDED.is_active;
+  'active',
+  'undecided'
+) ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status;
 
 -- 2. Domains
-INSERT INTO domains (id, tenure_id, slug, name, color, description)
+INSERT INTO domains (id, tenure_id, key, name, visibility, archived)
 VALUES
-  ('22222222-2222-2222-2222-000000000001', '11111111-1111-1111-1111-111111111111', 'technical', 'Technical', 'var(--chan-technical)', 'Software engineering, cloud infrastructure, and technical workshops'),
-  ('22222222-2222-2222-2222-000000000002', '11111111-1111-1111-1111-111111111111', 'management', 'Management', 'var(--chan-management)', 'Sponsorships, corporate outreach, budget management, and operational logistics'),
-  ('22222222-2222-2222-2222-000000000003', '11111111-1111-1111-1111-111111111111', 'events', 'Events', 'var(--chan-events)', 'Hackathons, speaker summits, auditorium bookings, and event coordination'),
-  ('22222222-2222-2222-2222-000000000004', '11111111-1111-1111-1111-111111111111', 'media', 'Media & PR', 'var(--chan-media)', 'Photography, videography, reels, social channels, and public relations'),
-  ('22222222-2222-2222-2222-000000000005', '11111111-1111-1111-1111-111111111111', 'design', 'Design', 'var(--chan-design)', 'UI/UX systems, brand identity, print banners, and creative assets'),
-  ('22222222-2222-2222-2222-000000000006', '11111111-1111-1111-1111-111111111111', 'core', 'Core Ops', 'var(--chan-core)', 'Club leadership, strategic oversight, and cross-domain operations')
-ON CONFLICT (tenure_id, slug) DO NOTHING;
+  ('22222222-2222-2222-2222-000000000001', '11111111-1111-1111-1111-111111111111', 'technical', 'Technical', 'club_visible', false),
+  ('22222222-2222-2222-2222-000000000002', '11111111-1111-1111-1111-111111111111', 'management', 'Management', 'club_visible', false),
+  ('22222222-2222-2222-2222-000000000003', '11111111-1111-1111-1111-111111111111', 'events', 'Events', 'club_visible', false),
+  ('22222222-2222-2222-2222-000000000004', '11111111-1111-1111-1111-111111111111', 'media', 'Media & PR', 'club_visible', false),
+  ('22222222-2222-2222-2222-000000000005', '11111111-1111-1111-1111-111111111111', 'design', 'Design', 'club_visible', false),
+  ('22222222-2222-2222-2222-000000000006', '11111111-1111-1111-1111-111111111111', 'core', 'Core Ops', 'club_visible', false)
+ON CONFLICT (tenure_id, key) DO NOTHING;
 
 -- 3. Users (All 4 roles: super_admin, admin, faculty, member)
-INSERT INTO users (id, tenure_id, email, name, initials, role, domain_id, domain, position_title, status, must_change_password)
+INSERT INTO users (id, tenure_id, email, name, initials, domain_id, role, position_title, status, must_change_password)
 VALUES
   -- super_admin: Executive Lead
-  ('33333333-3333-3333-3333-000000000001', '11111111-1111-1111-1111-111111111111', 'alex@inovx.club', 'Alex Rivera', 'AR', 'super_admin', '22222222-2222-2222-2222-000000000006', 'core', 'Executive Lead', 'active', FALSE),
+  ('33333333-3333-3333-3333-000000000001', '11111111-1111-1111-1111-111111111111', 'alex@inovx.club', 'Alex Rivera', 'AR', '22222222-2222-2222-2222-000000000006', 'super_admin', 'Executive Lead', 'active', FALSE),
   -- admin: Technical Lead (Riya Sharma, matches prototype)
-  ('33333333-3333-3333-3333-000000000002', '11111111-1111-1111-1111-111111111111', 'riya@inovx.club', 'Riya Sharma', 'RS', 'admin', '22222222-2222-2222-2222-000000000001', 'technical', 'Domain Lead', 'active', FALSE),
+  ('33333333-3333-3333-3333-000000000002', '11111111-1111-1111-1111-111111111111', 'riya@inovx.club', 'Riya Sharma', 'RS', '22222222-2222-2222-2222-000000000001', 'admin', 'Domain Lead', 'active', FALSE),
   -- faculty: Faculty Advisor (Dr. Nair, matches prototype)
-  ('33333333-3333-3333-3333-000000000003', '11111111-1111-1111-1111-111111111111', 'faculty@inovx.club', 'Dr. Nair', 'DN', 'faculty', '22222222-2222-2222-2222-000000000002', 'management', 'Faculty Advisor', 'active', FALSE),
+  ('33333333-3333-3333-3333-000000000003', '11111111-1111-1111-1111-111111111111', 'faculty@inovx.club', 'Dr. Nair', 'DN', '22222222-2222-2222-2222-000000000002', 'faculty', 'Faculty Advisor', 'active', FALSE),
   -- member: Design Lead (Ananya Rao, matches prototype)
-  ('33333333-3333-3333-3333-000000000004', '11111111-1111-1111-1111-111111111111', 'member@inovx.club', 'Ananya Rao', 'AR', 'member', '22222222-2222-2222-2222-000000000005', 'design', 'Domain Lead', 'active', FALSE),
+  ('33333333-3333-3333-3333-000000000004', '11111111-1111-1111-1111-111111111111', 'member@inovx.club', 'Ananya Rao', 'AR', '22222222-2222-2222-2222-000000000005', 'member', 'Domain Lead', 'active', FALSE),
   -- member: Events Associate (Karan Mehta)
-  ('33333333-3333-3333-3333-000000000005', '11111111-1111-1111-1111-111111111111', 'karan@inovx.club', 'Karan Mehta', 'KM', 'member', '22222222-2222-2222-2222-000000000003', 'events', 'Associate', 'active', TRUE),
+  ('33333333-3333-3333-3333-000000000005', '11111111-1111-1111-1111-111111111111', 'karan@inovx.club', 'Karan Mehta', 'KM', '22222222-2222-2222-2222-000000000003', 'member', 'Associate', 'active', TRUE),
   -- member: Tech Associate (Mayank Kumar)
-  ('33333333-3333-3333-3333-000000000006', '11111111-1111-1111-1111-111111111111', 'mayank@inovx.club', 'Mayank Kumar', 'MK', 'member', '22222222-2222-2222-2222-000000000001', 'technical', 'Associate', 'active', TRUE),
+  ('33333333-3333-3333-3333-000000000006', '11111111-1111-1111-1111-111111111111', 'mayank@inovx.club', 'Mayank Kumar', 'MK', '22222222-2222-2222-2222-000000000001', 'member', 'Associate', 'active', TRUE),
   -- member: Design Associate (Isha Sengupta)
-  ('33333333-3333-3333-3333-000000000007', '11111111-1111-1111-1111-111111111111', 'isha@inovx.club', 'Isha Sengupta', 'IS', 'member', '22222222-2222-2222-2222-000000000005', 'design', 'Associate', 'active', TRUE)
+  ('33333333-3333-3333-3333-000000000007', '11111111-1111-1111-1111-111111111111', 'isha@inovx.club', 'Isha Sengupta', 'IS', '22222222-2222-2222-2222-000000000005', 'member', 'Associate', 'active', TRUE)
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 -- Update domain lead FKs
-UPDATE domains SET lead_user_id = '33333333-3333-3333-3333-000000000002' WHERE slug = 'technical';
-UPDATE domains SET lead_user_id = '33333333-3333-3333-3333-000000000004' WHERE slug = 'design';
+UPDATE domains SET lead_user_id = '33333333-3333-3333-3333-000000000002' WHERE key = 'technical';
+UPDATE domains SET lead_user_id = '33333333-3333-3333-3333-000000000004' WHERE key = 'design';
 
--- 4. Committees
-INSERT INTO committees (id, tenure_id, name, slug, lead_user_id, description)
+-- 4. Permissions Catalogue & Role Matrix (Stream B Foundation)
+INSERT INTO permissions (key, label, description)
 VALUES
-  ('44444444-4444-4444-4444-000000000001', '11111111-1111-1111-1111-111111111111', 'Techfest 2026', 'techfest', '33333333-3333-3333-3333-000000000002', 'Annual national-level collegiate technical symposium'),
-  ('44444444-4444-4444-4444-000000000002', '11111111-1111-1111-1111-111111111111', 'Occasion Engine', 'occasion', '33333333-3333-3333-3333-000000000004', 'Birthdays, festive celebrations, and milestones')
-ON CONFLICT (tenure_id, slug) DO NOTHING;
+  ('task.view.all', 'View all boards', 'Can view task boards across all domains'),
+  ('task.approve', 'Approve completions', 'Can approve tasks submitted for review'),
+  ('recurring.manage', 'Manage recurring rules', 'Can create and configure recurrence schedules'),
+  ('user.manage', 'Manage club members', 'Can provision and update member profiles'),
+  ('permission.grant', 'Grant permissions', 'Can assign granular permissions to members')
+ON CONFLICT (key) DO NOTHING;
 
--- 5. Tasks (Context polymorphic: points to domain or committee)
+INSERT INTO role_permission_matrix (role, permission_key, default_on)
+VALUES
+  ('super_admin', 'task.view.all', TRUE),
+  ('super_admin', 'task.approve', TRUE),
+  ('super_admin', 'recurring.manage', TRUE),
+  ('super_admin', 'user.manage', TRUE),
+  ('super_admin', 'permission.grant', TRUE),
+  ('admin', 'task.view.all', TRUE),
+  ('admin', 'task.approve', TRUE),
+  ('admin', 'recurring.manage', TRUE),
+  ('admin', 'user.manage', TRUE),
+  ('admin', 'permission.grant', FALSE),
+  ('faculty', 'task.view.all', TRUE),
+  ('faculty', 'task.approve', FALSE),
+  ('faculty', 'recurring.manage', FALSE),
+  ('member', 'task.view.all', FALSE),
+  ('member', 'task.approve', FALSE),
+  ('member', 'recurring.manage', FALSE)
+ON CONFLICT (role, permission_key) DO NOTHING;
+
+-- 5. Committees
+INSERT INTO committees (id, tenure_id, name, purpose, linked_event, starts_on, expected_end, visibility, archived)
+VALUES
+  ('44444444-4444-4444-4444-000000000001', '11111111-1111-1111-1111-111111111111', 'Techfest 2026', 'Annual national-level collegiate technical symposium', 'Techfest 2026', '2026-08-01', '2026-09-15', 'club_visible', false),
+  ('44444444-4444-4444-4444-000000000002', '11111111-1111-1111-1111-111111111111', 'Occasion Engine', 'Birthdays, festive celebrations, and milestones', NULL, '2026-06-01', '2027-05-31', 'club_visible', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- 6. Tasks
 INSERT INTO tasks (
-  id, tenure_id, task_number, title, description,
-  context_type, context_id, domain_id,
-  status, priority, due_date, due_label, is_overdue, is_blocked, blocked_reason, tags, created_by
+  id, tenure_id, seq, title, description,
+  context_type, context_id,
+  priority, due_at, status, labels, creator_id, approval_required, blocked_reason
 )
 VALUES
   (
     '55555555-5555-5555-5555-000000000117',
     '11111111-1111-1111-1111-111111111111',
-    '#0117',
+    117,
     'Confirm auditorium booking and get written approval',
     'Coordinate with Campus Admin for the main-stage auditorium reservation. Requires a formal signature and stamped requisition slip.',
     'committee',
     '44444444-4444-4444-4444-000000000001',
-    '22222222-2222-2222-2222-000000000003',
-    'blocked',
     'urgent',
     NOW() - INTERVAL '3 days',
-    'OVERDUE 3D · 19 AUG',
-    TRUE,
-    TRUE,
-    'Admin office pending Dean''s stamp',
+    'blocked',
     ARRAY['TECHFEST', 'VENUE'],
-    '33333333-3333-3333-3333-000000000002'
+    '33333333-3333-3333-3333-000000000002',
+    TRUE,
+    'Admin office pending Dean''s stamp'
   ),
   (
     '55555555-5555-5555-5555-000000000142',
     '11111111-1111-1111-1111-111111111111',
-    '#0142',
+    142,
     'Birthday poster — Ananya Rao',
     'Design a phosphor-styled birthday card for the People page and the announcement feed.',
     'committee',
     '44444444-4444-4444-4444-000000000002',
-    '22222222-2222-2222-2222-000000000005',
-    'progress',
     'medium',
     NOW(),
-    'DUE TODAY',
-    FALSE,
-    FALSE,
-    NULL,
+    'progress',
     ARRAY['OCCASION'],
-    '33333333-3333-3333-3333-000000000004'
+    '33333333-3333-3333-3333-000000000004',
+    FALSE,
+    NULL
   ),
   (
     '55555555-5555-5555-5555-000000000188',
     '11111111-1111-1111-1111-111111111111',
-    '#0188',
+    188,
     'Techfest key visual — v2',
     'Incorporate typography revisions and render 4K variants for the print banner and Instagram story formats.',
     'committee',
     '44444444-4444-4444-4444-000000000001',
-    '22222222-2222-2222-2222-000000000005',
-    'review',
     'high',
     NOW() + INTERVAL '2 days',
-    'SUBMITTED 20 AUG',
-    FALSE,
-    FALSE,
-    NULL,
+    'review',
     ARRAY['TECHFEST', 'CREATIVE'],
-    '33333333-3333-3333-3333-000000000007'
+    '33333333-3333-3333-3333-000000000007',
+    TRUE,
+    NULL
   ),
   (
     '55555555-5555-5555-5555-000000000201',
     '11111111-1111-1111-1111-111111111111',
-    '#0201',
+    201,
     'Redesign the People page avatar grid',
     'Implement dynamic domain-accented borders and a monospace initials grid with fallback avatars.',
     'domain',
     '22222222-2222-2222-2222-000000000001',
-    '22222222-2222-2222-2222-000000000001',
-    'todo',
     'medium',
     NOW() + INTERVAL '5 days',
-    'DUE 30 AUG',
-    FALSE,
-    FALSE,
-    NULL,
+    'todo',
     ARRAY['FRONTEND'],
-    '33333333-3333-3333-3333-000000000002'
+    '33333333-3333-3333-3333-000000000002',
+    FALSE,
+    NULL
   ),
   (
     '55555555-5555-5555-5555-000000000088',
     '11111111-1111-1111-1111-111111111111',
-    '#0088',
+    88,
     'Setup container cluster for hackathon CI/CD',
     'Configure autoscaling runners on the campus server node to run sandboxed code evaluation for the 36-hour hackathon.',
     'domain',
     '22222222-2222-2222-2222-000000000001',
-    '22222222-2222-2222-2222-000000000001',
-    'todo',
     'urgent',
     NOW() + INTERVAL '1 day',
-    'DUE 01 SEP',
-    FALSE,
-    FALSE,
-    NULL,
+    'todo',
     ARRAY['DOCKER', 'INFRA'],
-    '33333333-3333-3333-3333-000000000001'
+    '33333333-3333-3333-3333-000000000001',
+    FALSE,
+    NULL
   )
 ON CONFLICT (id) DO NOTHING;
 
--- 6. Task Assignees
-INSERT INTO task_assignees (tenure_id, task_id, user_id, is_primary)
+-- 7. Task Assignees
+INSERT INTO task_assignees (task_id, user_id)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000117', '33333333-3333-3333-3333-000000000005', TRUE),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000142', '33333333-3333-3333-3333-000000000004', TRUE),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000188', '33333333-3333-3333-3333-000000000007', TRUE),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000201', '33333333-3333-3333-3333-000000000006', TRUE),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000088', '33333333-3333-3333-3333-000000000001', TRUE)
+  ('55555555-5555-5555-5555-000000000117', '33333333-3333-3333-3333-000000000005'),
+  ('55555555-5555-5555-5555-000000000142', '33333333-3333-3333-3333-000000000004'),
+  ('55555555-5555-5555-5555-000000000188', '33333333-3333-3333-3333-000000000007'),
+  ('55555555-5555-5555-5555-000000000201', '33333333-3333-3333-3333-000000000006'),
+  ('55555555-5555-5555-5555-000000000088', '33333333-3333-3333-3333-000000000001')
 ON CONFLICT (task_id, user_id) DO NOTHING;
 
--- 7. Task Checklist Items
-INSERT INTO task_checklist (tenure_id, task_id, text, completed, position)
+-- 8. Task Checklist Items
+INSERT INTO task_checklist (task_id, text, completed, position)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000117', 'Submit requisition form', TRUE, 1),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000117', 'Get Dean endorsement', TRUE, 2),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000117', 'Receive written confirmation & stamp', FALSE, 3),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000142', 'Pull photo from directory', TRUE, 1),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000142', 'Draft layout', FALSE, 2),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000142', 'Get review from lead', FALSE, 3),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000188', 'Revise grid typography', TRUE, 1),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000188', 'Export 9:16 reels canvas', TRUE, 2),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000188', 'Export 300dpi print poster', TRUE, 3)
+  ('55555555-5555-5555-5555-000000000117', 'Submit requisition form', TRUE, 1),
+  ('55555555-5555-5555-5555-000000000117', 'Get Dean endorsement', TRUE, 2),
+  ('55555555-5555-5555-5555-000000000117', 'Receive written confirmation & stamp', FALSE, 3),
+  ('55555555-5555-5555-5555-000000000142', 'Pull photo from directory', TRUE, 1),
+  ('55555555-5555-5555-5555-000000000142', 'Draft layout', FALSE, 2),
+  ('55555555-5555-5555-5555-000000000142', 'Get review from lead', FALSE, 3),
+  ('55555555-5555-5555-5555-000000000188', 'Revise grid typography', TRUE, 1),
+  ('55555555-5555-5555-5555-000000000188', 'Export 9:16 reels canvas', TRUE, 2),
+  ('55555555-5555-5555-5555-000000000188', 'Export 300dpi print poster', TRUE, 3)
 ON CONFLICT DO NOTHING;
 
--- 8. Task Activity Logs (Immutable history)
-INSERT INTO task_activity (tenure_id, task_id, actor_id, action, message)
+-- 9. Task Activity Logs (Immutable trail)
+INSERT INTO task_activity (task_id, actor_id, action, note)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000117', '33333333-3333-3333-3333-000000000005', 'blocked', 'Flagged as BLOCKED: Admin office pending Dean stamp'),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000142', '33333333-3333-3333-3333-000000000004', 'created', 'Task spawned automatically by Occasion Engine'),
-  ('11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-000000000188', '33333333-3333-3333-3333-000000000007', 'submitted', 'Submitted for review by Isha S.')
+  ('55555555-5555-5555-5555-000000000117', '33333333-3333-3333-3333-000000000005', 'status_change', 'Flagged as BLOCKED: Admin office pending Dean stamp'),
+  ('55555555-5555-5555-5555-000000000142', '33333333-3333-3333-3333-000000000004', 'created', 'Task spawned automatically by Occasion Engine'),
+  ('55555555-5555-5555-5555-000000000188', '33333333-3333-3333-3333-000000000007', 'submitted', 'Submitted for review by Isha S.')
 ON CONFLICT DO NOTHING;
 
--- 9. Member Directory (Can hold members even without login accounts)
-INSERT INTO member_directory (tenure_id, name, email, domain_name, role_label, birthday, linked_user_id)
+-- 10. Member Directory
+INSERT INTO member_directory (name, dob, team)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Ananya Rao', 'ananya@inovx.club', 'Design', 'Domain Lead', '2004-09-04', '33333333-3333-3333-3333-000000000004'),
-  ('11111111-1111-1111-1111-111111111111', 'Karan Mehta', 'karan@inovx.club', 'Events', 'Associate', '2004-11-12', '33333333-3333-3333-3333-000000000005'),
-  ('11111111-1111-1111-1111-111111111111', 'Sanjeev Varma', 'sanjeev@inovx.club', 'Technical', 'Member', '2005-03-22', NULL)
+  ('Ananya Rao', '2004-09-04', 'Design'),
+  ('Karan Mehta', '2004-11-12', 'Events'),
+  ('Sanjeev Varma', '2005-03-22', 'Technical')
 ON CONFLICT DO NOTHING;
 
--- 10. Feature Flags (Tier-4 "Should" features shipped dark)
+-- 11. Feature Flags (Tier-4 "Should" features shipped dark)
 INSERT INTO feature_flags (key, name, description, is_enabled, tier)
 VALUES
   ('dark_mode_theme', 'Dark Mode Theme', 'Phosphor green on pitch black high-contrast token palette', FALSE, 'tier-4'),
