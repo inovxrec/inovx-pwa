@@ -10,6 +10,13 @@
   cursor: pointer;
   text-align: left;
   transition: background-color var(--t-fast) linear;
+  /*
+    Clips the domain bar to the card's own curve. Without it the bar is a 4px
+    box asking for a 20px radius, which the browser clamps to 4px — so it stays
+    straight while the card curves away and pokes out of both left corners.
+    The focus ring is an outline and is not clipped by this.
+  */
+  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -19,12 +26,15 @@
 .task-card:hover  { background: var(--paper-hi); }
 .task-card:active { background: var(--paper-lo); }
 
-/* The 4px domain bar, flush left, sharing the card's radius (§7.10). */
+/*
+  The 4px domain bar, flush left, sharing the card's radius (§7.10). It carries
+  no radius of its own — the card clips it, which is the only way a bar this
+  narrow can actually follow a 20px curve.
+*/
 .task-card__edge {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  border-radius: var(--r-lg) 0 0 var(--r-lg);
   background: var(--domain);
 }
 
