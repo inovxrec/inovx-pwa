@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '../../hooks/useToast';
-import { HANDOVER_STEPS, TENURES } from '../../lib/admin';
-import { Avatar } from '../../ui/primitives/Avatar';
+import { describeError } from '../../lib/supabase';
+import { fetchTenures } from '../../lib/db/queries';
+import type { TenureRow } from '../../lib/db/rows';
+import { HANDOVER_STEPS } from '../../lib/admin';
 import { Button } from '../../ui/primitives/Button';
 import { Tag } from '../../ui/primitives/Tag';
-import { Card, Modal } from '../../ui/patterns';
+import { Card, EmptyState, Modal } from '../../ui/patterns';
+import { StickerClipboard } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
@@ -16,7 +20,28 @@ export function AdminArchive() {
   const [step, setStep] = useState(0);
   const [confirming, setConfirming] = useState(false);
 
+  const [tenures, setTenures] = useState<TenureRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchTenures()
+      .then((rows) => !cancelled && setTenures(rows))
+      .catch((caught) => !cancelled && setError(describeError(caught)))
+      .finally(() => !cancelled && setLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const last = step === HANDOVER_STEPS.length - 1;
+  const current = tenures.find((tenure) => tenure.is_active) ?? tenures[0];
+
+  const dates = (tenure: TenureRow) =>
+    `${tenure.start_date.slice(0, 10)} to ${tenure.end_date.slice(0, 10)}`;
 
   return (
     <AdminPage
@@ -31,38 +56,38 @@ export function AdminArchive() {
         </Button>
       }
     >
-      <div className="admin__tenures">
-        {TENURES.map((tenure) => (
-          <Card
-            key={tenure.id}
-            surface={tenure.current ? 'mint' : 'paper'}
-            className="admin__tenure"
-            title={tenure.label}
-            aside={tenure.current ? <Tag ink>Current</Tag> : undefined}
-          >
-            <div className="admin__tenure-lead">
-              <Avatar
-                size={32}
-                name={tenure.president.name}
-                initials={tenure.president.initials}
-                channel={tenure.president.domain}
-              />
-              <span className="body-sm">{tenure.president.name}, president</span>
-            </div>
-
-            <dl className="admin__tenure-stats">
-              <div>
-                <dt className="label">Members</dt>
-                <dd className="num-xl tnum">{tenure.members}</dd>
-              </div>
-              <div>
-                <dt className="label">Completed</dt>
-                <dd className="num-xl tnum">{tenure.tasksCompleted}</dd>
-              </div>
-            </dl>
-          </Card>
-        ))}
-      </div>
+      {loading ? (
+        <SkeletonTaskCard />
+      ) : error ? (
+        <Card>
+          <EmptyState
+            sticker={<StickerClipboard size="empty" />}
+            title="Could not read the tenures"
+            line={error}
+          />
+        </Card>
+      ) : (
+        <div className="admin__tenures">
+          {tenures.map((tenure) => (
+            <Card
+              key={tenure.id}
+              surface={tenure.is_active ? 'mint' : 'paper'}
+              className="admin__tenure"
+              title={tenure.name}
+              aside={tenure.is_active ? <Tag ink>Current</Tag> : undefined}
+            >
+              {/*
+                A tenure row carries its dates and nothing else. The head count
+                and the completed total that §9.15 asks for would each need a
+                figure the schema does not keep, so the card says what it knows
+                rather than counting something else and calling it that.
+              */}
+              <p className="body-sm admin__tenure-lead">{dates(tenure)}</p>
+              <p className="micro">Member and completion totals are not recorded yet</p>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* §9.15's three-step stepper. */}
       <Card title="Hand over to next year">
@@ -128,9 +153,9 @@ export function AdminArchive() {
         }
       >
         <p className="body">
-          This archives {TENURES[0].label}, moves everything still open to the
-          incoming team, and emails all {TENURES[0].members} members. It cannot
-          be undone from here.
+          This archives {current?.name ?? 'the current tenure'}, moves everything
+          still open to the incoming team, and emails every member. It cannot be
+          undone from here.
         </p>
       </Modal>
     </AdminPage>

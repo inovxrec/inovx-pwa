@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
-import { PERSON_BY_EMAIL } from '../../lib/mockTasks';
-import { MEMBERS } from '../../lib/club';
+import { useClub, useMe } from '../../store/ClubProvider';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
@@ -48,8 +47,9 @@ export function Settings() {
   const [matrix, setMatrix] = useState<Matrix>(DEFAULT_MATRIX);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
-  const me = session ? PERSON_BY_EMAIL[session.email] : undefined;
-  const member = MEMBERS.find((m) => m.id === me?.id);
+  const { members } = useClub();
+  const me = useMe();
+  const member = members.find((m) => m.id === me?.id);
 
   const [name, setName] = useState(session?.name ?? '');
   const [title, setTitle] = useState(member?.title ?? '');

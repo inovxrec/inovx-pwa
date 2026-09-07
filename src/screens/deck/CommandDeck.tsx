@@ -6,12 +6,13 @@ import { useToast } from '../../hooks/useToast';
 import { useOpenTask } from '../../hooks/useOpenTask';
 import { useAssignment } from '../../hooks/useAssignment';
 import { usePermissionCheck } from '../../hooks/usePermission';
+import { useMeetings } from '../../hooks/useMeetings';
+import { useClub, useDomainSlugs } from '../../store/ClubProvider';
 import {
-  COMMITTEES, OVERDUE_THRESHOLD, STAT_TRENDS, UPCOMING, attentionItems, deckStats,
-  domainRollups,
+  OVERDUE_THRESHOLD, attentionItems, deckStats, domainRollups,
 } from '../../lib/analytics';
-import { OCCASIONS } from '../../lib/mockTasks';
-import { STATE_LABELS, daysUntil, type Task } from '../../lib/tasks';
+import { calendarEvents, eventIsLate, upcomingBirthdays } from '../../lib/club';
+import { STATE_LABELS, daysUntil, formatDate, startOfToday, type Task } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { Chip } from '../../ui/primitives/Chip';
 import { Tag } from '../../ui/primitives/Tag';
@@ -39,14 +40,47 @@ export function CommandDeck() {
   const toast = useToast();
   const can = usePermissionCheck();
   const { canCreate } = useAssignment();
+  const { members, committees: clubCommittees } = useClub();
+  const { meetings } = useMeetings();
+  const domains = useDomainSlugs();
 
   /** The mobile approval row opens a sheet with the same two actions (§9.5.3). */
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
   const [raising, setRaising] = useState(false);
 
   const stats = useMemo(() => deckStats(tasks), [tasks]);
-  const rollups = useMemo(() => domainRollups(tasks), [tasks]);
+  const rollups = useMemo(() => domainRollups(tasks, domains), [tasks, domains]);
   const attention = useMemo(() => attentionItems(tasks), [tasks]);
+
+  /** Today's birthdays, and then the next few dated things after them. */
+  const birthdays = useMemo(
+    () => upcomingBirthdays(members, 0).map((entry) => entry.member),
+    [members],
+  );
+
+  const upcoming = useMemo(() => {
+    const today = startOfToday().toISOString().slice(0, 10);
+    return calendarEvents(tasks, members, meetings)
+      .filter((event) => event.date > today && !eventIsLate(event))
+      .slice(0, 5);
+  }, [tasks, members, meetings]);
+
+  /** Open work per committee, counted from the same task list as the board. */
+  const committeeRows = useMemo(
+    () =>
+      clubCommittees.map((committee) => ({
+        id: committee.id,
+        name: committee.name,
+        members: committee.members.length,
+        open: tasks.filter(
+          (task) =>
+            task.committee === committee.name &&
+            task.state !== 'done' &&
+            task.state !== 'cancelled',
+        ).length,
+      })),
+    [clubCommittees, tasks],
+  );
 
   const queue = useMemo(
     () =>
@@ -70,23 +104,18 @@ export function CommandDeck() {
 
   const statRow = (
     <div className="deck__stats">
-      <StatCard value={stats.open} caption="Open" trend={STAT_TRENDS.open} />
+      {/*
+        No sparklines: a tile's trend needs seven days of history and nothing
+        records one, so the number stands on its own (§7.11).
+      */}
+      <StatCard value={stats.open} caption="Open" />
       <StatCard
         value={stats.overdue}
         caption="Overdue"
-        trend={STAT_TRENDS.overdue}
         atRisk={stats.overdue > OVERDUE_THRESHOLD}
       />
-      <StatCard
-        value={stats.awaitingApproval}
-        caption="Awaiting approval"
-        trend={STAT_TRENDS.awaitingApproval}
-      />
-      <StatCard
-        value={stats.doneThisWeek}
-        caption="Done this week"
-        trend={STAT_TRENDS.doneThisWeek}
-      />
+      <StatCard value={stats.awaitingApproval} caption="Awaiting approval" />
+      <StatCard value={stats.doneThisWeek} caption="Done this week" />
     </div>
   );
 
@@ -186,10 +215,10 @@ export function CommandDeck() {
     </Card>
   );
 
-  const committees = (
+  const committees = committeeRows.length === 0 ? null : (
     <Card title="Committees">
       <ul className="deck__list" role="list">
-        {COMMITTEES.map((committee) => (
+        {committeeRows.map((committee) => (
           <li className="deck__list-row" key={committee.id}>
             <span className="body-sm deck__list-name">{committee.name}</span>
             <span className="micro deck__list-meta tnum">
@@ -201,25 +230,30 @@ export function CommandDeck() {
     </Card>
   );
 
-  const occasions = (
+  /*
+    Birthdays are the only occasion the app can work out for itself — the rest
+    of the occasion engine (festivals, the lunar queue) has no table yet, so
+    what follows them is simply the next few dated things.
+  */
+  const occasions = birthdays.length === 0 && upcoming.length === 0 ? null : (
     <Card surface="mint" title="Occasions">
       <ul className="deck__list" role="list">
-        {OCCASIONS.map((occasion) => (
-          <li className="deck__list-row" key={occasion.id}>
+        {birthdays.map((member) => (
+          <li className="deck__list-row" key={member.id}>
             <Avatar
               size={24}
-              name={occasion.person.name}
-              initials={occasion.person.initials}
-              channel={occasion.person.domain}
+              name={member.name}
+              initials={member.initials}
+              channel={member.domain}
             />
-            <span className="body-sm deck__list-name">{occasion.person.name}</span>
-            <span className="micro deck__list-meta">{occasion.kind} today</span>
+            <span className="body-sm deck__list-name">{member.name}</span>
+            <span className="micro deck__list-meta">birthday today</span>
           </li>
         ))}
-        {UPCOMING.map((event) => (
+        {upcoming.map((event) => (
           <li className="deck__list-row" key={event.id}>
             <span className="body-sm deck__list-name">{event.label}</span>
-            <span className="micro deck__list-meta">{event.when}</span>
+            <span className="micro deck__list-meta">{formatDate(event.date)}</span>
           </li>
         ))}
       </ul>

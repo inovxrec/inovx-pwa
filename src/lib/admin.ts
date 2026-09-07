@@ -1,22 +1,20 @@
-import { MEMBERS } from './club';
-import { PEOPLE } from './mockTasks';
 import { startOfToday, type Domain, type Person } from './tasks';
 
 /*
-  What the eight admin screens read (§9.15). Everything here is seeded, because
-  none of it is derivable from the task list — these are the club's settings,
-  not its work.
+  Shapes and helpers for the eight admin screens (§9.15).
+
+  Two of these have tables behind them — recurring_rules and audit_log — and are
+  fetched in `lib/db/queries.ts`. The rest do not exist in the foundation
+  schema, so their screens say the feature is not wired up yet rather than
+  showing invented rows:
+
+    · occasions (the whole occasion engine: rules, outputs, the lunar queue)
+    · integrations and their sync health
+    · tenure archive figures beyond the tenure row itself
+
+  Listed in the README so the backend team knows what the frontend is waiting
+  for. Nothing here fabricates a stand-in.
 */
-
-function iso(offsetDays: number): string {
-  const d = startOfToday();
-  d.setDate(d.getDate() + offsetDays);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function ago(hours: number): string {
-  return new Date(Date.now() - hours * 3_600_000).toISOString();
-}
 
 /* ------------------------------------------------------------- occasions */
 
@@ -28,55 +26,11 @@ export interface OccasionRule {
   type: OccasionType;
   /** MM-DD, or null for a lunar date that has to be confirmed each year. */
   date: string | null;
-  /** Which domain picks up the generated work. */
   outputDomain: Domain;
-  /** Days before the date that the task is raised. */
   leadDays: number;
   strategy: 'domain-lead' | 'round-robin' | 'unassigned';
-  /** Lunar occasions need this year's date confirming (§9.15). */
   needsDate?: boolean;
 }
-
-export const OCCASION_RULES: OccasionRule[] = [
-  ...MEMBERS.map((member, index) => ({
-    id: `occ-${member.id}`,
-    name: `${member.name} — birthday`,
-    type: 'birthday' as const,
-    date: member.birthday,
-    outputDomain: 'design' as const,
-    leadDays: 5,
-    strategy: index % 2 === 0 ? ('domain-lead' as const) : ('round-robin' as const),
-  })),
-  {
-    id: 'occ-foundation',
-    name: 'Club foundation day',
-    type: 'anniversary',
-    date: '11-14',
-    outputDomain: 'media',
-    leadDays: 10,
-    strategy: 'domain-lead',
-  },
-  {
-    id: 'occ-diwali',
-    name: 'Diwali',
-    type: 'lunar',
-    date: null,
-    outputDomain: 'design',
-    leadDays: 14,
-    strategy: 'domain-lead',
-    needsDate: true,
-  },
-  {
-    id: 'occ-eid',
-    name: 'Eid',
-    type: 'lunar',
-    date: null,
-    outputDomain: 'design',
-    leadDays: 14,
-    strategy: 'round-robin',
-    needsDate: true,
-  },
-];
 
 export const OCCASION_TYPE_LABELS: Record<OccasionType, string> = {
   birthday: 'Birthday',
@@ -93,7 +47,7 @@ export const STRATEGY_LABELS: Record<OccasionRule['strategy'], string> = {
 
 /* ------------------------------------------------------------- recurring */
 
-export type Frequency = 'daily' | 'weekly' | 'fortnightly' | 'monthly';
+export type Frequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
 
 export interface RecurringRule {
   id: string;
@@ -111,36 +65,33 @@ export interface RecurringRule {
 export const FREQUENCY_LABELS: Record<Frequency, string> = {
   daily: 'Every day',
   weekly: 'Every week',
-  fortnightly: 'Every two weeks',
+  biweekly: 'Every two weeks',
   monthly: 'Every month',
+  custom: 'On a schedule',
 };
 
-export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-export const RECURRING_RULES: RecurringRule[] = [
-  {
-    id: 'rec-1', title: 'Weekly recap post', frequency: 'weekly', weekday: 5,
-    monthDay: 1, domain: 'media', owner: PEOPLE.dev, active: true,
-  },
-  {
-    id: 'rec-2', title: 'Core team agenda', frequency: 'weekly', weekday: 1,
-    monthDay: 1, domain: 'core', owner: PEOPLE.riya, active: true,
-  },
-  {
-    id: 'rec-3', title: 'Sponsor pipeline review', frequency: 'monthly', weekday: 1,
-    monthDay: 1, domain: 'management', owner: PEOPLE.sana, active: false,
-  },
+export const WEEKDAYS = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
 ];
 
 /**
  * The next five dates a rule would fire — §9.15's live preview panel.
  *
- * Calculated rather than seeded, so the preview genuinely reflects whatever the
- * builder's controls currently say.
+ * Calculated rather than fetched, so the preview reflects whatever the
+ * builder's controls currently say rather than what was last saved.
  */
-export function nextOccurrences(rule: Pick<RecurringRule, 'frequency' | 'weekday' | 'monthDay'>, count = 5): string[] {
+export function nextOccurrences(
+  rule: Pick<RecurringRule, 'frequency' | 'weekday' | 'monthDay'>,
+  count = 5,
+): string[] {
   const out: string[] = [];
   const cursor = startOfToday();
+
+  const iso = (offset: number) => {
+    const d = startOfToday();
+    d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
 
   if (rule.frequency === 'monthly') {
     const day = Math.min(28, Math.max(1, rule.monthDay));
@@ -161,8 +112,9 @@ export function nextOccurrences(rule: Pick<RecurringRule, 'frequency' | 'weekday
     return out;
   }
 
-  const step = rule.frequency === 'fortnightly' ? 14 : 7;
-  // The first hit is the next matching weekday, today included.
+  // A custom cron is the server's to interpret; the preview shows the weekly
+  // reading of it rather than pretending to parse one here.
+  const step = rule.frequency === 'biweekly' ? 14 : 7;
   let offset = (rule.weekday - cursor.getDay() + 7) % 7;
 
   for (let i = 0; i < count; i += 1) {
@@ -191,40 +143,16 @@ export const HEALTH_LABELS: Record<SyncHealth, string> = {
   failing: 'Failing',
 };
 
-export const INTEGRATIONS: Integration[] = [
-  {
-    id: 'int-drive', name: 'Google Drive', health: 'degraded', lastSync: ago(74),
-    note: 'Deliverable links stopped resolving three days ago.',
-    conflicts: ['Two files named "Techfest backdrop final"'],
-  },
-  {
-    id: 'int-sheets', name: 'Member roster sheet', health: 'ok', lastSync: ago(3),
-    note: 'Roll numbers and domains, read-only.',
-    conflicts: [],
-  },
-  {
-    id: 'int-mail', name: 'Club mail', health: 'failing', lastSync: ago(210),
-    note: 'The app password was rotated and not replaced.',
-    conflicts: [],
-  },
-];
-
 /* -------------------------------------------------------------- archive */
 
 export interface Tenure {
   id: string;
   label: string;
-  president: Person;
+  president?: Person;
   members: number;
   tasksCompleted: number;
   current: boolean;
 }
-
-export const TENURES: Tenure[] = [
-  { id: 't-2026', label: '2026–27', president: PEOPLE.riya, members: 45, tasksCompleted: 128, current: true },
-  { id: 't-2025', label: '2025–26', president: PEOPLE.arjun, members: 41, tasksCompleted: 402, current: false },
-  { id: 't-2024', label: '2024–25', president: PEOPLE.sana, members: 38, tasksCompleted: 361, current: false },
-];
 
 export const HANDOVER_STEPS = [
   {
@@ -248,33 +176,8 @@ export const HANDOVER_STEPS = [
 
 export interface AuditEntry {
   id: string;
-  actor: Person;
+  actor?: Person;
   action: string;
   target: string;
   at: string;
-}
-
-export const AUDIT: AuditEntry[] = [
-  { id: 'a-1', actor: PEOPLE.riya, action: 'Granted permission', target: 'Ananya R. — approvals.review', at: ago(4) },
-  { id: 'a-2', actor: PEOPLE.riya, action: 'Approved task', target: '#0131 Club website hero', at: ago(50) },
-  { id: 'a-3', actor: PEOPLE.arjun, action: 'Created committee', target: 'Techfest', at: ago(96) },
-  { id: 'a-4', actor: PEOPLE.riya, action: 'Issued account', target: 'karan@inovx.club', at: ago(120) },
-  { id: 'a-5', actor: PEOPLE.sana, action: 'Edited recurring rule', target: 'Sponsor pipeline review', at: ago(150) },
-  { id: 'a-6', actor: PEOPLE.riya, action: 'Revoked permission', target: 'Dev A. — export.csv', at: ago(200) },
-];
-
-/* -------------------------------------------------------------- members */
-
-/**
- * A temporary password for a newly provisioned account (§9.15).
- *
- * TEMP and deliberately obvious: the server issues the real one. This exists so
- * the result card has something to show during review, and it is never sent
- * anywhere.
- */
-export function temporaryPassword(): string {
-  const words = ['amber', 'vinyl', 'stencil', 'ribbon', 'quartz', 'cobalt', 'marble'];
-  const word = words[Math.floor(Math.random() * words.length)];
-  const digits = String(Math.floor(Math.random() * 9000) + 1000);
-  return `${word}-${digits}`;
 }

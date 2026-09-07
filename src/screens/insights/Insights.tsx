@@ -1,15 +1,14 @@
 import { useMemo } from 'react';
 import { useTasks } from '../../store/taskStore';
 import { usePermissionCheck } from '../../hooks/usePermission';
+import { useClub, useDomainSlugs } from '../../store/ClubProvider';
 import {
-  ACTIVITY_12W, LEADERBOARD, OVERDUE_THRESHOLD, STAT_TRENDS, deckStats,
-  domainRollups, workload,
+  OVERDUE_THRESHOLD, deckStats, domainRollups, leaderboard, workload,
 } from '../../lib/analytics';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Tag } from '../../ui/primitives/Tag';
 import { Card, StatCard } from '../../ui/patterns';
 import { BarChart } from '../../ui/charts/BarChart';
-import { LineChart } from '../../ui/charts/LineChart';
 import './Insights.css';
 
 /** §9.12 — a maximum of ten rows. */
@@ -26,43 +25,42 @@ const LEADERBOARD_MAX = 10;
  */
 export function Insights() {
   const { tasks } = useTasks();
+  const { people } = useClub();
+  const domains = useDomainSlugs();
   const can = usePermissionCheck();
 
   const stats = useMemo(() => deckStats(tasks), [tasks]);
-  const rollups = useMemo(() => domainRollups(tasks), [tasks]);
-  const load = useMemo(() => workload(tasks).filter((row) => row.open > 0), [tasks]);
+  const rollups = useMemo(() => domainRollups(tasks, domains), [tasks, domains]);
+  const load = useMemo(
+    () => workload(tasks, people).filter((row) => row.open > 0),
+    [tasks, people],
+  );
+  const board = useMemo(() => leaderboard(tasks, people), [tasks, people]);
 
   return (
     <div className="insights">
       <div className="insights__stats">
-        <StatCard value={stats.open} caption="Open" trend={STAT_TRENDS.open} />
+        {/*
+          No sparklines: a tile's trend needs seven days of history and nothing
+          records one. The number is the tile (§7.11) — a made-up shape beneath
+          it would be the only part anybody read.
+        */}
+        <StatCard value={stats.open} caption="Open" />
         <StatCard
           value={stats.overdue}
           caption="Overdue"
-          trend={STAT_TRENDS.overdue}
           atRisk={stats.overdue > OVERDUE_THRESHOLD}
         />
-        <StatCard
-          value={stats.awaitingApproval}
-          caption="Awaiting approval"
-          trend={STAT_TRENDS.awaitingApproval}
-        />
-        <StatCard
-          value={stats.doneThisWeek}
-          caption="Done this week"
-          trend={STAT_TRENDS.doneThisWeek}
-        />
+        <StatCard value={stats.awaitingApproval} caption="Awaiting approval" />
+        <StatCard value={stats.doneThisWeek} caption="Done this week" />
       </div>
 
       <div className="insights__grid">
-        <Card title="Twelve weeks of activity" className="insights__wide">
-          <LineChart
-            points={ACTIVITY_12W.map((week) => ({ label: week.label, value: week.completed }))}
-            title="Tasks completed per week, last twelve weeks"
-            unit="tasks completed"
-          />
-        </Card>
-
+        {/*
+          §9.12 asks for twelve weeks of completions. A task carries a status
+          and no completion date, so there is no week to put a finish in — the
+          chart is absent rather than plotted against the wrong date.
+        */}
         <Card surface="mint" title="Completion by domain">
           <BarChart
             title="Percentage of tasks complete, by domain"
@@ -99,9 +97,14 @@ export function Insights() {
 
         {/* Core team and faculty only (§9.12). Absent otherwise, not disabled. */}
         {can('leaderboard.view') && (
-          <Card surface="mint" title="Leaderboard" className="insights__wide sleeve">
+          <Card
+            surface="mint"
+            title="Leaderboard"
+            eyebrow="Tasks finished, all year"
+            className="insights__wide sleeve"
+          >
             <ol className="insights__board" role="list">
-              {LEADERBOARD.slice(0, LEADERBOARD_MAX).map((row, index) => (
+              {board.slice(0, LEADERBOARD_MAX).map((row, index) => (
                 <li className="insights__board-row" key={row.person.id}>
                   {/* Rank 1 gets the flame tag; 2 and 3 get ink (§9.12). */}
                   {index === 0 ? (

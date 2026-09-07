@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAuth } from '../store/authStore';
 import { useCommittees, type Committee } from '../store/committeeStore';
 import { assignableDomains, useGrants } from '../store/grantStore';
-import { BOARDS, PERSON_BY_EMAIL } from '../lib/mockTasks';
+import { useBoards, useMe } from '../store/ClubProvider';
 import type { Domain, Person } from '../lib/tasks';
 
 export interface Assignment {
@@ -21,8 +21,6 @@ export interface Assignment {
   selfOnly: boolean;
 }
 
-const EVERY_DOMAIN = BOARDS.map((board) => board.domain);
-
 /** Stable identity for "no overrides", so the memo below actually holds. */
 const NO_EDITS = Object.freeze({});
 
@@ -39,13 +37,15 @@ export function useAssignment(): Assignment {
   const { forPerson } = useGrants();
   const { committees } = useCommittees();
 
-  const me = session ? PERSON_BY_EMAIL[session.email] : undefined;
+  const me = useMe();
+  const boards = useBoards();
   const role = session?.role ?? 'member';
   const edits = me ? forPerson(me.id) : NO_EDITS;
+  const everyDomain = boards.map((board) => board.domain);
 
   return useMemo(() => {
     const canCreate = role === 'admin' || role === 'super-admin';
-    const domains = me ? assignableDomains(role, me.domain, edits, EVERY_DOMAIN) : [];
+    const domains = me ? assignableDomains(role, me.domain, edits, everyDomain) : [];
 
     /*
       A super admin runs every committee. Anyone else runs the ones they are
@@ -64,5 +64,5 @@ export function useAssignment(): Assignment {
       committees: mine,
       selfOnly: canCreate && domains.length === 0 && mine.length === 0,
     };
-  }, [role, me, edits, committees]);
+  }, [role, me, edits, committees, everyDomain]);
 }

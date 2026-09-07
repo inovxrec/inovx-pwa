@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
-import type { Role } from '../../store/authStore';
 import { LANDING_BY_ROLE } from '../../lib/navConfig';
 import {
   Avatar, AvatarStack, Button, Checkbox, Chip, DatePicker, IconButton, Input,
@@ -93,10 +92,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-const ROLES: Role[] = ['member', 'admin', 'super-admin', 'faculty'];
-
 export function KitchenSink() {
-  const { session, setRole } = useAuth();
+  const { session } = useAuth();
   const [text, setText] = useState('Birthday poster');
   const [bio, setBio] = useState('');
   const [domain, setDomain] = useState<string | string[]>('design');
@@ -129,29 +126,16 @@ export function KitchenSink() {
       </header>
 
       <main className="ks-main">
-        {/* ---------------- SESSION (TEMP) ---------------- */}
         {/*
-          TEMP (Phase 2 review). Login is Phase 3, so this is the only way to
-          see the shell as each role. Delete this whole section — and setRole
-          in AuthProvider — when the real login lands.
+          The role switcher that used to sit here went with Phase 3: the session
+          now comes from Supabase, so the way to see another role is to sign in
+          as one.
         */}
         <Section
-          title="Session — temporary"
-          note="Phase 2 review only. Login is Phase 3; this goes away then."
+          title="Session"
+          note={session ? `Signed in as ${session.name} — ${session.role}.` : 'Signed out.'}
           tone="mint"
         >
-          <Row label="Signed in as">
-            {ROLES.map((role) => (
-              <Radio
-                key={role}
-                name="ks-role"
-                label={role}
-                value={role}
-                checked={session?.role === role}
-                onChange={() => setRole(role)}
-              />
-            ))}
-          </Row>
           <Row label="Landing screen for this role">
             <Link className="ks-link" to={session ? LANDING_BY_ROLE[session.role] : '/'}>
               Open the shell at {session ? LANDING_BY_ROLE[session.role] : '/'}

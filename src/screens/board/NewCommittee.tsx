@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useCommittees, domainsOf } from '../../store/committeeStore';
 import { useToast } from '../../hooks/useToast';
-import { MEMBERS } from '../../lib/club';
-import { BOARDS } from '../../lib/mockTasks';
+import { useBoards, useClub } from '../../store/ClubProvider';
+import type { Member } from '../../lib/club';
 import { DOMAIN_LABELS, type Domain, type Person } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
@@ -28,21 +28,23 @@ export interface NewCommitteeProps {
  */
 export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
   const { create } = useCommittees();
+  const { members: roster } = useClub();
+  const boards = useBoards();
   const toast = useToast();
 
   const [name, setName] = useState('');
   const [picked, setPicked] = useState<Person[]>([]);
 
   const byDomain = useMemo(() => {
-    const map = new Map<Domain, typeof MEMBERS>();
-    for (const board of BOARDS) map.set(board.domain, []);
-    for (const member of MEMBERS) {
+    const map = new Map<Domain, Member[]>();
+    for (const board of boards) map.set(board.domain, []);
+    for (const member of roster) {
       const list = map.get(member.domain);
       if (list) list.push(member);
       else map.set(member.domain, [member]);
     }
     return [...map].filter(([, list]) => list.length > 0);
-  }, []);
+  }, [boards, roster]);
 
   const spans = domainsOf(picked);
   /** A committee that draws from one domain is just that domain's board. */
@@ -62,14 +64,19 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
     setPicked([]);
   }
 
-  function submit() {
+  async function submit() {
     if (!valid) return;
-    const committee = create(name, picked);
+
+    const committee = await create(name, picked);
+    if (!committee) {
+      // The write was refused. Say so rather than closing as though it worked.
+      toast.show('Could not create that committee.', { tone: 'error' });
+      return;
+    }
+
     reset();
     onCreated(committee.id);
-    toast.show(`${committee.name} created with ${picked.length} members.`, {
-      tone: 'success',
-    });
+    toast.show(`${committee.name} created with ${picked.length} members.`, { tone: 'success' });
   }
 
   return (
@@ -92,7 +99,7 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
           >
             Cancel
           </Button>
-          <Button variant="brush" disabled={!valid} onClick={submit}>
+          <Button variant="brush" disabled={!valid} onClick={() => void submit()}>
             Create
           </Button>
         </>

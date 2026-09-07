@@ -2,8 +2,14 @@ import { useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { usePermissionCheck } from '../../hooks/usePermission';
-import { MEETINGS, type ActionItem, type Attendance, type Meeting } from '../../lib/club';
-import { PEOPLE } from '../../lib/mockTasks';
+import { useMeetings } from '../../hooks/useMeetings';
+import { useClub } from '../../store/ClubProvider';
+import { useAuth } from '../../store/authStore';
+import { describeError } from '../../lib/supabase';
+import { insertMeeting, saveAttendance, saveMinutes } from '../../lib/db/queries';
+import { useTasks } from '../../store/taskStore';
+import { useBoards } from '../../store/ClubProvider';
+import { type ActionItem, type Attendance, type Meeting } from '../../lib/club';
 import { formatDate, type Person } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
@@ -13,6 +19,7 @@ import { Textarea } from '../../ui/primitives/Textarea';
 import { DatePicker } from '../../ui/primitives/DatePicker';
 import { Card, EmptyState, LinkChip, Modal, SectionHeader, SegmentedControl } from '../../ui/patterns';
 import { StickerCalendar } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import './Meetings.css';
 
 const ATTENDANCE_OPTIONS = [
@@ -26,8 +33,10 @@ export function Meetings() {
   const navigate = useNavigate();
   const toast = useToast();
   const can = usePermissionCheck();
+  const { tenureId } = useClub();
+  const { session } = useAuth();
+  const { meetings, loading, error, reload } = useMeetings();
 
-  const [meetings, setMeetings] = useState<Meeting[]>(MEETINGS);
   const [scheduling, setScheduling] = useState(false);
   const [draft, setDraft] = useState({
     title: '',
@@ -47,30 +56,50 @@ export function Meetings() {
     return map;
   }, [meetings]);
 
-  function schedule() {
+  async function schedule() {
     const title = draft.title.trim();
-    if (!title || !draft.date) return;
+    if (!title || !draft.date || !tenureId) return;
 
-    const meeting: Meeting = {
-      id: `mt-${Date.now().toString(36)}`,
-      title,
-      context: draft.context,
-      date: draft.date,
-      // Empty strings are absent, not empty — a meeting with no link should
-      // not render a link chip pointing nowhere.
-      location: draft.location.trim() || undefined,
-      link: draft.link.trim() || undefined,
-      published: false,
-      invited: Object.values(PEOPLE),
-      attendance: {},
-      minutes: '',
-      actions: [],
-    };
+    const link = draft.link.trim();
 
-    setMeetings((current) => [...current, meeting]);
+    try {
+      await insertMeeting({
+        tenureId,
+        title,
+        // The picker gives a date; meetings are stored to the minute, so it is
+        // widened here rather than the column being narrowed.
+        scheduledAt: `${draft.date}T09:00:00Z`,
+        // Empty strings are absent, not empty — a meeting with no location
+        // should not render a chip pointing nowhere.
+        location: draft.location.trim() || null,
+        // The join link rides in the description until the table has a column
+        // for it; `toMeeting` reads it back out.
+        description: link || null,
+        createdBy: session?.userId ?? null,
+      });
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+      return;
+    }
+
     setScheduling(false);
     setDraft({ title: '', context: 'Core team', date: null, location: '', link: '' });
-    toast.show(`${title} scheduled for ${formatDate(meeting.date)}.`, { tone: 'success' });
+    await reload();
+    toast.show(`${title} scheduled for ${formatDate(draft.date)}.`, { tone: 'success' });
+  }
+
+  if (loading) return <SkeletonTaskCard />;
+
+  if (error) {
+    return (
+      <Card>
+        <EmptyState
+          sticker={<StickerCalendar size="empty" />}
+          title="Could not read the meetings"
+          line={error}
+        />
+      </Card>
+    );
   }
 
   if (meetings.length === 0) {
@@ -151,7 +180,7 @@ export function Meetings() {
             <Button
               variant="brush"
               disabled={!draft.title.trim() || !draft.date}
-              onClick={schedule}
+              onClick={() => void schedule()}
             >
               Schedule
             </Button>
@@ -205,21 +234,46 @@ export function Meetings() {
  */
 export function MeetingDetail() {
   const { id } = useParams<{ id: string }>();
+  const { meetings, loading, error } = useMeetings();
+
+  const source = meetings.find((meeting) => meeting.id === id);
+
+  if (loading) return <SkeletonTaskCard />;
+
+  if (error) {
+    return (
+      <Card>
+        <EmptyState
+          sticker={<StickerCalendar size="empty" />}
+          title="Could not read this meeting"
+          line={error}
+        />
+      </Card>
+    );
+  }
+
+  if (!source) return <Navigate to="/meetings" replace />;
+
+  // Keyed on the meeting so the editor's local state is initialised from the
+  // fetched minutes rather than from an empty placeholder.
+  return <MeetingEditor key={source.id} source={source} />;
+}
+
+function MeetingEditor({ source }: { source: Meeting }) {
   const can = usePermissionCheck();
   const toast = useToast();
-
-  const source = MEETINGS.find((meeting) => meeting.id === id);
+  const { tenureId } = useClub();
+  const { create } = useTasks();
+  const boards = useBoards();
 
   // Local state: minutes and attendance are edited here and saved as one write.
   const [attendance, setAttendance] = useState<Partial<Record<string, Attendance>>>(
-    source?.attendance ?? {},
+    source.attendance,
   );
-  const [minutes, setMinutes] = useState(source?.minutes ?? '');
-  const [actions, setActions] = useState<ActionItem[]>(source?.actions ?? []);
+  const [minutes, setMinutes] = useState(source.minutes);
+  const [actions, setActions] = useState<ActionItem[]>(source.actions);
   const [drafting, setDrafting] = useState<ActionItem | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
-
-  if (!source) return <Navigate to="/meetings" replace />;
 
   /** §9.11 — the person may minute a meeting only if they may assign work. */
   const editable = can('task.assign');
@@ -230,7 +284,7 @@ export function MeetingDetail() {
 
   function markAllPresent() {
     setAttendance(
-      Object.fromEntries(source!.invited.map((person) => [person.id, 'present' as const])),
+      Object.fromEntries(source.invited.map((person) => [person.id, 'present' as const])),
     );
   }
 
@@ -239,21 +293,61 @@ export function MeetingDetail() {
     setDraftTitle(item.text);
   }
 
-  function confirmTask() {
+  async function confirmTask() {
     if (!drafting) return;
 
+    const title = draftTitle.trim();
+    if (!title) return;
+
     /*
-      TEMP: creating a task needs POST /tasks, which does not exist. Until it
-      does, the action item is marked as converted and the toast is honest
-      about what happened — it does not claim a task number that is not real.
+      An action item belongs to whoever was given it, so the task lands on
+      their domain. With nobody named it goes to the first board rather than to
+      a domain that does not exist.
     */
+    const domain = drafting.owner?.domain ?? boards[0]?.domain ?? 'design';
+    const board = boards.find((each) => each.domain === domain);
+
+    const task = await create({
+      title,
+      description: `From the minutes of ${source.title}, ${formatDate(source.date)}.`,
+      domain,
+      boardSlug: board?.slug ?? domain,
+      boardName: board?.name ?? domain,
+      priority: 'medium',
+      assignees: drafting.owner ? [drafting.owner] : [],
+      due: null,
+    });
+
+    if (!task) {
+      toast.show('Could not raise that task.', { tone: 'error' });
+      return;
+    }
+
     setActions((current) =>
       current.map((item) =>
-        item.id === drafting.id ? { ...item, taskNumber: 'pending' } : item,
+        item.id === drafting.id ? { ...item, taskNumber: task.number } : item,
       ),
     );
     setDrafting(null);
-    toast.show('Task drafted from the action item.', { tone: 'success' });
+    toast.show(`${task.number} raised from the action item.`, { tone: 'success' });
+  }
+
+  async function publish() {
+    if (!tenureId) return;
+
+    try {
+      await saveMinutes(source.id, minutes, source.link);
+      await saveAttendance(
+        tenureId,
+        source.id,
+        Object.entries(attendance)
+          .filter((entry): entry is [string, Attendance] => Boolean(entry[1]))
+          .map(([userId, status]) => ({ userId, status })),
+      );
+      toast.show('Minutes and attendance saved.', { tone: 'success' });
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+    }
   }
 
   const present = Object.values(attendance).filter((value) => value === 'present').length;
@@ -344,7 +438,7 @@ export function MeetingDetail() {
             />
             <Button
               variant="outline"
-              onClick={() => toast.show('Minutes saved.', { tone: 'success' })}
+              onClick={() => void publish()}
             >
               Save minutes
             </Button>
@@ -369,9 +463,7 @@ export function MeetingDetail() {
                 </span>
 
                 {item.taskNumber ? (
-                  <Tag state="done">
-                    {item.taskNumber === 'pending' ? 'Task drafted' : item.taskNumber}
-                  </Tag>
+                  <Tag state="done">{item.taskNumber}</Tag>
                 ) : (
                   editable && (
                     <Button variant="outline" size="sm" onClick={() => makeTask(item)}>
@@ -393,7 +485,13 @@ export function MeetingDetail() {
         footer={
           <>
             <Button variant="ghost" onClick={() => setDrafting(null)}>Cancel</Button>
-            <Button variant="brush" onClick={confirmTask}>Create</Button>
+            <Button
+              variant="brush"
+              disabled={!draftTitle.trim()}
+              onClick={() => void confirmTask()}
+            >
+              Create
+            </Button>
           </>
         }
       >

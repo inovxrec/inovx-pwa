@@ -5,7 +5,9 @@ import { useTasks } from '../../store/taskStore';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { useToast } from '../../hooks/useToast';
 import { useOpenTask } from '../../hooks/useOpenTask';
-import { ANNOUNCEMENTS, OCCASIONS, PERSON_BY_EMAIL } from '../../lib/mockTasks';
+import { useAnnouncements } from '../../hooks/useAnnouncements';
+import { useClub, useMe } from '../../store/ClubProvider';
+import { upcomingBirthdays } from '../../lib/club';
 import { LEGAL_TRANSITIONS, STATE_LABELS, daysUntil, dueInfo, type Task } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { Avatar } from '../../ui/primitives/Avatar';
@@ -43,6 +45,8 @@ export interface MyDayProps {
 export function MyDay({ loading = false }: MyDayProps) {
   const { session } = useAuth();
   const { tasks, setState } = useTasks();
+  const { members } = useClub();
+  const { announcements } = useAnnouncements();
   const can = usePermissionCheck();
   const navigate = useNavigate();
   const toast = useToast();
@@ -51,7 +55,14 @@ export function MyDay({ loading = false }: MyDayProps) {
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
 
-  const me = session ? PERSON_BY_EMAIL[session.email] : undefined;
+  const me = useMe();
+
+  // Only the ones that are actually today — a birthday next week belongs on the
+  // calendar, not in a card headed "Today's birthdays".
+  const birthdays = useMemo(
+    () => upcomingBirthdays(members, 0).map((entry) => entry.member),
+    [members],
+  );
 
   const groups = useMemo(() => {
     const live = tasks.filter((task) => task.state !== 'cancelled' && task.state !== 'done');
@@ -248,29 +259,29 @@ export function MyDay({ loading = false }: MyDayProps) {
             </Card>
           )}
 
-          {OCCASIONS.length > 0 && (
+          {birthdays.length > 0 && (
             <Card surface="mint" title="Today's birthdays">
               <ul className="myday__people" role="list">
-                {OCCASIONS.map((occasion) => (
-                  <li key={occasion.id} className="myday__person">
+                {birthdays.map((member) => (
+                  <li key={member.id} className="myday__person">
                     <Avatar
                       size={32}
-                      name={occasion.person.name}
-                      initials={occasion.person.initials}
-                      channel={occasion.person.domain}
+                      name={member.name}
+                      initials={member.initials}
+                      channel={member.domain}
                     />
-                    <span className="body-sm">{occasion.person.name}</span>
+                    <span className="body-sm">{member.name}</span>
                   </li>
                 ))}
               </ul>
             </Card>
           )}
 
-          {ANNOUNCEMENTS.map((announcement) => (
+          {announcements.map((announcement) => (
             <Card
               key={announcement.id}
               title={announcement.title}
-              eyebrow={`Pinned by ${announcement.by.name}`}
+              eyebrow={announcement.by ? `Pinned by ${announcement.by.name}` : 'Pinned'}
               decoration={tapeOnOverdue ? undefined : <Pin />}
             >
               <p className="body-sm read-width myday__announcement">{announcement.body}</p>

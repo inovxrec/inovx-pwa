@@ -1,8 +1,7 @@
-import {
-  createContext, useCallback, useContext, useMemo, useState, type ReactNode,
-} from 'react';
-import { PEOPLE } from '../lib/mockTasks';
+import { useCallback, useMemo } from 'react';
+import { supabase } from '../lib/supabase';
 import type { Domain, Person } from '../lib/tasks';
+import { useClub } from './ClubProvider';
 
 /**
  * Committees are the club's cross-domain unit (§0): a group drawn from more
@@ -10,6 +9,7 @@ import type { Domain, Person } from '../lib/tasks';
  * sees an Events task on their board at all.
  */
 export interface Committee {
+  /** The slug, which is what the URL carries. */
   id: string;
   name: string;
   members: Person[];
@@ -22,94 +22,67 @@ export function domainsOf(members: Person[]): Domain[] {
   return [...new Set(members.map((person) => person.domain))];
 }
 
-/** TEMP: seeded until GET /committees exists. */
-const SEED: Committee[] = [
-  {
-    id: 'techfest',
-    name: 'Techfest',
-    members: [PEOPLE.arjun, PEOPLE.karan, PEOPLE.ananya, PEOPLE.nithya, PEOPLE.dev],
-    domains: domainsOf([PEOPLE.arjun, PEOPLE.karan, PEOPLE.ananya, PEOPLE.nithya, PEOPLE.dev]),
-    createdAt: '2026-08-01',
-  },
-  {
-    id: 'alumni-meet',
-    name: 'Alumni meet',
-    members: [PEOPLE.sana, PEOPLE.riya, PEOPLE.dev],
-    domains: domainsOf([PEOPLE.sana, PEOPLE.riya, PEOPLE.dev]),
-    createdAt: '2026-08-18',
-  },
-];
-
 export interface CommitteeContextValue {
   committees: Committee[];
+  loading: boolean;
+  error: string;
   byId: (id: string) => Committee | undefined;
-  create: (name: string, members: Person[]) => Committee;
-  rename: (id: string, name: string) => void;
-  setMembers: (id: string, members: Person[]) => void;
-  remove: (id: string) => void;
+  create: (name: string, members: Person[]) => Promise<Committee | null>;
 }
 
-const CommitteeContext = createContext<CommitteeContextValue | null>(null);
-
-/** A URL-safe id from the name, kept unique against what already exists. */
-function slugify(name: string, taken: Set<string>): string {
-  const base =
-    name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'committee';
-
-  if (!taken.has(base)) return base;
-  let n = 2;
-  while (taken.has(`${base}-${n}`)) n += 1;
-  return `${base}-${n}`;
-}
-
-export function CommitteeProvider({ children }: { children: ReactNode }) {
-  const [committees, setCommittees] = useState<Committee[]>(SEED);
+/**
+ * Reads straight from the club provider rather than keeping a second copy.
+ * Committees are loaded with the domains and the roster because every screen
+ * that wants one wants those too.
+ */
+export function useCommittees(): CommitteeContextValue {
+  const { committees, tenureId, loading, error, reload } = useClub();
 
   const byId = useCallback(
     (id: string) => committees.find((committee) => committee.id === id),
     [committees],
   );
 
-  const create = useCallback((name: string, members: Person[]) => {
-    const committee: Committee = {
-      id: slugify(name, new Set(committees.map((c) => c.id))),
-      name: name.trim(),
-      members,
-      domains: domainsOf(members),
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    setCommittees((current) => [...current, committee]);
-    return committee;
-  }, [committees]);
+  const create = useCallback(
+    async (name: string, members: Person[]) => {
+      if (!tenureId) return null;
 
-  const rename = useCallback((id: string, name: string) => {
-    setCommittees((current) =>
-      current.map((c) => (c.id === id ? { ...c, name: name.trim() } : c)),
-    );
-  }, []);
+      const slug =
+        name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'committee';
 
-  const setMembers = useCallback((id: string, members: Person[]) => {
-    setCommittees((current) =>
-      current.map((c) =>
-        c.id === id ? { ...c, members, domains: domainsOf(members) } : c,
-      ),
-    );
-  }, []);
+      const { data, error: insertError } = await supabase
+        .from('committees')
+        .insert({ tenure_id: tenureId, name: name.trim(), slug })
+        .select('id, slug, name')
+        .single();
 
-  const remove = useCallback((id: string) => {
-    setCommittees((current) => current.filter((c) => c.id !== id));
-  }, []);
+      if (insertError || !data) return null;
 
-  const value = useMemo(
-    () => ({ committees, byId, create, rename, setMembers, remove }),
-    [committees, byId, create, rename, setMembers, remove],
+      if (members.length > 0) {
+        await supabase.from('committee_members').insert(
+          members.map((person) => ({
+            tenure_id: tenureId,
+            committee_id: data.id,
+            user_id: person.id,
+          })),
+        );
+      }
+
+      await reload();
+
+      return {
+        id: data.slug,
+        name: data.name,
+        members,
+        domains: domainsOf(members),
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+    },
+    [tenureId, reload],
   );
 
-  return <CommitteeContext.Provider value={value}>{children}</CommitteeContext.Provider>;
-}
-
-export function useCommittees(): CommitteeContextValue {
-  const ctx = useContext(CommitteeContext);
-  if (!ctx) throw new Error('useCommittees must be used within a CommitteeProvider');
-  return ctx;
+  return useMemo(
+    () => ({ committees, loading, error, byId, create }),
+    [committees, loading, error, byId, create],
+  );
 }

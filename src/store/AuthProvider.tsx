@@ -1,110 +1,134 @@
-import { useCallback, useState, type ReactNode } from 'react';
-import { AuthContext, type Role, type Session } from './authStore';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { NOT_CONFIGURED, describeError, isConfigured, supabase } from '../lib/supabase';
+import { fetchProfile } from '../lib/db/queries';
+import { toDomain, toRole } from '../lib/db/map';
+import { AuthContext, type Session } from './authStore';
 
 /**
- * TEMP: fakes a login against a hardcoded table so frontend work isn't blocked
- * on the backend team's auth endpoint. Swap the body of `login` for a real
- * fetch('/api/auth/login') once that's ready — the shape of Session should stay
- * the same so nothing downstream needs to change.
+ * Real authentication, against Supabase.
  *
- * Every account here still holds the password the core team issued it, so each
- * one lands on /first-run the first time (§9.2). That flag is real state on the
- * server; here it is remembered per-email in localStorage so a reviewer isn't
- * walked through the same two screens on every reload.
+ * The account lives in `auth.users` and its profile — role, domain, position,
+ * whether the issued password has been changed — mirrors into the public
+ * `users` table. Signing in gets the first; the session the app works with
+ * needs both, so the profile is fetched straight after.
+ *
+ * Nothing here decides what anyone may do. Row level security does that; the
+ * role below only chooses which screens are worth offering (§12).
  */
-type Account = { password: string; person: Omit<Session, 'mustSetPassword' | 'hasOnboarded'> };
-
-const FAKE_USERS: Record<string, Account> = {
-  'riya@inovx.club': {
-    password: 'demo',
-    person: { email: 'riya@inovx.club', name: 'Riya S.', initials: 'RS', role: 'super-admin' },
-  },
-  'arjun@inovx.club': {
-    password: 'demo',
-    person: { email: 'arjun@inovx.club', name: 'Arjun M.', initials: 'AM', role: 'admin' },
-  },
-  'member@inovx.club': {
-    password: 'demo',
-    person: { email: 'member@inovx.club', name: 'Ananya R.', initials: 'AR', role: 'member' },
-  },
-  'faculty@inovx.club': {
-    password: 'demo',
-    person: { email: 'faculty@inovx.club', name: 'Dr. Nair', initials: 'DN', role: 'faculty' },
-  },
-};
-
-/** §9.1 — five failures locks the account for fifteen minutes. */
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 15 * 60 * 1000;
-
-const FLAGS_KEY = 'inovx.dev.entry';
-
-type EntryFlags = Record<string, { passwordSet?: boolean; onboarded?: boolean }>;
-
-function readFlags(): EntryFlags {
-  try {
-    return JSON.parse(localStorage.getItem(FLAGS_KEY) ?? '{}') as EntryFlags;
-  } catch {
-    // Private mode, blocked site data, or a value from an older shape.
-    return {};
-  }
-}
-
-function writeFlag(email: string, patch: EntryFlags[string]) {
-  try {
-    const all = readFlags();
-    localStorage.setItem(FLAGS_KEY, JSON.stringify({ ...all, [email]: { ...all[email], ...patch } }));
-  } catch {
-    // Not being able to remember it is survivable — the flow just repeats.
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // No seeded session: the app opens at /login (§9.1).
   const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(!isConfigured);
 
-  // Attempt counting is per browser here; the server owns it for real.
-  const [failures, setFailures] = useState(0);
-  const [lockedUntil, setLockedUntil] = useState(0);
+  /** Builds the app's session from an auth user id. */
+  const loadProfile = useCallback(async (userId: string, email: string) => {
+    const profile = await fetchProfile(userId);
+
+    if (!profile) {
+      /*
+        Authenticated but with no profile row. That is a provisioning fault, not
+        a login the app can carry on with — a session with no role would be
+        given a member's screens by default, which is a guess about access.
+      */
+      await supabase.auth.signOut();
+      throw new Error('Your account has no profile yet. Ask the core team to finish setting it up.');
+    }
+
+    const next: Session = {
+      email: profile.email || email,
+      name: profile.name,
+      initials:
+        profile.initials ??
+        profile.name.split(/\s+/).slice(0, 2).map((p) => p[0] ?? '').join('').toUpperCase(),
+      role: toRole(profile.role),
+      mustSetPassword: profile.must_change_password,
+      // Onboarding is a client-side courtesy; the schema does not track it.
+      hasOnboarded: readOnboarded(profile.email || email),
+      userId: profile.id,
+      domain: toDomain(profile.domain),
+    };
+
+    setSession(next);
+    return next;
+  }, []);
+
+  // Restore an existing session on load, and follow sign-in/out from anywhere.
+  useEffect(() => {
+    if (!isConfigured) return;
+
+    let cancelled = false;
+
+    supabase.auth
+      .getSession()
+      .then(async ({ data }) => {
+        if (cancelled) return;
+        const user = data.session?.user;
+        if (user) await loadProfile(user.id, user.email ?? '').catch(() => setSession(null));
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === 'SIGNED_OUT' || !next?.user) {
+        setSession(null);
+        return;
+      }
+      // SIGNED_IN also fires on a token refresh; reloading the profile then is
+      // cheap and keeps a role change from needing a reload to take effect.
+      void loadProfile(next.user.id, next.user.email ?? '').catch(() => setSession(null));
+    });
+
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
+  }, [loadProfile]);
 
   const login = useCallback(
     async (email: string, password: string) => {
-      if (Date.now() < lockedUntil) return { ok: false, error: 'Locked for 15 minutes.' };
+      if (!isConfigured) return { ok: false, error: NOT_CONFIGURED };
 
-      const key = email.trim().toLowerCase();
-      const account = FAKE_USERS[key];
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      if (!account || account.password !== password) {
-        const next = failures + 1;
-        setFailures(next);
-        if (next >= MAX_ATTEMPTS) {
-          setLockedUntil(Date.now() + LOCKOUT_MS);
-          return { ok: false, error: 'Locked for 15 minutes.' };
-        }
-        // One message for both halves — never reveal which was wrong (§9.1).
-        return { ok: false, error: 'Check your email and password.' };
+      if (error || !data.user) {
+        /*
+          One message for both halves (§9.1). Supabase distinguishes a wrong
+          password from an unknown address; passing that through would tell an
+          attacker which emails are real.
+        */
+        const rateLimited = error?.status === 429;
+        return {
+          ok: false,
+          error: rateLimited ? 'Too many attempts. Try again shortly.' : 'Check your email and password.',
+        };
       }
 
-      const flags = readFlags()[key] ?? {};
-      const next: Session = {
-        ...account.person,
-        mustSetPassword: !flags.passwordSet,
-        hasOnboarded: Boolean(flags.onboarded),
-      };
-
-      setFailures(0);
-      setSession(next);
-      return { ok: true, session: next };
+      try {
+        const next = await loadProfile(data.user.id, data.user.email ?? email);
+        return { ok: true, session: next };
+      } catch (caught) {
+        return { ok: false, error: describeError(caught) };
+      }
     },
-    [failures, lockedUntil],
+    [loadProfile],
   );
 
-  const logout = useCallback(() => setSession(null), []);
+  const logout = useCallback(() => {
+    void supabase.auth.signOut();
+    setSession(null);
+  }, []);
 
-  const setPassword = useCallback(async (_password: string) => {
+  const setPassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+
     setSession((current) => {
       if (!current) return current;
-      writeFlag(current.email, { passwordSet: true });
+      // The flag is the server's, so it is cleared there too.
+      void supabase.from('users').update({ must_change_password: false }).eq('id', current.userId);
       return { ...current, mustSetPassword: false };
     });
   }, []);
@@ -112,22 +136,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const completeOnboarding = useCallback(() => {
     setSession((current) => {
       if (!current) return current;
-      writeFlag(current.email, { onboarded: true });
+      writeOnboarded(current.email);
       return { ...current, hasOnboarded: true };
     });
   }, []);
 
-  const setRole = useCallback((role: Role) => {
-    const account = Object.values(FAKE_USERS).find((a) => a.person.role === role);
-    if (!account) return;
-    setSession({ ...account.person, mustSetPassword: false, hasOnboarded: true });
-  }, []);
-
   return (
     <AuthContext.Provider
-      value={{ session, login, logout, setPassword, completeOnboarding, setRole }}
+      value={{ session, ready, login, logout, setPassword, completeOnboarding }}
     >
       {children}
     </AuthContext.Provider>
   );
+}
+
+/*
+  Whether someone has seen the tour is a preference, not a fact about the club,
+  and the schema has nowhere for it. It lives in this browser, keyed by email so
+  two people sharing a machine do not inherit each other's.
+*/
+const ONBOARDED_KEY = 'inovx.onboarded';
+
+function readOnboarded(email: string): boolean {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ONBOARDED_KEY) ?? '{}') as Record<string, boolean>;
+    return Boolean(raw[email]);
+  } catch {
+    return false;
+  }
+}
+
+function writeOnboarded(email: string): void {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ONBOARDED_KEY) ?? '{}') as Record<string, boolean>;
+    localStorage.setItem(ONBOARDED_KEY, JSON.stringify({ ...raw, [email]: true }));
+  } catch {
+    // Private mode. The tour shows again, which is survivable.
+  }
 }

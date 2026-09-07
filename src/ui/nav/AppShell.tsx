@@ -5,6 +5,7 @@ import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useHideOnScroll } from '../../hooks/useHideOnScroll';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { usePermissionCheck } from '../../hooks/usePermission';
+import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { splitForBottomBar, visibleNavItems } from '../../lib/navConfig';
 import { NavRail } from './NavRail';
 import { BottomBar } from './BottomBar';
@@ -49,8 +50,8 @@ export function AppShell() {
     ([...matches].reverse().find((match) => (match.handle as RouteHandle | undefined)?.title)
       ?.handle as RouteHandle | undefined) ?? {};
 
-  // TEMP: the alert count is mock until the notifications endpoint exists.
-  const counts = { notifications: 3 };
+  const unread = useUnreadCount();
+  const counts = { notifications: unread };
 
   const items = session ? visibleNavItems(session.role, can) : [];
   const { tabs, more } = splitForBottomBar(items);

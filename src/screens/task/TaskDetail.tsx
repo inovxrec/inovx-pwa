@@ -1,11 +1,10 @@
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTasks } from '../../store/taskStore';
-import { useAuth } from '../../store/authStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { TASK_PARAM, useCloseTask } from '../../hooks/useOpenTask';
-import { PERSON_BY_EMAIL } from '../../lib/mockTasks';
+import { useMe } from '../../store/ClubProvider';
 import { STATE_LABELS, type TaskState } from '../../lib/tasks';
 import { Drawer } from '../../ui/patterns/Drawer';
 import { NotFound } from '../system/SystemScreens';
@@ -15,12 +14,11 @@ import './TaskDetail.css';
 /** Everything both halves of the fork need, in one place. */
 function useTaskActions(id: string | undefined) {
   const { byId, setState } = useTasks();
-  const { session } = useAuth();
   const can = usePermissionCheck();
   const toast = useToast();
 
   const task = id ? byId(id) : undefined;
-  const me = session ? PERSON_BY_EMAIL[session.email] : undefined;
+  const me = useMe();
 
   function move(next: TaskState) {
     if (!task) return;

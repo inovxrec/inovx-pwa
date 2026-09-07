@@ -3,8 +3,8 @@ import { useTasks } from '../../store/taskStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
-import { MEMBERS, openCountFor, upcomingBirthdays } from '../../lib/club';
-import { BOARDS } from '../../lib/mockTasks';
+import { openCountFor, upcomingBirthdays } from '../../lib/club';
+import { useBoards, useClub } from '../../store/ClubProvider';
 import { DOMAIN_LABELS, formatDate, type Domain } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Chip } from '../../ui/primitives/Chip';
@@ -12,10 +12,8 @@ import { Tag } from '../../ui/primitives/Tag';
 import { StatePill } from '../../ui/primitives/StatePill';
 import { Card, EmptyState, SearchBar, TabPanel, Tabs } from '../../ui/patterns';
 import { StickerCalendar } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import './People.css';
-
-/** §9.10 — the club's five domains, plus an "all" resting state. */
-const DOMAIN_FILTERS: Array<Domain | 'all'> = ['all', ...BOARDS.map((b) => b.domain)];
 
 /**
  * §9.10 — a three-column grid of member cards on desktop, a 56px list on
@@ -23,6 +21,8 @@ const DOMAIN_FILTERS: Array<Domain | 'all'> = ['all', ...BOARDS.map((b) => b.dom
  */
 export function People() {
   const { tasks } = useTasks();
+  const { members: roster, loading, error } = useClub();
+  const boards = useBoards();
   const isDesktop = useIsDesktop();
   const can = usePermissionCheck();
   const openTask = useOpenTask();
@@ -31,16 +31,22 @@ export function People() {
   const [query, setQuery] = useState('');
   const [domain, setDomain] = useState<Domain | 'all'>('all');
 
+  /** §9.10 — the club's domains, plus an "all" resting state. */
+  const domainFilters = useMemo<Array<Domain | 'all'>>(
+    () => ['all', ...boards.map((board) => board.domain)],
+    [boards],
+  );
+
   const members = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return MEMBERS.filter((member) => {
+    return roster.filter((member) => {
       if (domain !== 'all' && member.domain !== domain) return false;
       if (!needle) return true;
       return `${member.name} ${member.title}`.toLowerCase().includes(needle);
     });
-  }, [query, domain]);
+  }, [roster, query, domain]);
 
-  const birthdays = useMemo(() => upcomingBirthdays(60), []);
+  const birthdays = useMemo(() => upcomingBirthdays(roster, 60), [roster]);
 
   /** The open-task count is analytics, so it is absent without the key. */
   const showCounts = can('analytics.view');
@@ -52,7 +58,7 @@ export function People() {
         value={tab}
         onChange={setTab}
         items={[
-          { id: 'members', label: 'Members', count: MEMBERS.length },
+          { id: 'members', label: 'Members', count: roster.length },
           { id: 'birthdays', label: 'Birthdays', count: birthdays.length },
         ]}
         className="people__tabs"
@@ -69,7 +75,7 @@ export function People() {
             />
 
             <div className="people__filters no-scrollbar" role="group" aria-label="Filter by domain">
-              {DOMAIN_FILTERS.map((option) => (
+              {domainFilters.map((option) => (
                 <Chip
                   key={option}
                   variant="toggle"
@@ -83,7 +89,17 @@ export function People() {
             </div>
           </div>
 
-          {members.length === 0 ? (
+          {loading ? (
+            <SkeletonTaskCard />
+          ) : error ? (
+            <Card>
+              <EmptyState
+                sticker={<StickerCalendar size="empty" />}
+                title="Could not read the roster"
+                line={error}
+              />
+            </Card>
+          ) : members.length === 0 ? (
             <Card>
               <EmptyState
                 sticker={<StickerCalendar size="empty" />}

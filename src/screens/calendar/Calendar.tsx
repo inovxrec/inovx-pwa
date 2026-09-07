@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useTasks } from '../../store/taskStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useOpenTask } from '../../hooks/useOpenTask';
+import { useMeetings } from '../../hooks/useMeetings';
+import { useClub } from '../../store/ClubProvider';
 import {
   LAYER_LABELS, calendarEvents, eventsByDate, type CalendarLayer,
 } from '../../lib/club';
@@ -22,12 +24,14 @@ const LAYERS: CalendarLayer[] = ['deadlines', 'occasions', 'meetings', 'events']
  */
 export function Calendar() {
   const { tasks } = useTasks();
+  const { members } = useClub();
+  const { meetings } = useMeetings();
   const isDesktop = useIsDesktop();
   const openTask = useOpenTask();
 
   const [layers, setLayers] = useState<CalendarLayer[]>(LAYERS);
 
-  const events = useMemo(() => calendarEvents(tasks), [tasks]);
+  const events = useMemo(() => calendarEvents(tasks, members, meetings), [tasks, members, meetings]);
   const visible = useMemo(
     () => events.filter((event) => layers.includes(event.layer)),
     [events, layers],

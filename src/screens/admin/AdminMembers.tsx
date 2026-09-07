@@ -1,38 +1,33 @@
 import { useMemo, useState } from 'react';
 import { useTasks } from '../../store/taskStore';
 import { useToast } from '../../hooks/useToast';
-import { temporaryPassword } from '../../lib/admin';
-import { MEMBERS, openCountFor, type Member } from '../../lib/club';
-import { BOARDS } from '../../lib/mockTasks';
+import { openCountFor, type Member } from '../../lib/club';
+import { useBoards, useClub } from '../../store/ClubProvider';
 import { DOMAIN_LABELS, type Domain } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
 import { Select } from '../../ui/primitives/Select';
 import { Tag } from '../../ui/primitives/Tag';
-import { Card, DataView, Modal, type Column } from '../../ui/patterns';
+import { Card, DataView, EmptyState, Modal, type Column } from '../../ui/patterns';
+import { StickerCloudOff } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
 const SCREEN = ADMIN_SCREENS.find((s) => s.id === 'members')!;
 
-interface Provisioned {
-  name: string;
-  email: string;
-  password: string;
-}
-
 /** §9.15 — the member list, and the provisioning flow behind it. */
 export function AdminMembers() {
   const { tasks } = useTasks();
+  const { members, loading, error } = useClub();
+  const boards = useBoards();
   const toast = useToast();
 
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [domain, setDomain] = useState<Domain>('design');
-  /** The result card. Shown once, and never recoverable afterwards. */
-  const [issued, setIssued] = useState<Provisioned | null>(null);
+  const [domain, setDomain] = useState<Domain>(boards[0]?.domain ?? 'design');
 
   const columns: Column<Member>[] = useMemo(
     () => [
@@ -68,14 +63,17 @@ export function AdminMembers() {
     [tasks],
   );
 
+  /*
+    Issuing an account means creating an auth user and a temporary password,
+    which needs the service role — the browser must never hold that key. It
+    belongs to the bulk-import function, so this form stops here rather than
+    minting a password the server never saw.
+  */
   function provision() {
-    const trimmed = name.trim();
-    if (!trimmed || !email.trim()) return;
-
-    setIssued({ name: trimmed, email: email.trim(), password: temporaryPassword() });
     setAdding(false);
     setName('');
     setEmail('');
+    toast.show('Issuing accounts runs on the server — that endpoint is not wired up yet.');
   }
 
   return (
@@ -96,54 +94,32 @@ export function AdminMembers() {
         </>
       }
     >
-      {/*
-        §9.15 — shown once, with a warning that says so. There is deliberately
-        no way back to it: if it is lost the account is reset, not recovered.
-      */}
-      {issued && (
-        <Card surface="mint" title="Account issued" className="admin__issued">
-          <p className="body-sm">
-            <strong>{issued.name}</strong> can sign in as {issued.email} with this
-            password. It is shown once and cannot be looked up again — send it to
-            them now.
-          </p>
-
-          <div className="admin__password">
-            <code className="admin__password-value">{issued.password}</code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void navigator.clipboard?.writeText(issued.password);
-                toast.show('Temporary password copied.', { tone: 'success' });
-              }}
-            >
-              Copy
-            </Button>
-          </div>
-
-          <Button variant="ghost" size="sm" onClick={() => setIssued(null)}>
-            I have sent it
-          </Button>
-        </Card>
-      )}
-
       <Card>
-        <DataView
-          label="All members"
-          rows={MEMBERS}
-          columns={columns}
-          rowKey={(row) => row.id}
-          actions={() => (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toast.show('Editing a member is not wired up yet.')}
-            >
-              Edit
-            </Button>
-          )}
-        />
+        {loading ? (
+          <SkeletonTaskCard />
+        ) : error ? (
+          <EmptyState
+            sticker={<StickerCloudOff size="empty" />}
+            title="Could not read the roster"
+            line={error}
+          />
+        ) : (
+          <DataView
+            label="All members"
+            rows={members}
+            columns={columns}
+            rowKey={(row) => row.id}
+            actions={() => (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toast.show('Editing a member is not wired up yet.')}
+              >
+                Edit
+              </Button>
+            )}
+          />
+        )}
       </Card>
 
       <Modal
@@ -176,7 +152,7 @@ export function AdminMembers() {
           <Select
             label="Domain"
             value={domain}
-            options={BOARDS.map((board) => ({
+            options={boards.map((board) => ({
               value: board.domain,
               label: board.name,
               dot: `var(--dom-${board.domain})`,
@@ -184,8 +160,8 @@ export function AdminMembers() {
             onChange={(value) => setDomain(value as Domain)}
           />
           <p className="body-sm admin__note">
-            A temporary password is generated when the account is issued, and
-            shown to you once.
+            Accounts are issued by the server, which generates the temporary
+            password. That endpoint is not wired up yet.
           </p>
         </div>
       </Modal>

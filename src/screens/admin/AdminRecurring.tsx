@@ -1,10 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../../hooks/useToast';
+import { describeError } from '../../lib/supabase';
 import {
-  FREQUENCY_LABELS, RECURRING_RULES, WEEKDAYS, nextOccurrences,
+  cronFor, domainIdBySlug, fetchRecurringRules, insertRecurringRule,
+  scheduleFromCron, setRecurringRuleActive,
+} from '../../lib/db/queries';
+import { useBoards, useClub } from '../../store/ClubProvider';
+import {
+  FREQUENCY_LABELS, WEEKDAYS, nextOccurrences,
   type Frequency, type RecurringRule,
 } from '../../lib/admin';
-import { BOARDS } from '../../lib/mockTasks';
 import { DOMAIN_LABELS, formatDate, type Domain } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
@@ -13,6 +18,7 @@ import { Switch } from '../../ui/primitives/Switch';
 import { Tag } from '../../ui/primitives/Tag';
 import { Card, EmptyState } from '../../ui/patterns';
 import { StickerCalendar } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './Admin.css';
 
@@ -24,18 +30,59 @@ const BLANK: RecurringRule = {
   frequency: 'weekly',
   weekday: 1,
   monthDay: 1,
-  // A real board, not 'core' — core has no board, so the Select had no option
-  // matching it and rendered empty.
-  domain: BOARDS[0].domain,
+  domain: 'design',
   active: true,
 };
 
 /** §9.15 — the rule builder, with the live "next five" preview beside it. */
 export function AdminRecurring() {
   const toast = useToast();
+  const { tenureId, domains } = useClub();
+  const boards = useBoards();
 
-  const [rules, setRules] = useState<RecurringRule[]>(RECURRING_RULES);
+  const [rules, setRules] = useState<RecurringRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [draft, setDraft] = useState<RecurringRule>(BLANK);
+
+  /*
+    A real board, not 'core' — core has no board, so the Select would have no
+    option matching it and render empty. The boards arrive a moment after the
+    first render, so the draft's domain is corrected here rather than in an
+    effect that would re-render for it.
+  */
+  const blank: RecurringRule = { ...BLANK, domain: boards[0]?.domain ?? BLANK.domain };
+  const onABoard = boards.some((board) => board.domain === draft.domain);
+  if (boards.length > 0 && !onABoard) setDraft((current) => ({ ...current, domain: blank.domain }));
+
+  useEffect(() => {
+    if (!tenureId) return;
+    let cancelled = false;
+
+    const slugById = new Map(domains.map((domain) => [domain.id, domain.slug as Domain]));
+
+    setLoading(true);
+    fetchRecurringRules(tenureId)
+      .then((rows) => {
+        if (cancelled) return;
+        setRules(
+          rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            frequency: row.frequency,
+            domain: slugById.get(row.context_id) ?? 'core',
+            active: row.is_active,
+            ...scheduleFromCron(row.cron_expression),
+          })),
+        );
+      })
+      .catch((caught) => !cancelled && setError(describeError(caught)))
+      .finally(() => !cancelled && setLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenureId, domains]);
 
   // Recomputed from the draft on every keystroke — the point of the panel is
   // that it answers "what will this actually do" before anything is saved.
@@ -45,15 +92,50 @@ export function AdminRecurring() {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function save() {
+  async function save() {
     const title = draft.title.trim();
-    if (!title) return;
+    if (!title || !tenureId) return;
 
-    setRules((current) => [...current, { ...draft, id: `rec-${Date.now()}`, title }]);
-    setDraft(BLANK);
-    toast.show(`"${title}" will raise its first task on ${formatDate(preview[0])}.`, {
-      tone: 'success',
-    });
+    const contextId = domainIdBySlug(domains, draft.domain);
+    if (!contextId) {
+      toast.show('That domain is not on this tenure.', { tone: 'error' });
+      return;
+    }
+
+    try {
+      const row = await insertRecurringRule({
+        tenureId,
+        title,
+        frequency: draft.frequency,
+        cron: cronFor(draft.frequency, draft.weekday, draft.monthDay),
+        contextId,
+        active: draft.active,
+      });
+
+      setRules((current) => [...current, { ...draft, id: row.id, title }]);
+      setDraft(blank);
+      toast.show(`"${title}" will raise its first task on ${formatDate(preview[0])}.`, {
+        tone: 'success',
+      });
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+    }
+  }
+
+  async function toggle(rule: RecurringRule, active: boolean) {
+    setRules((current) =>
+      current.map((r) => (r.id === rule.id ? { ...r, active } : r)),
+    );
+
+    try {
+      await setRecurringRuleActive(rule.id, active);
+    } catch (caught) {
+      // Put the switch back rather than leaving it saying something untrue.
+      setRules((current) =>
+        current.map((r) => (r.id === rule.id ? { ...r, active: !active } : r)),
+      );
+      toast.show(describeError(caught), { tone: 'error' });
+    }
   }
 
   return (
@@ -79,7 +161,7 @@ export function AdminRecurring() {
             />
 
             {/* Only the control the chosen frequency actually uses is rendered. */}
-            {(draft.frequency === 'weekly' || draft.frequency === 'fortnightly') && (
+            {(draft.frequency === 'weekly' || draft.frequency === 'biweekly') && (
               <Select
                 label="On which day"
                 value={String(draft.weekday)}
@@ -103,7 +185,7 @@ export function AdminRecurring() {
             <Select
               label="Domain"
               value={draft.domain}
-              options={BOARDS.map((board) => ({
+              options={boards.map((board) => ({
                 value: board.domain,
                 label: board.name,
                 dot: `var(--dom-${board.domain})`,
@@ -117,7 +199,7 @@ export function AdminRecurring() {
               onChange={(event) => set('active', event.target.checked)}
             />
 
-            <Button variant="brush" disabled={!draft.title.trim()} onClick={save}>
+            <Button variant="brush" disabled={!draft.title.trim()} onClick={() => void save()}>
               Create rule
             </Button>
           </div>
@@ -142,7 +224,17 @@ export function AdminRecurring() {
       </div>
 
       <Card title="Existing rules">
-        {rules.length === 0 && (
+        {loading && <SkeletonTaskCard />}
+
+        {!loading && error && (
+          <EmptyState
+            sticker={<StickerCalendar size="empty" />}
+            title="Could not read the rules"
+            line={error}
+          />
+        )}
+
+        {!loading && !error && rules.length === 0 && (
           <EmptyState
             sticker={<StickerCalendar size="empty" />}
             title="No rules yet"
@@ -157,7 +249,7 @@ export function AdminRecurring() {
                 <span className="body-sm admin__rule-title">{rule.title}</span>
                 <span className="micro admin__rule-meta">
                   {FREQUENCY_LABELS[rule.frequency]}
-                  {rule.frequency === 'weekly' || rule.frequency === 'fortnightly'
+                  {rule.frequency === 'weekly' || rule.frequency === 'biweekly'
                     ? ` · ${WEEKDAYS[rule.weekday]}`
                     : rule.frequency === 'monthly'
                       ? ` · day ${rule.monthDay}`
@@ -171,13 +263,7 @@ export function AdminRecurring() {
                 label={`${rule.title} active`}
                 labelHidden
                 checked={rule.active}
-                onChange={(event) =>
-                  setRules((current) =>
-                    current.map((r) =>
-                      r.id === rule.id ? { ...r, active: event.target.checked } : r,
-                    ),
-                  )
-                }
+                onChange={(event) => void toggle(rule, event.target.checked)}
               />
             </li>
           ))}

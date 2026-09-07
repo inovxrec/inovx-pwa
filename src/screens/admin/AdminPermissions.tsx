@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useGrants } from '../../store/grantStore';
 import { useToast } from '../../hooks/useToast';
-import { MEMBERS, type Member } from '../../lib/club';
-import { BOARDS } from '../../lib/mockTasks';
+import { type Member } from '../../lib/club';
+import { useBoards, useClub } from '../../store/ClubProvider';
 import { ROLE_DEFAULTS, type PermissionKey } from '../../lib/permissions';
 import {
   PERMISSION_GROUPS, type Decision, type PermissionEdits,
@@ -53,13 +53,12 @@ const DECISIONS = [
 ];
 
 /**
- * TEMP: the roster carries no role, so one is inferred from the position title.
- * The real member record has it, and this goes when that lands.
+ * The account's own role where there is one. Somebody in the directory with no
+ * account has none, and the defaults shown for them are a member's — which is
+ * what they would get if an account were issued today.
  */
 function roleOf(member: Member): Role {
-  if (member.title === 'President') return 'super-admin';
-  if (member.title.endsWith('lead')) return 'admin';
-  return 'member';
+  return member.role ?? 'member';
 }
 
 /**
@@ -73,11 +72,14 @@ export function AdminPermissions() {
   const isDesktop = useIsDesktop();
   const toast = useToast();
   const { forPerson, setForPerson, clearForPerson } = useGrants();
+  const { members: roster } = useClub();
+  const boards = useBoards();
 
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(
-    isDesktop ? MEMBERS[0].id : null,
-  );
+  // The roster arrives after the first render, so desktop picks its first
+  // person once there is one rather than at init (§8's two-pane fork wants
+  // somebody selected; mobile starts on the list).
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [edits, setEdits] = useState<PermissionEdits>({});
   /* Loads the saved grants for whoever is selected on first render. */
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
@@ -85,11 +87,15 @@ export function AdminPermissions() {
 
   const members = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return MEMBERS;
-    return MEMBERS.filter((m) => `${m.name} ${m.title}`.toLowerCase().includes(needle));
-  }, [query]);
+    if (!needle) return roster;
+    return roster.filter((m) => `${m.name} ${m.title}`.toLowerCase().includes(needle));
+  }, [roster, query]);
 
-  const member = MEMBERS.find((m) => m.id === selectedId);
+  const member = roster.find((m) => m.id === selectedId);
+
+  if (isDesktop && !selectedId && roster.length > 0) {
+    setSelectedId(roster[0].id);
+  }
 
   if (selectedId && loadedFor !== selectedId) {
     setLoadedFor(selectedId);
@@ -266,7 +272,7 @@ export function AdminPermissions() {
                           {scope.length === 0 ? 'In every domain' : 'Only in'}
                         </span>
                         <div className="perm__scope-chips no-scrollbar">
-                          {BOARDS.map((board) => (
+                          {boards.map((board) => (
                             <Chip
                               key={board.domain}
                               variant="toggle"

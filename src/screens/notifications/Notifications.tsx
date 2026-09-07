@@ -1,12 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/cn';
-import { NOTIFICATIONS, type AppNotification } from '../../lib/club';
+import { useAuth } from '../../store/authStore';
+import { describeError } from '../../lib/supabase';
+import { fetchNotifications, markNotificationsRead } from '../../lib/db/queries';
+import { type AppNotification } from '../../lib/club';
 import { relativeTime } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Card, EmptyState, SectionHeader } from '../../ui/patterns';
 import { StickerBell } from '../../ui/stickers';
+import { SkeletonTaskCard } from '../../ui/primitives/Skeleton';
 import './Notifications.css';
 
 /** Anything within this many hours is TODAY (§9.13). */
@@ -18,9 +22,30 @@ const TODAY_HOURS = 24;
  */
 export function Notifications() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<AppNotification[]>(NOTIFICATIONS);
+  const { session } = useAuth();
+
+  const [items, setItems] = useState<AppNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   // Read once at mount, so the grouping does not shift under a re-render.
   const [mountedAt] = useState(() => Date.now());
+
+  const userId = session?.userId;
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    setLoading(true);
+    fetchNotifications(userId)
+      .then((rows) => !cancelled && setItems(rows))
+      .catch((caught) => !cancelled && setError(describeError(caught)))
+      .finally(() => !cancelled && setLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const { today, earlier } = useMemo(() => {
     const cutoff = mountedAt - TODAY_HOURS * 3_600_000;
@@ -36,11 +61,30 @@ export function Notifications() {
     setItems((current) =>
       current.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
     );
+    // The row is already marked here; a failed write only means it comes back
+    // unread on the next visit, which is the safer way round.
+    if (!item.read) void markNotificationsRead([item.id]);
     if (item.to) navigate(item.to);
   }
 
   function markAllRead() {
+    const ids = items.filter((n) => !n.read).map((n) => n.id);
     setItems((current) => current.map((n) => ({ ...n, read: true })));
+    if (ids.length > 0) void markNotificationsRead(ids);
+  }
+
+  if (loading) return <SkeletonTaskCard />;
+
+  if (error) {
+    return (
+      <Card>
+        <EmptyState
+          sticker={<StickerBell size="empty" />}
+          title="Could not read your notifications"
+          line={error}
+        />
+      </Card>
+    );
   }
 
   if (items.length === 0) {

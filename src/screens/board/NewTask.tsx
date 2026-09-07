@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTasks } from '../../store/taskStore';
 import { useAssignment } from '../../hooks/useAssignment';
 import { useToast } from '../../hooks/useToast';
-import { MEMBERS } from '../../lib/club';
-import { BOARDS } from '../../lib/mockTasks';
+import { useBoards, useClub } from '../../store/ClubProvider';
 import { DOMAIN_LABELS, type Domain, type Person, type Task } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { DatePicker } from '../../ui/primitives/DatePicker';
@@ -39,6 +38,8 @@ const PRIORITIES = [
 export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
   const { create } = useTasks();
   const { me, domains, committees, selfOnly } = useAssignment();
+  const { members } = useClub();
+  const boards = useBoards();
   const toast = useToast();
 
   /** "me", a domain id, or "committee:<id>". */
@@ -84,8 +85,8 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
       return committee?.members ?? [];
     }
 
-    return MEMBERS.filter((member) => member.domain === target);
-  }, [target, committees, me]);
+    return members.filter((member) => member.domain === target);
+  }, [target, committees, me, members]);
 
   function reset() {
     setTitle('');
@@ -96,7 +97,7 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
     setTarget(initialTarget);
   }
 
-  function submit() {
+  async function submit() {
     const trimmed = title.trim();
     if (!trimmed) return;
 
@@ -113,14 +114,14 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
           ? committee.domains[0]
           : (target as Domain);
 
-    const board = BOARDS.find((b) => b.domain === domain);
+    const board = boards.find((b) => b.domain === domain);
 
     const assignees: Person[] =
       target === 'me' && me
         ? [me]
         : candidates.filter((person) => person.id === assigneeId);
 
-    const task = create({
+    const task = await create({
       title: trimmed,
       description: description.trim(),
       domain,
@@ -131,6 +132,11 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
       assignees,
       due,
     });
+
+    if (!task) {
+      toast.show('Could not raise that task.', { tone: 'error' });
+      return;
+    }
 
     reset();
     onCreated(task);
@@ -159,7 +165,7 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
           >
             Cancel
           </Button>
-          <Button variant="brush" disabled={!title.trim()} onClick={submit}>
+          <Button variant="brush" disabled={!title.trim()} onClick={() => void submit()}>
             Create
           </Button>
         </>

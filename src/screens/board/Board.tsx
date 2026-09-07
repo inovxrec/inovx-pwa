@@ -7,7 +7,7 @@ import { useToast } from '../../hooks/useToast';
 import { TASK_PARAM, useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { useAssignment } from '../../hooks/useAssignment';
-import { BOARDS } from '../../lib/mockTasks';
+import { useBoards } from '../../store/ClubProvider';
 import {
   BOARD_STATES, DOMAIN_LABELS, LEGAL_TRANSITIONS, STATE_LABELS, daysUntil,
   type Domain, type Task, type TaskState,
@@ -54,6 +54,7 @@ export function Board() {
   const toast = useToast();
   const can = usePermissionCheck();
   const { canCreate } = useAssignment();
+  const boards = useBoards();
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterId>('all');
@@ -63,7 +64,7 @@ export function Board() {
   const [raising, setRaising] = useState(false);
 
   const committee = id ? byId(id) : undefined;
-  const domainBoard = slug && slug !== 'all' ? BOARDS.find((b) => b.slug === slug) : undefined;
+  const domainBoard = slug && slug !== 'all' ? boards.find((b) => b.slug === slug) : undefined;
   const domain: Domain | undefined = domainBoard?.domain;
 
   const scoped = useMemo(() => {
@@ -104,7 +105,7 @@ export function Board() {
   const options = useMemo(
     () => [
       { value: '/board/all', label: 'All boards', group: 'Club' },
-      ...BOARDS.map((board) => ({
+      ...boards.map((board) => ({
         value: `/board/${board.slug}`,
         label: board.name,
         group: 'Domains',
@@ -117,7 +118,7 @@ export function Board() {
         dot: `var(--dom-${c.domains[0]})`,
       })),
     ],
-    [committees],
+    [committees, boards],
   );
 
   const current = committee

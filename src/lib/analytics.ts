@@ -1,12 +1,23 @@
-import { BOARDS, PEOPLE } from './mockTasks';
 import { DOMAIN_LABELS, daysUntil, dueInfo, type Domain, type Person, type Task } from './tasks';
 
 /*
-  Everything the three deck screens read (§9.5, §9.6, §9.12).
+  What the three deck screens read (§9.5, §9.6, §9.12).
 
-  Anything derivable from the task list is derived, so the decks and the board
-  can never disagree. Only the series that need history the store does not keep
-  — twelve weeks of completions, attendance, minutes — are seeded.
+  Everything here is derived from data the app has already fetched, so the decks
+  and the board can never disagree. Nothing is seeded.
+
+  NOT DERIVABLE, and therefore absent rather than invented — the foundation
+  schema has no table behind any of them:
+
+    · the seven-point sparkline trends on a stat tile
+    · twelve weeks of completions for the activity chart — a task carries no
+      completion date, only a status, so there is nothing to put on a week axis
+    · attendance and minutes summaries on the Oversight deck
+    · integration health, occasion rules, tenure archive figures
+
+  The screens that wanted those now say the figure is not available yet rather
+  than showing a number nobody measured. They are listed in the README for the
+  backend team.
 */
 
 export interface DomainRollup {
@@ -19,9 +30,10 @@ export interface DomainRollup {
   completion: number;
 }
 
-export function domainRollups(tasks: Task[]): DomainRollup[] {
-  return BOARDS.map((board) => {
-    const mine = tasks.filter((task) => task.domain === board.domain);
+/** One row per domain the club actually has. */
+export function domainRollups(tasks: Task[], domains: Domain[]): DomainRollup[] {
+  return domains.map((domain) => {
+    const mine = tasks.filter((task) => task.domain === domain);
     const done = mine.filter((task) => task.state === 'done').length;
     const open = mine.filter(
       (task) => task.state !== 'done' && task.state !== 'cancelled',
@@ -30,8 +42,8 @@ export function domainRollups(tasks: Task[]): DomainRollup[] {
     const counted = done + open;
 
     return {
-      domain: board.domain,
-      label: DOMAIN_LABELS[board.domain],
+      domain,
+      label: DOMAIN_LABELS[domain],
       open,
       overdue,
       done,
@@ -61,52 +73,15 @@ export function deckStats(tasks: Task[]): DeckStats {
 /** Past this many overdue tasks the tile gains its blocked border (§9.5.1). */
 export const OVERDUE_THRESHOLD = 3;
 
-/**
- * TEMP: seven-point trends for the stat sparklines, and twelve weeks of
- * completions for the activity chart. The store keeps no history, so these are
- * the only figures here that are not derived. They come from the analytics
- * endpoint in the real thing.
- */
-export const STAT_TRENDS: Record<keyof DeckStats, number[]> = {
-  open: [22, 25, 24, 28, 26, 24, 21],
-  overdue: [1, 2, 4, 3, 2, 3, 4],
-  awaitingApproval: [3, 2, 4, 5, 3, 2, 3],
-  doneThisWeek: [6, 9, 7, 11, 8, 12, 14],
-};
-
-export interface WeekPoint {
-  /** "12 Aug" — the week's Monday. */
-  label: string;
-  completed: number;
-}
-
-export const ACTIVITY_12W: WeekPoint[] = [
-  { label: '16 Jun', completed: 7 },
-  { label: '23 Jun', completed: 11 },
-  { label: '30 Jun', completed: 9 },
-  { label: '07 Jul', completed: 14 },
-  { label: '14 Jul', completed: 12 },
-  { label: '21 Jul', completed: 8 },
-  { label: '28 Jul', completed: 15 },
-  { label: '04 Aug', completed: 18 },
-  { label: '11 Aug', completed: 13 },
-  { label: '18 Aug', completed: 16 },
-  { label: '25 Aug', completed: 19 },
-  { label: '01 Sep', completed: 14 },
-];
-
 export interface WorkloadRow {
   person: Person;
   open: number;
   overdue: number;
 }
 
-export function workload(tasks: Task[]): WorkloadRow[] {
+export function workload(tasks: Task[], people: Person[]): WorkloadRow[] {
   const rows = new Map<string, WorkloadRow>();
-
-  for (const person of Object.values(PEOPLE)) {
-    rows.set(person.id, { person, open: 0, overdue: 0 });
-  }
+  for (const person of people) rows.set(person.id, { person, open: 0, overdue: 0 });
 
   for (const task of tasks) {
     if (task.state === 'done' || task.state === 'cancelled') continue;
@@ -123,25 +98,39 @@ export function workload(tasks: Task[]): WorkloadRow[] {
   return [...rows.values()].sort((a, b) => b.open - a.open);
 }
 
-export interface LeaderRow {
+export interface LeaderboardRow {
   person: Person;
   completed: number;
 }
 
-/** §9.12 — a maximum of ten rows, and only with `leaderboard.view`. */
-export const LEADERBOARD: LeaderRow[] = [
-  { person: PEOPLE.ananya, completed: 14 },
-  { person: PEOPLE.nithya, completed: 12 },
-  { person: PEOPLE.karan, completed: 9 },
-  { person: PEOPLE.dev, completed: 8 },
-  { person: PEOPLE.sana, completed: 6 },
-  { person: PEOPLE.arjun, completed: 5 },
-  { person: PEOPLE.riya, completed: 3 },
-];
+/**
+ * §9.12's leaderboard — finished tasks per person, highest first.
+ *
+ * Counted from the same task list the board draws, so it is a standing total
+ * rather than a period one: without a completion date on a task there is no
+ * way to say "this month", and a total that quietly meant something else would
+ * be worse than one that says what it is.
+ */
+export function leaderboard(tasks: Task[], people: Person[]): LeaderboardRow[] {
+  const rows = new Map<string, LeaderboardRow>();
+  for (const person of people) rows.set(person.id, { person, completed: 0 });
+
+  for (const task of tasks) {
+    if (task.state !== 'done') continue;
+    for (const person of task.assignees) {
+      const row = rows.get(person.id);
+      if (row) row.completed += 1;
+    }
+  }
+
+  return [...rows.values()]
+    .filter((row) => row.completed > 0)
+    .sort((a, b) => b.completed - a.completed);
+}
 
 /* ------------------------------------------------ §9.5.4 attention list */
 
-export type AttentionKind = 'blocked' | 'unassigned' | 'integration' | 'idle';
+export type AttentionKind = 'blocked' | 'unassigned';
 
 export interface AttentionItem {
   id: string;
@@ -154,6 +143,13 @@ export interface AttentionItem {
   to?: string;
 }
 
+/**
+ * Only the two the task list can actually answer.
+ *
+ * The screen used to list degraded integrations and members with nothing open
+ * as well; the first needs a table that does not exist, and the second was
+ * removed with it rather than left as the only half of a pair.
+ */
 export function attentionItems(tasks: Task[]): AttentionItem[] {
   const items: AttentionItem[] = [];
 
@@ -181,55 +177,17 @@ export function attentionItems(tasks: Task[]): AttentionItem[] {
     });
   }
 
-  // TEMP: integration health and idle members need endpoints that do not exist.
-  items.push({
-    id: 'integration-drive',
-    kind: 'integration',
-    tag: 'Integration',
-    line: 'Drive sync last succeeded 3 days ago',
-    action: 'Check',
-  });
-
-  const idle = workload(tasks).filter((row) => row.open === 0);
-  for (const row of idle) {
-    items.push({
-      id: `idle-${row.person.id}`,
-      kind: 'idle',
-      tag: 'No work',
-      line: `${row.person.name} has nothing open`,
-      action: 'Assign',
-    });
-  }
-
   return items;
 }
-
-/* ------------------------------------------------ §9.6 oversight extras */
-
-export const COMMITTEES = [
-  { id: 'c-techfest', name: 'Techfest', members: 18, open: 4 },
-  { id: 'c-alumni', name: 'Alumni meet', members: 7, open: 1 },
-];
-
-export const UPCOMING = [
-  { id: 'u-1', label: 'Techfest — day one', when: 'in 9 days' },
-  { id: 'u-2', label: "Karan M.'s birthday", when: 'today' },
-  { id: 'u-3', label: 'Sponsor review call', when: 'in 3 days' },
-];
-
-export const MINUTES = [
-  { id: 'm-1', label: 'Core team — 02 Sep', by: PEOPLE.riya },
-  { id: 'm-2', label: 'Techfest committee — 29 Aug', by: PEOPLE.arjun },
-];
-
-export const ATTENDANCE = { present: 38, invited: 46, meetings: 4 };
 
 /**
  * §9.6's hero card: the same figures as everywhere else, written as sentences.
  * Faculty read prose, not a metric wall.
  */
-export function oversightSummary(tasks: Task[]): string {
-  const rollups = domainRollups(tasks);
+export function oversightSummary(tasks: Task[], domains: Domain[]): string {
+  if (tasks.length === 0) return 'There is no work on the board yet.';
+
+  const rollups = domainRollups(tasks, domains);
   const done = tasks.filter((t) => t.state === 'done').length;
   const counted = tasks.filter((t) => t.state !== 'cancelled').length;
 
@@ -246,8 +204,6 @@ export function oversightSummary(tasks: Task[]): string {
     );
   }
 
-  // One sentence for all of them. Three sentences of the same shape in a row
-  // reads as a generated list, which is the opposite of what §9.6 asks for.
   if (late.length > 0) {
     const total = late.reduce((sum, domain) => sum + domain.overdue, 0);
     const names = late.map((domain) => domain.label);
@@ -256,9 +212,7 @@ export function oversightSummary(tasks: Task[]): string {
         ? names[0]
         : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 
-    sentences.push(
-      `${total} ${total === 1 ? 'task is' : 'tasks are'} overdue, in ${where}.`,
-    );
+    sentences.push(`${total} ${total === 1 ? 'task is' : 'tasks are'} overdue, in ${where}.`);
   }
 
   return sentences.join(' ');

@@ -13,26 +13,28 @@ npm install
 npm run dev
 ```
 
-The app opens at `/login`. Auth is still faked in `AuthProvider`, so any of
-these work — all with the password `demo`:
+It needs a Supabase project. Put its URL and anon key in `.env.local`:
 
-| Email | Role |
-|---|---|
-| riya@inovx.club | super-admin |
-| arjun@inovx.club | admin |
-| member@inovx.club | member |
-| faculty@inovx.club | faculty |
+```
+VITE_SUPABASE_URL=https://<project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon key>
+```
 
-Every account still holds its issued password, so the first sign-in goes
-through `/first-run` and then the tour, exactly as §9.2 requires. Those two
-are remembered per email in `localStorage` under `inovx.dev.entry` — clear
-that key to replay the flow.
+Only the **anon** key belongs here — everything named `VITE_*` is compiled into
+the bundle and served to every visitor. The service role key must never be one
+of these; work that needs it belongs in an edge function.
 
-**/kitchen-sink** holds the Phase 1 review surface and a role switcher that
-jumps straight into the shell.
+Without those two the app still boots and every screen says so rather than
+failing silently: `lib/supabase.ts` reports that it is not configured and the
+providers surface that message.
 
-`member@inovx.club` is the account with real work on it — the other three own
-few or no tasks, so their My Day is mostly the empty state.
+The app opens at `/login`. Accounts are rows in `public.users`, signed in
+through Supabase auth — there is no seeded login. An account whose
+`must_change_password` is set goes through `/first-run` and then the tour, as
+§9.2 requires; whether the tour has been seen is remembered per email in
+`localStorage` under `inovx.dev.entry`, so clearing that key replays it.
+
+**/kitchen-sink** holds the Phase 1 review surface.
 
 ## Where the build is
 
@@ -133,22 +135,14 @@ still in git history if you need to look something up.
    a "Core" tag both vanished on a paper card. Both now carry a hairline so
    they still read as a chip — but the token itself is the underlying problem,
    and §3 fixes its value, so it is worth a decision.
-9. **Loading states are designed but unexercised.** Every screen reads from a
-   synchronous store, so nothing ever spends a frame loading. `SkeletonTaskCard`
-   exists and My Day takes a `loading` prop, but until the store becomes a real
-   fetch there is nothing to trigger them. Worth wiring properly the moment the
-   API lands, rather than faking a delay now.
+9. **Empty is now the ordinary state.** Every screen reads from Supabase, so a
+   fresh project shows empty states everywhere until there are rows in it. That
+   is correct, but it means `supabase/seed.sql` is the fastest way to see the
+   app with something in it.
 10. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 
-## Temporary scaffolding
-
-`AuthProvider` fakes `login` against a hardcoded table and remembers the entry
-flags in `localStorage`; `setRole` and the `/kitchen-sink` switcher jump into
-the shell as another role without signing out. All of it is marked `TEMP` and
-goes when `/api/auth/login` lands — the `Session` shape should not need to
-change.
 
 ## The opening title
 
@@ -249,9 +243,9 @@ still the skeleton pulse. Nothing added here repeats.
 
 ## About the charts
 
-`src/lib/analytics.ts` derives everything it can from the task list, so the
-decks and the board can never disagree; only history the store does not keep
-(twelve weeks of completions, attendance, minutes) is seeded.
+`src/lib/analytics.ts` derives everything from the task list and the roster, so
+the decks and the board can never disagree. Nothing in it is seeded — where the
+history is not recorded, the chart is absent rather than filled in.
 
 **The domain channel palette fails as a series palette.** Run through the
 standard six checks against `--paper`, the five `--dom-*` tokens fail the
@@ -335,8 +329,8 @@ than a second mechanism sitting beside it.
 - Inherited, an admin runs their own domain and a member runs none.
 - A GRANT with domain chips means exactly those domains. The scope **replaces**
   the inherited default rather than adding to it, so the control can take a
-  domain away as well as give one — Arjun is the Events lead, and the seeded
-  grant scoping him to Design and Media removes Events.
+  domain away as well as give one: a grant scoping the Events lead to Design
+  and Media removes Events.
 - A GRANT with no chips means every domain: the chip row is a narrowing, so
   choosing none of them cannot mean choosing nothing.
 - A REVOKE means none. They can still raise work for themselves.
@@ -345,20 +339,70 @@ Committees follow membership: a super admin runs all of them, everyone else
 runs the ones they are actually on. Being allowed to assign into Design does
 not make someone a member of the Techfest committee.
 
-`store/grantStore` holds the overrides and §9.17's screen writes to it, so a
-saved change takes effect immediately in the new-task form. The form never
+`store/grantStore` reads the overrides out of `user_permissions` through the
+club provider, and §9.17's screen writes them back, so a saved change takes
+effect immediately in the new-task form. **The domain scoping is not enforced
+by the server yet** — see the schema gaps above. The form never
 offers a target the server would refuse — an ungranted domain is absent from
 the list, not disabled (§14 item 13).
 
 ## Where the data comes from
 
-`src/lib/tasks.ts` holds the model, the legal state transitions and the date
-helpers; `src/lib/mockTasks.ts` holds the seed, with dates generated relative
-to today so the My Day groupings stay meaningful. `src/store/taskStore.tsx`
-applies every mutation locally and immediately — the swipe-to-advance needs the
-row to move before any round trip — and each mutation returns an `undo` the
-toast can call. Swapping the seed for `GET /me/day` and `GET /board/:slug`
-should not change a single screen.
+Supabase, and nothing else. **There is no mock data left in the frontend** —
+`src/lib/mockTasks.ts` is gone, and so is every seeded constant that used to
+sit in `lib/club.ts`, `lib/admin.ts` and `lib/analytics.ts`.
+
+| | |
+|---|---|
+| `lib/supabase.ts` | the client, plus `isConfigured` and `describeError` |
+| `lib/db/rows.ts` | row types mirroring the migration, hand-written |
+| `lib/db/map.ts` | row to app shape — `toTask`, `toPerson`, `toMeeting` and the rest |
+| `lib/db/queries.ts` | every read and write, in one file |
+| `store/ClubProvider.tsx` | tenure, domains, people, roster, committees, grants — one fetch, not five |
+| `store/taskStore.tsx` | the task list, with write-through mutations |
+
+`src/lib/tasks.ts` still holds the model, the legal state transitions and the
+date helpers, none of which come from the database.
+
+`taskStore` applies every mutation locally first — the swipe-to-advance needs
+the row to move before any round trip — writes it through, and puts the row
+back if the server refuses. Each mutation still returns an `undo` the toast
+can call.
+
+A screen whose data has no table says so, through
+`screens/admin/NotWired.tsx`: it names the table it is waiting on rather than
+showing an empty state, which would be a claim about the club rather than
+about the software.
+
+## What the backend still owes the frontend
+
+Everything below is missing from the foundation schema, so the screen that
+wanted it says it is not wired up instead of inventing a number:
+
+- **No `completed_at` on `tasks`.** A task records a status and no finish date,
+  so the twelve-week activity chart on Insights and Oversight has no week axis
+  to plot against, and no stat tile can draw a seven-point sparkline. The
+  leaderboard is a standing all-year total for the same reason, and says so.
+- **No occasions engine.** No table for festival, anniversary or lunar rules,
+  the tasks they generate, or the confirmation queue. Birthdays are the one
+  occasion the app can work out for itself, from `member_directory.birthday`.
+- **No integrations table.** Nothing to report sync health, last-sync times or
+  conflicts against, so `/admin/integrations` is a stand-in.
+- **No archive figures.** `tenures` carries a name and its dates — not a head
+  count, a completed total or a president — so the tenure cards show dates.
+- **`user_permissions` has no scope column.** A `task.assign` grant cannot yet
+  be narrowed to particular domains, which is exactly what §9.17's chip row
+  edits. The scope currently lives in the frontend only; it needs a `domains`
+  column or a join table before the server can honour it.
+- **No `cancelled` status.** `tasks.status` allows six values and the UI models
+  a seventh.
+- **No link column on `meetings`.** A join link rides in `description` and is
+  read back out by `toMeeting`; a real column would be better.
+- **No action items on `meetings`.** §9.11 turns each into a task in one tap;
+  they are held for the session and not saved.
+- **No account provisioning from the browser.** Issuing an account needs the
+  service role, which must not be in the bundle, so "Add member" stops at the
+  form and points at the `bulk-import-members` function.
 
 ## Rules for building on this
 
