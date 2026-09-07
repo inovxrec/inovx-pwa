@@ -1,36 +1,150 @@
-import { useState, type ReactNode } from 'react';
-import { AuthContext, type Session } from './authStore';
+import { useEffect, useState, type ReactNode } from 'react';
 
-/**
- * TEMP: fakes a login against a hardcoded table so frontend work isn't
- * blocked on the backend team's auth endpoint. Swap the body of `login`
- * for a real fetch('/api/auth/login') once that's ready — the shape of
- * Session should stay the same so nothing downstream needs to change.
- */
-const FAKE_USERS: Record<string, { password: string; session: Session }> = {
-  'riya@inovx.club': { password: 'demo', session: { name: 'Riya S.', initials: 'RS', role: 'admin' } },
-  'member@inovx.club': { password: 'demo', session: { name: 'Ananya R.', initials: 'AR', role: 'member' } },
-  'faculty@inovx.club': { password: 'demo', session: { name: 'Dr. Nair', initials: 'DN', role: 'faculty' } },
-};
+import {
+  AuthContext,
+  hydrateSession,
+  login as loginWithSupabase,
+  logout as logoutFromSupabase,
+  restoreSession,
+  supabase,
+  type Session,
+} from './authStore';
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [session, setSession] =
+    useState<Session | null>(null);
 
-  async function login(email: string, password: string) {
-    const record = FAKE_USERS[email.trim().toLowerCase()];
-    if (!record || record.password !== password) {
-      return { ok: false, error: 'ACCESS DENIED — CHECK YOUR EMAIL AND PASSWORD.' };
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function restore() {
+      try {
+        const restored =
+          await restoreSession();
+
+        if (mounted) {
+          setSession(restored);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to restore session:',
+          error,
+        );
+
+        if (mounted) {
+          setSession(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
-    setSession(record.session);
-    return { ok: true, session: record.session };
+
+    void restore();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (event, authSession) => {
+        if (!mounted) return;
+
+        if (!authSession?.user) {
+          setSession(null);
+          setLoading(false);
+          return;
+        }
+
+        if (
+          event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED' ||
+          event === 'USER_UPDATED'
+        ) {
+          void hydrateSession(
+            authSession.user.id,
+          )
+            .then((hydrated) => {
+              if (mounted) {
+                setSession(hydrated);
+              }
+            })
+            .catch((error) => {
+              console.error(
+                'Failed to hydrate session:',
+                error,
+              );
+
+              if (mounted) {
+                setSession(null);
+              }
+            })
+            .finally(() => {
+              if (mounted) {
+                setLoading(false);
+              }
+            });
+        }
+      },
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function login(
+    email: string,
+    password: string,
+  ) {
+    try {
+      const nextSession =
+        await loginWithSupabase(
+          email,
+          password,
+        );
+
+      setSession(nextSession);
+
+      return {
+        ok: true,
+        session: nextSession,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Login failed',
+      };
+    }
   }
 
-  function logout() {
-    setSession(null);
+  async function logout() {
+    try {
+      await logoutFromSupabase();
+    } finally {
+      setSession(null);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ session, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
