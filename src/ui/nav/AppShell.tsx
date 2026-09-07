@@ -40,7 +40,14 @@ export function AppShell() {
   const { pathname } = useLocation();
   const matches = useMatches();
 
-  const handle = (matches[matches.length - 1]?.handle ?? {}) as RouteHandle;
+  /*
+    The nearest ancestor that names itself, not simply the last match — a
+    nested route like /admin/members has no title of its own and would
+    otherwise fall back to the app name.
+  */
+  const handle =
+    ([...matches].reverse().find((match) => (match.handle as RouteHandle | undefined)?.title)
+      ?.handle as RouteHandle | undefined) ?? {};
 
   // TEMP: the alert count is mock until the notifications endpoint exists.
   const counts = { notifications: 3 };

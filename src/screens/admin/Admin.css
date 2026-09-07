@@ -1,0 +1,287 @@
+/* §9.15 — the bits shared across the eight admin screens. */
+
+.admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.admin__note { color: var(--on-paper-mute); }
+
+.admin__cell-person {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.admin__filters {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.admin__filters > * { scroll-snap-align: start; flex: none; }
+
+.admin__controls {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+@media (min-width: 1024px) {
+  .admin__search { width: 280px; }
+  .admin__actor { width: 200px; }
+}
+
+/* ---------- MEMBERS ---------- */
+
+/*
+  The issued-account card is dashed rather than solid: it is a slip of paper to
+  act on and throw away, not a permanent part of the screen.
+*/
+.admin__issued { border: var(--b-bold) dashed var(--paper-line-2); }
+
+.admin__password {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+}
+
+.admin__password-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  color: var(--on-paper);
+}
+
+/* ---------- OCCASIONS ---------- */
+
+.admin__accordions { padding: var(--s-2) var(--d-card-pad); }
+
+.admin__occasion-meta { color: var(--on-paper-mute); }
+
+.admin__outputs {
+  display: grid;
+  gap: var(--s-3);
+}
+
+@media (min-width: 768px) {
+  .admin__outputs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.admin__queue { display: flex; flex-direction: column; list-style: none; }
+
+.admin__queue-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-2) 0;
+}
+
+.admin__queue-row + .admin__queue-row {
+  border-top: var(--b-hair) solid var(--mint-line);
+}
+
+.admin__queue-name { flex: 1; min-width: 160px; color: var(--on-paper); }
+
+/* ---------- RECURRING ---------- */
+
+.admin__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--d-card-gap);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .admin__split { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}
+
+.admin__preview { display: flex; flex-direction: column; list-style: none; }
+
+.admin__preview-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  min-height: 32px;
+  color: var(--on-paper);
+}
+
+.admin__preview-row + .admin__preview-row {
+  border-top: var(--b-hair) solid var(--mint-line);
+}
+
+.admin__rules { display: flex; flex-direction: column; list-style: none; }
+.admin__rules > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.admin__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+}
+
+.admin__rule-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.admin__rule-title { color: var(--on-paper); }
+.admin__rule-meta { color: var(--on-paper-faint); }
+
+/* ---------- APPROVALS ---------- */
+
+.admin__bulk-head {
+  padding-bottom: var(--s-2);
+  border-bottom: var(--b-hair) solid var(--paper-line);
+}
+
+.admin__queue-list { display: flex; flex-direction: column; list-style: none; }
+.admin__queue-list > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.admin__queue-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) 0;
+}
+
+.admin__queue-card { flex: 1; min-width: 0; background: transparent; }
+
+.admin__waiting {
+  flex: none;
+  padding: 4px var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--paper-lo);
+  color: var(--on-paper-mute);
+}
+
+.admin__waiting--stale {
+  background: var(--flame-soft);
+  color: var(--st-blocked);
+  font-weight: 700;
+}
+
+/* The bar only exists while a selection does (§9.15). */
+.admin__bar {
+  position: sticky;
+  bottom: calc(var(--nav-bottom) + var(--s-3));
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  padding: var(--s-3);
+  border-radius: var(--r-lg);
+  background: var(--ink-raised);
+  border: var(--b-hair) solid var(--ink-line-2);
+}
+
+@media (min-width: 1024px) {
+  .admin__bar { bottom: var(--s-4); }
+}
+
+.admin__bar-count { flex: 1; min-width: 90px; color: var(--on-ink); font-weight: 600; }
+
+/* ---------- INTEGRATIONS ---------- */
+
+.admin__health {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+/* Colour and a word — never the bar alone (§14 item 11). */
+.admin__health-bar {
+  width: 44px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--health, var(--st-done));
+}
+
+.admin__health--ok       { --health: var(--st-done); }
+.admin__health--degraded { --health: var(--st-review); }
+.admin__health--failing  { --health: var(--st-blocked); }
+
+.admin__health-word { color: var(--on-paper); }
+.admin__health-time { color: var(--on-paper-mute); }
+
+.admin__conflicts {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+}
+
+.surface-mint .admin__conflicts { background: var(--mint-hi); }
+
+.admin__conflicts-head { color: var(--st-review); }
+
+.admin__conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  padding-top: var(--s-2);
+}
+
+.admin__conflict { color: var(--on-paper); }
+
+/* ---------- ARCHIVE ---------- */
+
+.admin__tenures {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--d-card-gap);
+}
+
+@media (min-width: 768px) {
+  .admin__tenures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.admin__tenure-lead { display: flex; align-items: center; gap: var(--s-2); }
+
+.admin__tenure-stats { display: flex; gap: var(--s-6); }
+.admin__tenure-stats dt { color: var(--on-paper-mute); }
+.admin__tenure-stats dd { margin: 0; color: var(--on-paper); }
+
+.admin__steps { display: flex; flex-direction: column; list-style: none; }
+.admin__steps > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.admin__step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+}
+
+.admin__step--ahead { opacity: 0.5; }
+
+.admin__step-no { padding-top: 3px; }
+.admin__step--now .admin__step-no { color: var(--flame); }
+
+.admin__step-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.admin__step-title { color: var(--on-paper); }
+.admin__step-detail { color: var(--on-paper-mute); }
+
+.admin__step-state { flex: none; color: var(--on-paper-faint); }
+.admin__step--now .admin__step-state { color: var(--flame); font-weight: 700; }
+
+.admin__step-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  justify-content: flex-end;
+  padding-top: var(--s-2);
+}

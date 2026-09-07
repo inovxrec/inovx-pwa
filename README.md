@@ -36,7 +36,7 @@ few or no tasks, so their My Day is mostly the empty state.
 
 ## Where the build is
 
-**Phases 1 to 6 of the §13 build order are done. Phase 6 stops here for review.**
+**Phases 1 to 7 of the §13 build order are done. Phase 7 stops here for review.**
 
 | | |
 |---|---|
@@ -69,10 +69,13 @@ few or no tasks, so their My Day is mostly the empty state.
 | ✅ Meetings | `/meetings` — §9.11, attendance, minutes, action items → tasks |
 | ✅ Notifications | `/notifications` — §9.13, grouped today/earlier with unread state |
 | ✅ Settings | `/settings` — §9.14, accordion sections, the notification matrix, sign out |
-| ⬜ Phase 7 onward | The eight admin screens, Permissions last — not started |
+| ✅ Admin | `/admin/*` — §9.15, all eight screens, each gated on its own key |
+| ✅ Permissions | `/admin/permissions` — §9.17, two panes, live preview, save bar |
+| ⬜ Phase 8 | PWA manifest and service worker, the a11y, responsive and reduced-motion passes |
 
-Every nav destination routes to a placeholder naming the phase and spec section
-that delivers it. Those are deleted as their real screens land.
+Every screen in §9 is now built; the placeholder component and its route
+wiring are gone. What is left is Phase 8 — the manifest, the service worker,
+and the three passes over everything already standing.
 
 ### Roles and landing screens
 

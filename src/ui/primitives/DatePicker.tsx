@@ -5,6 +5,8 @@ import './DatePicker.css';
 
 export interface DatePickerProps {
   label: string;
+  /** Hides the label visually but keeps it for screen readers (§11). */
+  labelHidden?: boolean;
   /** ISO yyyy-mm-dd, or null for unset. */
   value: string | null;
   onChange: (value: string) => void;
@@ -50,6 +52,7 @@ function leadingBlanks(year: number, month: number): number {
  */
 export function DatePicker({
   label,
+  labelHidden = false,
   value,
   onChange,
   rangeEnd = null,
@@ -102,7 +105,9 @@ export function DatePicker({
 
   return (
     <div className={cn('datepicker', `datepicker--on-${tone}`, error && 'datepicker--error', className)}>
-      <label className="datepicker__label label" htmlFor={id}>{label}</label>
+      <label className={cn('datepicker__label label', labelHidden && 'sr-only')} htmlFor={id}>
+        {label}
+      </label>
 
       <button
         id={id}

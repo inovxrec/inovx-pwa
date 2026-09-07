@@ -6,6 +6,8 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
   label: string;
   indeterminate?: boolean;
   tone?: 'paper' | 'ink';
+  /** Hides the label visually but keeps it for screen readers (§11). */
+  labelHidden?: boolean;
 }
 
 /**
@@ -16,6 +18,7 @@ export function Checkbox({
   label,
   indeterminate = false,
   tone = 'paper',
+  labelHidden = false,
   className,
   id,
   ...rest
@@ -41,7 +44,7 @@ export function Checkbox({
           </svg>
         )}
       </span>
-      <span className="control__label body">{label}</span>
+      <span className={cn('control__label body', labelHidden && 'sr-only')}>{label}</span>
     </label>
   );
 }

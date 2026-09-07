@@ -1,0 +1,163 @@
+/* §9.17 — two panes on desktop, a two-step flow on mobile (fork #8). */
+
+.perm {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--d-card-gap);
+  align-items: start;
+}
+
+.perm__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.perm__members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+}
+
+.perm__member {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: var(--d-list-row);
+  padding: var(--s-2);
+  border-radius: var(--r-md);
+  text-align: left;
+  color: var(--on-ink);
+  transition: background-color var(--t-fast) linear;
+}
+
+.perm__member:hover { background: var(--ink-raised); }
+
+/* The selected person is filled paper, matching the rail's active item. */
+.perm__member--on { background: var(--paper); color: var(--ink); }
+
+.perm__member-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perm__member-name { font-weight: 600; }
+.perm__member-title { color: var(--on-ink-faint); }
+.perm__member--on .perm__member-title { color: var(--on-paper-mute); }
+
+.perm__editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  min-width: 0;
+}
+
+.perm__back { display: flex; align-items: center; gap: var(--s-3); }
+.perm__back-name { color: var(--on-ink); font-weight: 600; }
+
+.perm__groups { padding: var(--s-2) var(--d-card-pad); }
+
+.perm__rows { display: flex; flex-direction: column; list-style: none; }
+.perm__rows > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.perm__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) 0;
+}
+
+.perm__row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.perm__row-body {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perm__row-name { color: var(--on-paper); }
+
+/* The role default, so INHERIT is never ambiguous. Sentence case, not a label. */
+.perm__row-default {
+  color: var(--on-paper-faint);
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+
+.perm__control { flex: none; }
+
+.perm__scope {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  padding-top: var(--s-2);
+}
+
+.perm__scope-label { color: var(--on-paper-mute); flex: none; }
+
+.perm__scope-chips {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.perm__scope-chips > * { scroll-snap-align: start; flex: none; }
+
+/*
+  §9.17 — pinned and always visible. Sticking it to the bottom of its own
+  column keeps it on screen while the accordions above it scroll.
+*/
+.perm__preview {
+  position: sticky;
+  bottom: var(--s-4);
+  transition: bottom var(--t-base) var(--ease);
+}
+
+/* Clear of the save bar while it is on screen. */
+.perm__editor--dirty .perm__preview { bottom: calc(var(--s-4) + 72px); }
+
+@media (max-width: 1023px) {
+  .perm__editor--dirty .perm__preview {
+    bottom: calc(var(--nav-bottom) + var(--s-3) + 72px);
+  }
+}
+.perm__preview-text { color: var(--on-paper); }
+
+.perm__danger { display: flex; }
+
+/* The save bar appears the moment anything is dirty (§9.17). */
+.perm__savebar {
+  position: sticky;
+  bottom: calc(var(--nav-bottom) + var(--s-3));
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-lg);
+  background: var(--ink-raised);
+  border: var(--b-hair) solid var(--ink-line-2);
+}
+
+@media (min-width: 1024px) {
+  .perm__savebar { bottom: var(--s-4); }
+}
+
+.perm__savebar-count { flex: 1; color: var(--on-ink); font-weight: 600; }

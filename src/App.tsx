@@ -5,11 +5,10 @@ import { CommitteeProvider } from './store/committeeStore';
 import { ToastProvider } from './hooks/useToast';
 import { useAuth, type Session } from './store/authStore';
 import { usePermissionCheck } from './hooks/usePermission';
-import { LANDING_BY_ROLE, NAV_ITEMS } from './lib/navConfig';
+import { LANDING_BY_ROLE } from './lib/navConfig';
 import type { PermissionKey } from './lib/permissions';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
-import { Placeholder } from './screens/placeholder/Placeholder';
 import { Login } from './screens/auth/Login';
 import { FirstRun } from './screens/auth/FirstRun';
 import { Welcome } from './screens/onboarding/Welcome';
@@ -24,6 +23,15 @@ import { People } from './screens/people/People';
 import { Meetings, MeetingDetail } from './screens/meetings/Meetings';
 import { Notifications } from './screens/notifications/Notifications';
 import { Settings } from './screens/settings/Settings';
+import { ADMIN_SCREENS, AdminShell } from './screens/admin/AdminFrame';
+import { AdminMembers } from './screens/admin/AdminMembers';
+import { AdminPermissions } from './screens/admin/AdminPermissions';
+import { AdminOccasions } from './screens/admin/AdminOccasions';
+import { AdminRecurring } from './screens/admin/AdminRecurring';
+import { AdminApprovals } from './screens/admin/AdminApprovals';
+import { AdminIntegrations } from './screens/admin/AdminIntegrations';
+import { AdminArchive } from './screens/admin/AdminArchive';
+import { AdminAudit } from './screens/admin/AdminAudit';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
 
 /**
@@ -77,26 +85,28 @@ function Require({
 }
 
 /** Which phase and spec section each placeholder is standing in for. */
-const PENDING: Record<string, { screen: string; phase: string; section: string; permission?: PermissionKey }> = {
-  admin: { screen: 'Admin', phase: 'Phase 7', section: '§9.15', permission: 'admin.members' },
-};
-
 /**
- * The nav destinations that are still placeholders. My Day and Boards have
- * shipped (Phase 4) and are declared explicitly below.
+ * §9.15's eight screens, each gated on its own key. A person who holds one key
+ * reaches that screen and nothing else; /admin itself sends them to the first
+ * one they may actually see.
  */
-const shellRoutes = NAV_ITEMS.filter((item) => PENDING[item.id]).map((item) => {
-  const pending = PENDING[item.id];
-  return {
-    path: item.path,
-    handle: { title: item.label } satisfies RouteHandle,
-    element: (
-      <Require permission={pending.permission}>
-        <Placeholder screen={pending.screen} phase={pending.phase} section={pending.section} />
-      </Require>
-    ),
-  };
-});
+const adminRoutes = [
+  { path: 'members', element: <Require permission="admin.members"><AdminMembers /></Require> },
+  { path: 'permissions', element: <Require permission="admin.permissions"><AdminPermissions /></Require> },
+  { path: 'occasions', element: <Require permission="admin.occasions"><AdminOccasions /></Require> },
+  { path: 'recurring', element: <Require permission="admin.recurring"><AdminRecurring /></Require> },
+  { path: 'approvals', element: <Require permission="admin.approvals"><AdminApprovals /></Require> },
+  { path: 'integrations', element: <Require permission="admin.integrations"><AdminIntegrations /></Require> },
+  { path: 'archive', element: <Require permission="admin.archive"><AdminArchive /></Require> },
+  { path: 'audit', element: <Require permission="admin.audit"><AdminAudit /></Require> },
+];
+
+/** Sends /admin to whichever of the eight this person can actually open. */
+function AdminIndex() {
+  const can = usePermissionCheck();
+  const first = ADMIN_SCREENS.find((screen) => can(screen.permission));
+  return first ? <Navigate to={first.path} replace /> : <Forbidden />;
+}
 
 const router = createBrowserRouter([
   {
@@ -120,6 +130,17 @@ const router = createBrowserRouter([
           </RequireSession>
         ),
         children: [
+          // ---------- PHASE 7 ----------
+          {
+            path: '/admin',
+            handle: { title: 'Admin' } satisfies RouteHandle,
+            element: <AdminShell />,
+            children: [
+              { index: true, element: <AdminIndex /> },
+              ...adminRoutes,
+            ],
+          },
+
           // ---------- PHASE 6 ----------
           {
             path: '/calendar',
@@ -197,7 +218,6 @@ const router = createBrowserRouter([
             element: <TaskDetail />,
           },
 
-          ...shellRoutes,
           // Reachable directly so the states can be reviewed before the screens
           // that throw them exist.
           { path: '403', handle: { title: 'No access' }, element: <Forbidden /> },
