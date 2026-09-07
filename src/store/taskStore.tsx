@@ -2,7 +2,7 @@ import {
   createContext, useCallback, useContext, useMemo, useState, type ReactNode,
 } from 'react';
 import { MOCK_TASKS } from '../lib/mockTasks';
-import type { ChecklistItem, Deliverable, Person, Task, TaskState } from '../lib/tasks';
+import type { ChecklistItem, Deliverable, Domain, Person, Task, TaskState } from '../lib/tasks';
 import { STATE_LABELS } from '../lib/tasks';
 
 /**
@@ -17,12 +17,27 @@ import { STATE_LABELS } from '../lib/tasks';
  * can put it back from a toast.
  */
 
+/** What the new-task form supplies; the store fills in the rest. */
+export interface NewTask {
+  title: string;
+  description: string;
+  domain: Domain;
+  boardSlug: string;
+  boardName: string;
+  committee?: string;
+  priority: Task['priority'];
+  assignees: Person[];
+  due: string | null;
+}
+
 export interface TaskContextValue {
   tasks: Task[];
   byId: (id: string) => Task | undefined;
   byNumber: (number: string) => Task | undefined;
   /** Everything on one board, in the order the board should show it. */
   forBoard: (slug: string) => Task[];
+  /** Raises a new task and returns it, so the caller can open it. */
+  create: (input: NewTask) => Task;
   /** Moves a task and returns a function that puts it back. */
   setState: (id: string, state: TaskState) => () => void;
   toggleChecklistItem: (taskId: string, itemId: string) => void;
@@ -67,6 +82,36 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const forBoard = useCallback(
     (slug: string) => tasks.filter((t) => t.boardSlug === slug).sort(compareTasks),
+    [tasks],
+  );
+
+  /**
+   * The next task number. Derived from what exists rather than from a counter,
+   * so it stays right after an undo and after the seed changes.
+   */
+  const create = useCallback(
+    (input: NewTask) => {
+      const highest = tasks.reduce((max, task) => {
+        const n = Number(task.number.replace('#', ''));
+        return Number.isFinite(n) && n > max ? n : max;
+      }, 0);
+
+      const task: Task = {
+        ...input,
+        id: nextId('t'),
+        number: `#${String(highest + 1).padStart(4, '0')}`,
+        state: 'todo',
+        labels: [],
+        checklist: [],
+        deliverables: [],
+        comments: [],
+        activity: [{ id: nextId('v'), text: 'created', at: new Date().toISOString() }],
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+
+      setTasks((current) => [...current, task]);
+      return task;
+    },
     [tasks],
   );
 
@@ -158,12 +203,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      tasks, byId, byNumber, forBoard, setState, toggleChecklistItem, addChecklistItem,
-      addDeliverable, removeDeliverable, addComment, rename, setDue,
+      tasks, byId, byNumber, forBoard, create, setState, toggleChecklistItem,
+      addChecklistItem, addDeliverable, removeDeliverable, addComment, rename, setDue,
     }),
     [
-      tasks, byId, byNumber, forBoard, setState, toggleChecklistItem, addChecklistItem,
-      addDeliverable, removeDeliverable, addComment, rename, setDue,
+      tasks, byId, byNumber, forBoard, create, setState, toggleChecklistItem,
+      addChecklistItem, addDeliverable, removeDeliverable, addComment, rename, setDue,
     ],
   );
 

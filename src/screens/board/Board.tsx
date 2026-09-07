@@ -6,6 +6,7 @@ import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
 import { useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
+import { useAssignment } from '../../hooks/useAssignment';
 import { BOARDS } from '../../lib/mockTasks';
 import {
   BOARD_STATES, DOMAIN_LABELS, LEGAL_TRANSITIONS, STATE_LABELS, daysUntil,
@@ -22,6 +23,7 @@ import { StateSheet } from '../my-day/StateSheet';
 import { BoardKanban } from './BoardKanban';
 import { BoardList } from './BoardList';
 import { NewCommittee } from './NewCommittee';
+import { NewTask } from './NewTask';
 import './Board.css';
 
 const FILTERS = [
@@ -50,12 +52,14 @@ export function Board() {
   const openTask = useOpenTask();
   const toast = useToast();
   const can = usePermissionCheck();
+  const { canCreate } = useAssignment();
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterId>('all');
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
   const [flashed, setFlashed] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+  const [raising, setRaising] = useState(false);
 
   const committee = id ? byId(id) : undefined;
   const domainBoard = slug && slug !== 'all' ? BOARDS.find((b) => b.slug === slug) : undefined;
@@ -231,6 +235,16 @@ export function Board() {
               New committee
             </Button>
           )}
+
+          {/*
+            The board's one primary action (§1.2). Only admins and super admins
+            raise work, so it is absent for everyone else.
+          */}
+          {canCreate && (
+            <Button variant="brush" size="sm" onClick={() => setRaising(true)}>
+              New task
+            </Button>
+          )}
         </div>
       </header>
 
@@ -261,6 +275,22 @@ export function Board() {
           setSheetTask(null);
           move(task, next);
         }}
+      />
+
+      <NewTask
+        open={raising}
+        onClose={() => setRaising(false)}
+        onCreated={(task) => {
+          setRaising(false);
+          openTask(task);
+        }}
+        preset={
+          committee
+            ? { kind: 'committee', id: committee.id }
+            : domain
+              ? { kind: 'domain', domain }
+              : undefined
+        }
       />
 
       <NewCommittee

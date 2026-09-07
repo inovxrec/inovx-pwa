@@ -136,6 +136,27 @@
   to   { transform: scaleY(1); opacity: 1; }
 }
 
+/*
+  The playing state: each bar breathes about the centre line on its own period.
+
+  DEVIATION from §10, which allows one looping animation in the product and
+  forbids ambient movement. Asked for directly, and confined to the entry
+  screens' decorative wave — nothing inside the signed-in app plays, so the
+  rule still holds everywhere a person is trying to get work done.
+*/
+.wave--playing rect {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wave-bounce 1s var(--ease) infinite alternate both;
+}
+
+@keyframes wave-bounce {
+  from { transform: scaleY(0.34); }
+  to   { transform: scaleY(1.25); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wave--play rect { animation: none; }
+  /* It stops dead, rather than slowing down. */
+  .wave--playing rect { animation: none; transform: none; }
 }

@@ -2,6 +2,7 @@ import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './store/AuthProvider';
 import { TaskProvider } from './store/taskStore';
 import { CommitteeProvider } from './store/committeeStore';
+import { GrantProvider } from './store/grantStore';
 import { ToastProvider } from './hooks/useToast';
 import { useAuth, type Session } from './store/authStore';
 import { usePermissionCheck } from './hooks/usePermission';
@@ -235,10 +236,12 @@ export default function App() {
     <AuthProvider>
       <TaskProvider>
         <CommitteeProvider>
-          <ToastProvider>
-            <UpdatePrompt />
-            <RouterProvider router={router} />
-          </ToastProvider>
+          <GrantProvider>
+            <ToastProvider>
+              <UpdatePrompt />
+              <RouterProvider router={router} />
+            </ToastProvider>
+          </GrantProvider>
         </CommitteeProvider>
       </TaskProvider>
     </AuthProvider>

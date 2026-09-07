@@ -4,6 +4,7 @@ import { useTasks } from '../../store/taskStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
 import { useOpenTask } from '../../hooks/useOpenTask';
+import { useAssignment } from '../../hooks/useAssignment';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import {
   COMMITTEES, OVERDUE_THRESHOLD, STAT_TRENDS, UPCOMING, attentionItems, deckStats,
@@ -18,6 +19,7 @@ import { Avatar } from '../../ui/primitives/Avatar';
 import { Card, EmptyState, StatCard, DomainStrip, TaskCard } from '../../ui/patterns';
 import { Sheet } from '../../ui/patterns/Sheet';
 import { StickerCoffee } from '../../ui/stickers';
+import { NewTask } from '../board/NewTask';
 import './CommandDeck.css';
 
 /** Past this many days waiting, the approval chip turns blocked (§9.5.3). */
@@ -36,9 +38,11 @@ export function CommandDeck() {
   const openTask = useOpenTask();
   const toast = useToast();
   const can = usePermissionCheck();
+  const { canCreate } = useAssignment();
 
   /** The mobile approval row opens a sheet with the same two actions (§9.5.3). */
   const [sheetTask, setSheetTask] = useState<Task | null>(null);
+  const [raising, setRaising] = useState(false);
 
   const stats = useMemo(() => deckStats(tasks), [tasks]);
   const rollups = useMemo(() => domainRollups(tasks), [tasks]);
@@ -224,6 +228,18 @@ export function CommandDeck() {
 
   return (
     <div className="deck">
+      {/*
+        The deck is where an admin starts the day, so raising work belongs here
+        as well as on the board. It is the screen's one brush action (§1.2).
+      */}
+      {canCreate && (
+        <div className="deck__actions">
+          <Button variant="brush" size="sm" onClick={() => setRaising(true)}>
+            New task
+          </Button>
+        </div>
+      )}
+
       {statRow}
 
       {isDesktop ? (
@@ -247,6 +263,15 @@ export function CommandDeck() {
           {occasions}
         </div>
       )}
+
+      <NewTask
+        open={raising}
+        onClose={() => setRaising(false)}
+        onCreated={(task) => {
+          setRaising(false);
+          openTask(task);
+        }}
+      />
 
       {/* §9.5.3 — the mobile equivalent of the two inline buttons. */}
       {sheetTask && (

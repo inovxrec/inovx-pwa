@@ -3,13 +3,15 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { MEETINGS, type ActionItem, type Attendance, type Meeting } from '../../lib/club';
+import { PEOPLE } from '../../lib/mockTasks';
 import { formatDate, type Person } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
 import { Tag } from '../../ui/primitives/Tag';
 import { Textarea } from '../../ui/primitives/Textarea';
-import { Card, EmptyState, Modal, SectionHeader, SegmentedControl } from '../../ui/patterns';
+import { DatePicker } from '../../ui/primitives/DatePicker';
+import { Card, EmptyState, LinkChip, Modal, SectionHeader, SegmentedControl } from '../../ui/patterns';
 import { StickerCalendar } from '../../ui/stickers';
 import './Meetings.css';
 
@@ -19,21 +21,59 @@ const ATTENDANCE_OPTIONS = [
   { id: 'excused' as const, label: 'Excused' },
 ];
 
-/** §9.11 — the list, grouped by context. */
+/** §9.11 — the list, grouped by context, and the scheduling flow above it. */
 export function Meetings() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const can = usePermissionCheck();
+
+  const [meetings, setMeetings] = useState<Meeting[]>(MEETINGS);
+  const [scheduling, setScheduling] = useState(false);
+  const [draft, setDraft] = useState({
+    title: '',
+    context: 'Core team',
+    date: null as string | null,
+    location: '',
+    link: '',
+  });
 
   const byContext = useMemo(() => {
     const map = new Map<string, Meeting[]>();
-    for (const meeting of [...MEETINGS].sort((a, b) => b.date.localeCompare(a.date))) {
+    for (const meeting of [...meetings].sort((a, b) => b.date.localeCompare(a.date))) {
       const list = map.get(meeting.context);
       if (list) list.push(meeting);
       else map.set(meeting.context, [meeting]);
     }
     return map;
-  }, []);
+  }, [meetings]);
 
-  if (MEETINGS.length === 0) {
+  function schedule() {
+    const title = draft.title.trim();
+    if (!title || !draft.date) return;
+
+    const meeting: Meeting = {
+      id: `mt-${Date.now().toString(36)}`,
+      title,
+      context: draft.context,
+      date: draft.date,
+      // Empty strings are absent, not empty — a meeting with no link should
+      // not render a link chip pointing nowhere.
+      location: draft.location.trim() || undefined,
+      link: draft.link.trim() || undefined,
+      published: false,
+      invited: Object.values(PEOPLE),
+      attendance: {},
+      minutes: '',
+      actions: [],
+    };
+
+    setMeetings((current) => [...current, meeting]);
+    setScheduling(false);
+    setDraft({ title: '', context: 'Core team', date: null, location: '', link: '' });
+    toast.show(`${title} scheduled for ${formatDate(meeting.date)}.`, { tone: 'success' });
+  }
+
+  if (meetings.length === 0) {
     return (
       <Card>
         <EmptyState
@@ -47,6 +87,15 @@ export function Meetings() {
 
   return (
     <div className="meetings">
+      {/* Scheduling is assigning work of a sort, so it takes the same key. */}
+      {can('task.assign') && (
+        <div className="meetings__actions">
+          <Button variant="brush" size="sm" onClick={() => setScheduling(true)}>
+            Schedule a meeting
+          </Button>
+        </div>
+      )}
+
       {[...byContext].map(([context, list]) => (
         <section key={context}>
           <SectionHeader title={context} />
@@ -68,6 +117,18 @@ export function Meetings() {
                       </span>
                     </span>
 
+                    {/*
+                      Where it is, at a glance. A meeting with both shows both:
+                      a hybrid is a real thing and picking one would be a guess.
+                    */}
+                    {(meeting.location || meeting.link) && (
+                      <span className="micro meetings__where">
+                        {meeting.location}
+                        {meeting.location && meeting.link ? ' · ' : ''}
+                        {meeting.link ? 'online' : ''}
+                      </span>
+                    )}
+
                     <Tag state={meeting.published ? 'done' : 'todo'}>
                       {meeting.published ? 'Published' : 'Draft'}
                     </Tag>
@@ -78,6 +139,62 @@ export function Meetings() {
           </Card>
         </section>
       ))}
+
+      <Modal
+        open={scheduling}
+        onClose={() => setScheduling(false)}
+        dirty={draft.title.trim().length > 0}
+        title="Schedule a meeting"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setScheduling(false)}>Cancel</Button>
+            <Button
+              variant="brush"
+              disabled={!draft.title.trim() || !draft.date}
+              onClick={schedule}
+            >
+              Schedule
+            </Button>
+          </>
+        }
+      >
+        <div className="meeting__draft">
+          <Input
+            label="Title"
+            placeholder="Core team weekly"
+            value={draft.title}
+            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+          />
+          <Input
+            label="Context"
+            hint="The group this meeting belongs to."
+            value={draft.context}
+            onChange={(e) => setDraft((d) => ({ ...d, context: e.target.value }))}
+          />
+          <DatePicker
+            label="Date"
+            value={draft.date}
+            onChange={(value) => setDraft((d) => ({ ...d, date: value }))}
+          />
+          <Input
+            label="Location"
+            placeholder="Seminar hall 2"
+            value={draft.location}
+            onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
+          />
+          <Input
+            label="Join link"
+            type="url"
+            placeholder="https://meet.google.com/..."
+            value={draft.link}
+            onChange={(e) => setDraft((d) => ({ ...d, link: e.target.value }))}
+          />
+          <p className="body-sm meeting__draft-note">
+            Either is enough, and both is fine — a hybrid meeting has a room and
+            a link.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -149,6 +266,33 @@ export function MeetingDetail() {
         <p className="body-sm meeting__meta">
           {formatDate(source.date)} · {source.invited.length} invited · {present} present
         </p>
+
+        {/*
+          Where to actually go, at the top where someone arriving five minutes
+          late will look. The link opens in a new tab and says so.
+        */}
+        {(source.location || source.link) && (
+          <div className="meeting__where">
+            {source.location && (
+              <span className="meeting__place body-sm">
+                <span className="label meeting__place-key">Room</span>
+                {source.location}
+              </span>
+            )}
+
+            {source.link && (
+              <LinkChip
+                deliverable={{
+                  id: 'join',
+                  url: source.link,
+                  label: 'Join online',
+                  provider: 'link',
+                  shared: true,
+                }}
+              />
+            )}
+          </div>
+        )}
       </header>
 
       <Card

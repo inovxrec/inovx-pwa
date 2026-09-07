@@ -84,6 +84,10 @@ export interface Meeting {
   /** "Core team", "Techfest committee" — the context the list groups by. */
   context: string;
   date: string;
+  /** Where it happens — a room, a building. Either or both of these may be set. */
+  location?: string;
+  /** A join link. Kept apart from `location` so a hybrid meeting can say both. */
+  link?: string;
   published: boolean;
   invited: Person[];
   attendance: Record<string, Attendance>;
@@ -97,6 +101,7 @@ export const MEETINGS: Meeting[] = [
     title: 'Core team weekly',
     context: 'Core team',
     date: iso(-5),
+    location: 'Seminar hall 2',
     published: true,
     invited: [PEOPLE.riya, PEOPLE.arjun, PEOPLE.ananya, PEOPLE.nithya, PEOPLE.dev, PEOPLE.sana],
     attendance: {
@@ -119,6 +124,8 @@ export const MEETINGS: Meeting[] = [
     title: 'Techfest committee',
     context: 'Techfest',
     date: iso(-9),
+    location: 'Design studio',
+    link: 'https://meet.google.com/abc-defg-hij',
     published: true,
     invited: [PEOPLE.arjun, PEOPLE.karan, PEOPLE.ananya, PEOPLE.nithya],
     attendance: {
@@ -135,6 +142,7 @@ export const MEETINGS: Meeting[] = [
     title: 'Core team weekly',
     context: 'Core team',
     date: iso(2),
+    link: 'https://meet.google.com/klm-nopq-rst',
     published: false,
     invited: [PEOPLE.riya, PEOPLE.arjun, PEOPLE.ananya, PEOPLE.nithya, PEOPLE.dev, PEOPLE.sana],
     attendance: {},

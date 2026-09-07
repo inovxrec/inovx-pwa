@@ -6,6 +6,8 @@
   gap: var(--d-card-gap);
 }
 
+.deck__actions { display: flex; justify-content: flex-end; }
+
 /* 2×2 on mobile, four across on desktop — never a horizontal scroll (§7.11). */
 .deck__stats {
   display: grid;

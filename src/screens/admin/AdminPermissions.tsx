@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
+import { useGrants } from '../../store/grantStore';
 import { useToast } from '../../hooks/useToast';
 import { MEMBERS, type Member } from '../../lib/club';
 import { BOARDS } from '../../lib/mockTasks';
@@ -21,6 +22,29 @@ import { ADMIN_SCREENS, AdminPage } from './AdminFrame';
 import './AdminPermissions.css';
 
 const SCREEN = ADMIN_SCREENS.find((s) => s.id === 'permissions')!;
+
+const EMPTY_EDITS: PermissionEdits = Object.freeze({});
+
+/**
+ * How many rows differ from what is saved. Measured against the saved state
+ * rather than against inherit, so someone who already holds two grants does not
+ * see "2 changes" the moment they are selected.
+ */
+function countChanges(saved: PermissionEdits, edits: PermissionEdits): number {
+  const keys = new Set([...Object.keys(saved), ...Object.keys(edits)]) as Set<PermissionKey>;
+  let n = 0;
+
+  for (const key of keys) {
+    const a = saved[key];
+    const b = edits[key];
+    const sameDecision = (a?.decision ?? 'inherit') === (b?.decision ?? 'inherit');
+    const sameScope =
+      (a?.domains ?? []).slice().sort().join() === (b?.domains ?? []).slice().sort().join();
+    if (!sameDecision || !sameScope) n += 1;
+  }
+
+  return n;
+}
 
 const DECISIONS = [
   { id: 'inherit' as const, label: 'Inherit' },
@@ -48,12 +72,15 @@ function roleOf(member: Member): Role {
 export function AdminPermissions() {
   const isDesktop = useIsDesktop();
   const toast = useToast();
+  const { forPerson, setForPerson, clearForPerson } = useGrants();
 
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(
     isDesktop ? MEMBERS[0].id : null,
   );
   const [edits, setEdits] = useState<PermissionEdits>({});
+  /* Loads the saved grants for whoever is selected on first render. */
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
   const members = useMemo(() => {
@@ -63,17 +90,22 @@ export function AdminPermissions() {
   }, [query]);
 
   const member = MEMBERS.find((m) => m.id === selectedId);
-  const role = member ? roleOf(member) : 'member';
-  const defaults = useMemo(() => new Set(ROLE_DEFAULTS[role]), [role]);
 
-  const dirtyCount = Object.values(edits).filter(
-    (edit) => edit && edit.decision !== 'inherit',
-  ).length;
+  if (selectedId && loadedFor !== selectedId) {
+    setLoadedFor(selectedId);
+    setEdits(forPerson(selectedId));
+  }
+  const role = member ? roleOf(member) : 'member';
+  const defaults = new Set(ROLE_DEFAULTS[role]);
+
+  const saved = member ? forPerson(member.id) : EMPTY_EDITS;
+  const dirtyCount = countChanges(saved, edits);
 
   function pick(id: string) {
     setSelectedId(id);
-    // Switching people must not carry the previous person's unsaved edits.
-    setEdits({});
+    // Start from what is already saved for that person, not from the previous
+    // person's unsaved edits.
+    setEdits(forPerson(id));
   }
 
   function decisionFor(key: PermissionKey): Decision {
@@ -97,8 +129,13 @@ export function AdminPermissions() {
     });
   }
 
-  /** What this person will be able to do, in a sentence (§9.17). */
-  const preview = useMemo(() => {
+  /**
+   * What this person will be able to do, in a sentence (§9.17).
+   *
+   * Not memoised: it is a loop over about fifteen permissions, and a hand-rolled
+   * memo here is what stopped the compiler optimising the whole component.
+   */
+  const preview = (() => {
     if (!member) return '';
 
     const able: string[] = [];
@@ -124,12 +161,15 @@ export function AdminPermissions() {
     const first = member.name.split(' ')[0];
     if (able.length === 0) return `${first} will not be able to do anything.`;
     return `${first} will be able to: ${able.join(' · ')}.`;
-  }, [member, defaults, edits]);
+  })();
 
   function save() {
-    setEdits({});
+    if (!member) return;
+
+    // Atomic: one write for the whole person (§9.17).
+    setForPerson(member.id, edits);
     toast.show(
-      `${dirtyCount} ${dirtyCount === 1 ? 'change' : 'changes'} saved for ${member?.name}.`,
+      `${dirtyCount} ${dirtyCount === 1 ? 'change' : 'changes'} saved for ${member.name}.`,
       { tone: 'success' },
     );
   }
@@ -279,7 +319,11 @@ export function AdminPermissions() {
           <p className="body-sm perm__savebar-count">
             {dirtyCount} {dirtyCount === 1 ? 'change' : 'changes'}
           </p>
-          <Button variant="ghost" size="sm" onClick={() => setEdits({})}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEdits(member ? forPerson(member.id) : {})}
+          >
             Discard
           </Button>
           <Button variant="brush" size="sm" onClick={save}>
@@ -298,6 +342,7 @@ export function AdminPermissions() {
             <Button
               variant="danger"
               onClick={() => {
+                if (member) clearForPerson(member.id);
                 setEdits({});
                 setConfirmReset(false);
                 toast.show(`${member?.name} is back on the ${role.replace('-', ' ')} defaults.`);

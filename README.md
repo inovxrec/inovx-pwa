@@ -161,7 +161,15 @@ colour:
   have none, so these are four short rules that stop well short of meeting.
 - **`.track-no`** — leading-zero tabular numerals, as a sleeve lists its tracks.
 
-Three motions come with them, all one-shot and all off under
+**The entry screens' wave plays.** On login and first run the bars breathe on
+their own periods, the way a spectrum does while something is running. This is
+a **deviation from §10**, which allows one looping animation in the product and
+forbids ambient movement — asked for directly, and confined to the entry
+screens: no wave inside the signed-in app plays, so the rule still holds
+everywhere someone is trying to get work done. It stops dead under
+`prefers-reduced-motion`.
+
+Three further motions, all one-shot and all off under
 `prefers-reduced-motion`:
 
 - **The playhead** — a flame hairline draws once across the top of a screen as
@@ -256,6 +264,31 @@ transparency anyway.
 - **Reduced motion.** The global rule now collapses `animation-delay` as well
   as duration: a staggered child whose animation was cancelled but whose delay
   survived would sit invisible at its from-state for up to 100ms.
+
+## Who can raise work, and where
+
+Admins and super admins raise tasks; members do not. **A super admin decides
+whether an admin can assign into domains at all, and which ones** — and that
+decision is the scoped `task.assign` grant §9.17's screen already edits, rather
+than a second mechanism sitting beside it.
+
+- Inherited, an admin runs their own domain and a member runs none.
+- A GRANT with domain chips means exactly those domains. The scope **replaces**
+  the inherited default rather than adding to it, so the control can take a
+  domain away as well as give one — Arjun is the Events lead, and the seeded
+  grant scoping him to Design and Media removes Events.
+- A GRANT with no chips means every domain: the chip row is a narrowing, so
+  choosing none of them cannot mean choosing nothing.
+- A REVOKE means none. They can still raise work for themselves.
+
+Committees follow membership: a super admin runs all of them, everyone else
+runs the ones they are actually on. Being allowed to assign into Design does
+not make someone a member of the Techfest committee.
+
+`store/grantStore` holds the overrides and §9.17's screen writes to it, so a
+saved change takes effect immediately in the new-task form. The form never
+offers a target the server would refuse — an ungranted domain is absent from
+the list, not disabled (§14 item 13).
 
 ## Where the data comes from
 
