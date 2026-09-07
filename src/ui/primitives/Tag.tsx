@@ -37,7 +37,17 @@ export function Tag({ children, channel, state, flame, ink, className }: TagProp
 
   return (
     <span
-      className={cn('tag', 'micro', flame && 'tag--flame', ink && 'tag--ink', className)}
+      /*
+        --dom-core is the same value as --paper, so a core tag on a paper card
+        is invisible. It gets a hairline so it still reads as a chip (§11).
+      */
+      className={cn(
+        'tag', 'micro',
+        flame && 'tag--flame',
+        ink && 'tag--ink',
+        channel === 'core' && 'tag--core',
+        className,
+      )}
       style={{ background }}
     >
       {children}

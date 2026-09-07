@@ -51,3 +51,9 @@ export type { DataViewProps, Column } from './DataView';
 
 export { DomainStrip } from './DomainStrip';
 export type { DomainStripProps } from './DomainStrip';
+
+export { Accordion } from './Accordion';
+export type { AccordionProps } from './Accordion';
+
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';

@@ -36,7 +36,7 @@ few or no tasks, so their My Day is mostly the empty state.
 
 ## Where the build is
 
-**Phases 1 to 5 of the §13 build order are done. Phase 5 stops here for review.**
+**Phases 1 to 6 of the §13 build order are done. Phase 6 stops here for review.**
 
 | | |
 |---|---|
@@ -64,7 +64,12 @@ few or no tasks, so their My Day is mostly the empty state.
 | ✅ Oversight Deck | `/oversight` — §9.6, read-only, prose summary, DataView table |
 | ✅ Insights | `/insights` — §9.12, charts and the permission-gated leaderboard |
 | ✅ Charts | `src/ui/charts/` — line, bars and sparkline, all inline SVG |
-| ⬜ Phase 6 onward | Calendar, People, Meetings, Notifications, Settings — not started |
+| ✅ Calendar | `/calendar` — §9.9, month grid on desktop, agenda + week strip on mobile |
+| ✅ People | `/people` — §9.10, card grid, compact list, and the birthdays tab |
+| ✅ Meetings | `/meetings` — §9.11, attendance, minutes, action items → tasks |
+| ✅ Notifications | `/notifications` — §9.13, grouped today/earlier with unread state |
+| ✅ Settings | `/settings` — §9.14, accordion sections, the notification matrix, sign out |
+| ⬜ Phase 7 onward | The eight admin screens, Permissions last — not started |
 
 Every nav destination routes to a placeholder naming the phase and spec section
 that delivers it. Those are deleted as their real screens land.
@@ -113,7 +118,11 @@ still in git history if you need to look something up.
    `--st-blocked` instead of its domain colour. The value label always says
    "· N late" alongside, so the colour is never the only signal — but say if
    you would rather the bar always kept its domain colour.
-7. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+7. **`--dom-core` is the same value as `--paper`.** A core member's avatar and
+   a "Core" tag both vanished on a paper card. Both now carry a hairline so
+   they still read as a chip — but the token itself is the underlying problem,
+   and §3 fixes its value, so it is worth a decision.
+8. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 

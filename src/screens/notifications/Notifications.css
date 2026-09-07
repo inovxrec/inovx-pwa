@@ -1,0 +1,65 @@
+/* §9.13 — grouped TODAY / EARLIER, unread on --paper-hi with a flame dot. */
+
+.alerts { display: flex; flex-direction: column; max-width: 760px; }
+
+.alerts__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+}
+
+.alerts__count { color: var(--on-ink-mute); }
+
+.alerts__card { padding: var(--s-2) var(--d-card-pad); }
+
+.alerts__list { display: flex; flex-direction: column; list-style: none; }
+.alerts__list > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.alerts__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: var(--d-list-row);
+  padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  border-radius: var(--r-sm);
+  text-align: left;
+}
+
+.alerts__row:hover { background: var(--paper-lo); }
+
+/*
+  Unread carries three signals: the dot, the raised background, and the
+  "Unread" the row announces to a screen reader (§14 item 11).
+*/
+.alerts__row--unread { background: var(--paper-hi); }
+
+.alerts__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: var(--s-2);
+  border-radius: var(--r-pill);
+  background: transparent;
+}
+
+.alerts__row--unread .alerts__dot { background: var(--flame); }
+
+.alerts__sticker {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-xs);
+  background: var(--paper-lo);
+  color: var(--on-paper);
+}
+
+.alerts__sticker .sticker { width: 20px; height: 20px; }
+
+.alerts__body { flex: 1; min-width: 0; color: var(--on-paper); }
+.alerts__actor { font-weight: 600; }
+.alerts__age { flex: none; color: var(--on-paper-faint); }

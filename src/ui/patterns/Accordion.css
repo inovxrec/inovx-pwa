@@ -1,0 +1,39 @@
+/* §7.19 — a 44px trigger row, a rotating chevron. */
+
+.accordion { border-bottom: var(--b-hair) solid var(--paper-line); }
+.accordion:last-child { border-bottom: none; }
+
+.accordion__heading { margin: 0; }
+
+.accordion__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s-2) 0;
+  text-align: left;
+}
+
+.accordion__title { flex: 1; color: var(--on-paper); }
+.accordion__aside { flex: none; }
+
+.accordion__chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--on-paper-mute);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.accordion__chevron--open { transform: rotate(180deg); }
+
+.accordion__body {
+  padding: var(--s-1) 0 var(--s-4);
+  animation: accordion-in var(--t-base) var(--ease-out) both;
+}
+
+@keyframes accordion-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}

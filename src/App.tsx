@@ -19,6 +19,11 @@ import { TaskDetail } from './screens/task/TaskDetail';
 import { CommandDeck } from './screens/deck/CommandDeck';
 import { OversightDeck } from './screens/oversight/OversightDeck';
 import { Insights } from './screens/insights/Insights';
+import { Calendar } from './screens/calendar/Calendar';
+import { People } from './screens/people/People';
+import { Meetings, MeetingDetail } from './screens/meetings/Meetings';
+import { Notifications } from './screens/notifications/Notifications';
+import { Settings } from './screens/settings/Settings';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
 
 /**
@@ -73,12 +78,7 @@ function Require({
 
 /** Which phase and spec section each placeholder is standing in for. */
 const PENDING: Record<string, { screen: string; phase: string; section: string; permission?: PermissionKey }> = {
-  calendar: { screen: 'Calendar', phase: 'Phase 6', section: '§9.9' },
-  people: { screen: 'People', phase: 'Phase 6', section: '§9.10' },
-  meetings: { screen: 'Meetings', phase: 'Phase 6', section: '§9.11', permission: 'meetings.view' },
-  notifications: { screen: 'Alerts', phase: 'Phase 6', section: '§9.13' },
   admin: { screen: 'Admin', phase: 'Phase 7', section: '§9.15', permission: 'admin.members' },
-  settings: { screen: 'Settings', phase: 'Phase 6', section: '§9.14' },
 };
 
 /**
@@ -120,6 +120,38 @@ const router = createBrowserRouter([
           </RequireSession>
         ),
         children: [
+          // ---------- PHASE 6 ----------
+          {
+            path: '/calendar',
+            handle: { title: 'Calendar' } satisfies RouteHandle,
+            element: <Calendar />,
+          },
+          {
+            path: '/people',
+            handle: { title: 'People' } satisfies RouteHandle,
+            element: <People />,
+          },
+          {
+            path: '/meetings',
+            handle: { title: 'Meetings' } satisfies RouteHandle,
+            element: <Require permission="meetings.view"><Meetings /></Require>,
+          },
+          {
+            path: '/meetings/:id',
+            handle: { title: 'Meeting', back: true } satisfies RouteHandle,
+            element: <Require permission="meetings.view"><MeetingDetail /></Require>,
+          },
+          {
+            path: '/notifications',
+            handle: { title: 'Alerts' } satisfies RouteHandle,
+            element: <Notifications />,
+          },
+          {
+            path: '/settings',
+            handle: { title: 'Settings' } satisfies RouteHandle,
+            element: <Settings />,
+          },
+
           // ---------- PHASE 5 ----------
           {
             path: '/deck',

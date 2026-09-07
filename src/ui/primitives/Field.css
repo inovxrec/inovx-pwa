@@ -89,3 +89,24 @@
 /* ---------- DISABLED ---------- */
 .field__input:disabled { cursor: not-allowed; }
 .field__shell:has(.field__input:disabled) { opacity: 0.4; }
+
+/*
+  A read-only field must not look like one you can type in. It keeps its label
+  and stays focusable so it can be read and copied, but it sits on the card's
+  own surface rather than the raised input fill, and it takes no focus colour.
+*/
+.field__input[readonly],
+.field__shell:has(.field__input[readonly]) {
+  background: transparent;
+  color: var(--on-paper-mute);
+}
+
+.field__shell:has(.field__input[readonly]) {
+  border-style: dashed;
+}
+
+.field__shell:has(.field__input[readonly]):focus-within {
+  border-color: var(--paper-line-2);
+  border-width: 1.5px;
+  outline: none;
+}

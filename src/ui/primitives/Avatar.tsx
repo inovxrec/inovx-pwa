@@ -58,7 +58,11 @@ export function Avatar({
 
   return (
     <span
-      className={cn('avatar', 'avatar--initials', className)}
+      /*
+        --dom-core is the same value as --paper, so a core member's avatar
+        vanishes on a paper card. It gets a hairline instead (§11).
+      */
+      className={cn('avatar', 'avatar--initials', channel === 'core' && 'avatar--core', className)}
       style={{
         '--avatar-size': `${size}px`,
         background: `var(--dom-${channel})`,

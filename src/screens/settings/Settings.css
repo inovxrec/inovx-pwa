@@ -1,0 +1,81 @@
+/* §9.14 — accordion sections on one paper card. */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  max-width: 760px;
+}
+
+.settings__card { padding: var(--s-2) var(--d-card-pad) var(--s-3); }
+
+.settings__profile {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+}
+
+.settings__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+}
+
+/* The desktop matrix. Below lg this is replaced, never scrolled (§9.14). */
+.settings__matrix {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.settings__matrix-th {
+  height: 38px;
+  padding: 0 var(--s-2);
+  text-align: left;
+  color: var(--on-paper-mute);
+  background: var(--paper-lo);
+}
+
+.settings__matrix-th:first-child { border-radius: var(--r-xs) 0 0 var(--r-xs); }
+.settings__matrix-th:last-child  { border-radius: 0 var(--r-xs) var(--r-xs) 0; }
+
+.settings__matrix-row {
+  padding: var(--s-2);
+  text-align: left;
+  font-weight: 400;
+  color: var(--on-paper);
+  border-bottom: var(--b-hair) solid var(--paper-line);
+}
+
+.settings__matrix-cell {
+  width: 96px;
+  padding: var(--s-2);
+  border-bottom: var(--b-hair) solid var(--paper-line);
+}
+
+.settings__events { display: flex; flex-direction: column; }
+
+.settings__switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.settings__about { display: flex; flex-direction: column; }
+
+.settings__about-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 36px;
+  padding: var(--s-1) 0;
+  border-bottom: var(--b-hair) solid var(--paper-line);
+}
+
+.settings__about-row:last-child { border-bottom: none; }
+.settings__about-row dt { color: var(--on-paper-mute); }
+.settings__about-row dd { margin: 0; color: var(--on-paper); }
+
+.settings__signout { display: flex; }

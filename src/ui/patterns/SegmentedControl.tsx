@@ -8,7 +8,11 @@ export interface Segment<T extends string = string> {
 
 export interface SegmentedControlProps<T extends string = string> {
   segments: Segment<T>[];
-  value: T;
+  /**
+   * Undefined means nothing has been chosen yet — the thumb is hidden rather
+   * than parked on the first segment, which would assert an answer nobody gave.
+   */
+  value: T | undefined;
   onChange: (id: T) => void;
   /** Names the group — "View", "Permission". */
   label: string;
@@ -26,12 +30,13 @@ export function SegmentedControl<T extends string = string>({
   segments, value, onChange, label, className,
 }: SegmentedControlProps<T>) {
   const index = segments.findIndex((s) => s.id === value);
+  const unset = index === -1;
 
   return (
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn('segmented', className)}
+      className={cn('segmented', unset && 'segmented--unset', className)}
       style={{
         '--segment-count': segments.length,
         '--segment-index': Math.max(0, index),
