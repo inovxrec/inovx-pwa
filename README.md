@@ -231,6 +231,13 @@ them is an illegible strip, so they take the X. The 512 and the maskable 512,
 which are used for splash screens and listings, take the full mark. Say if you
 would rather they were consistent either way.
 
+**The favicon is the one icon without the ink tile.** §2 puts every generated
+icon on `#0B0B0B`; a tab strip has its own colour and the browser theme changes
+it, so a black square sits in it as a visible tile rather than as the mark. The
+32px favicon is drawn on transparency instead. The other four keep the ink
+ground — a home-screen icon needs its own tile, and iOS composites away any
+transparency anyway.
+
 ## What Phase 8's passes found
 
 - **Responsive.** Checked at 375, 768, 1024 and 1440 by loading the app in a

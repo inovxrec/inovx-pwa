@@ -43,7 +43,12 @@ const INK = '#0B0B0B';
 const X_CROP = { x: 422, y: 0, w: 139, h: 198 };
 
 const TARGETS = [
-  { file: 'favicon-32.png', size: 32, inset: 0.06, crop: true },
+  /*
+    The favicon alone is transparent, not on the ink ground. A tab strip has
+    its own colour and the browser theme changes it, so a black tile sits in it
+    as a visible square; the glyph on its own reads on either.
+  */
+  { file: 'favicon-32.png', size: 32, inset: 0.06, crop: true, transparent: true },
   { file: 'icon-192.png', size: 192, inset: 0.14, crop: true },
   { file: 'apple-touch-icon.png', size: 180, inset: 0.14, crop: true },
   { file: 'icon-512.png', size: 512, inset: 0.1, crop: false },
@@ -51,12 +56,15 @@ const TARGETS = [
   { file: 'icon-maskable-512.png', size: 512, inset: 0.2, crop: false },
 ];
 
-function render(img, size, inset, crop) {
+function render(img, size, inset, crop, transparent) {
   const c = document.createElement('canvas');
   c.width = size; c.height = size;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = INK;
-  ctx.fillRect(0, 0, size, size);
+
+  if (!transparent) {
+    ctx.fillStyle = INK;
+    ctx.fillRect(0, 0, size, size);
+  }
 
   const sx = crop ? X_CROP.x : 0;
   const sy = crop ? X_CROP.y : 0;
@@ -77,7 +85,7 @@ img.onerror = () => { document.getElementById('status').textContent = 'Could not
 img.onload = async () => {
   const files = {};
   for (const t of TARGETS) {
-    const canvas = render(img, t.size, t.inset, t.crop);
+    const canvas = render(img, t.size, t.inset, t.crop, t.transparent);
     files[t.file] = canvas.toDataURL('image/png').split(',')[1];
     canvas.style.cssText = 'margin:8px;max-width:128px;border:1px solid #555';
     document.getElementById('preview').append(canvas);
