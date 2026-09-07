@@ -1,4 +1,4 @@
-/* §2 — the wordmark and its black chip. */
+/* §2 — the wordmark, its black chip, and the X app mark. */
 
 .logo {
   display: inline-flex;
@@ -8,15 +8,20 @@
   color: var(--on-ink);
 }
 
+/* §2's minimum width is 88px; below that the X takes over. */
 .logo--sm { font-size: 12px; width: 88px; }
 .logo--md { font-size: 16px; width: 120px; }
 .logo--lg { font-size: 20px; width: 160px; }
 
-.logo__img { width: 100%; height: auto; }
+.logo__img {
+  width: 100%;
+  height: auto;
+}
 
 /*
-  The Anton fallback. It takes its size from the parent's font-size rather than
-  a .display-* class so that one size token drives both the image and the word.
+  The Anton fallback, for the case where the asset does not load. It takes its
+  size from the parent rather than a .display-* class so one size token drives
+  both the image and the word.
 */
 .logo__word {
   display: block;
@@ -33,11 +38,33 @@
 /*
   The X app mark. Hidden until a container narrower than 88px opts into it by
   setting .logo--x on this element (§2).
+
+  It is the wordmark's own X rather than a second asset, so the two can never
+  drift apart. The crop is exact rather than an object-fit: the X occupies
+  x 422–561 of the 561×198 source, which is narrower than a square, so cover
+  would drag a slice of the V in with it.
+
+  The box is 139:198 — the glyph's own ratio — so the image is 561/139 = 403.6%
+  of it, offset left by 422/139 = 303.6%.
 */
 .logo__x {
   display: none;
+  position: relative;
+  overflow: hidden;
+  width: 1.4em;
+  height: 2em;
   font-size: 1.5em;
-  line-height: 1;
+  line-height: 2em;
+  text-align: center;
+}
+
+.logo__x-img {
+  position: absolute;
+  top: 0;
+  left: -303.6%;
+  width: 403.6%;
+  max-width: none;
+  height: 100%;
 }
 
 .logo--x { width: auto; }

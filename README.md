@@ -98,11 +98,12 @@ still in git history if you need to look something up.
 0. **Phase 2 asks for "the four system screens" but §9.18 specifies three**
    (404, 403, 500) plus the offline banner and an update toast. The three are
    built. Say what the fourth should be if one is missing.
-1. **The logo.** §2 expects `public/brand/inovx-logo.png`; it isn't in the repo.
-   `src/ui/brand/Logo.tsx` renders it everywhere and falls back to the word set
-   in Anton until it lands, so dropping the file in is the whole fix. The PWA
-   icons §2 asks to generate from it are still outstanding, and belong with
-   Phase 8's manifest work.
+1. **The logo asset sits at a different path to the one §2 names.** §2 says
+   `public/brand/inovx-logo.png`; the file supplied is
+   `public/inovx-wordmark-light.webp` — the same mark, with an alpha channel.
+   The code follows the file that exists rather than moving it. Say the word if
+   you would rather it lived at §2's path and I will move it and update the two
+   references.
 2. **The brush at wide sizes.** The §6.1 paths stretch with
    `preserveAspectRatio="none"`, so a full-width button flattens into a smooth
    lozenge rather than reading as hand-painted. Worth a look on
@@ -212,12 +213,23 @@ shell.
 A waiting worker raises §9.18's "A new version is ready" toast, which persists
 until acted on because it carries an action.
 
-**The icons are placeholders.** §2 says to generate them from
-`public/brand/inovx-logo.png`, which is still not in the repo, so
-`scripts/generate-icons.mjs` draws the "X" app mark §2 itself falls back to
-below 88px. Drop the real logo in and rerun `node scripts/generate-icons.mjs` —
-the sizes, padding and filenames are the ones §2 specifies and should not
-change.
+**The icons are generated from the real wordmark.** Run
+`node scripts/generate-icons.mjs` and open the address it prints; it rasterises
+`public/inovx-wordmark-light.webp` into the five files §2 names and writes them
+to `public/icons`. Node cannot decode WebP without a dependency and the browser
+already can, so the drawing happens there and the bytes come back to be
+written. Nothing about that script ships — its page is served from memory, not
+from `public/`.
+
+Rerun it whenever the wordmark changes. The sizes, padding and file names are
+the ones §2 specifies and should not change.
+
+**Which icons show what.** §2 says to generate all of them from the logo, and
+separately that below 88px the X glyph alone is the app mark. The home-screen
+and tab sizes — 32, 180, 192 — render small enough that a 2.8:1 wordmark inside
+them is an illegible strip, so they take the X. The 512 and the maskable 512,
+which are used for splash screens and listings, take the full mark. Say if you
+would rather they were consistent either way.
 
 ## What Phase 8's passes found
 

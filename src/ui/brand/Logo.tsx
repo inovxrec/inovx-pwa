@@ -4,12 +4,15 @@ import './Logo.css';
 
 export type LogoSize = 'sm' | 'md' | 'lg';
 
+/** The wordmark's own pixels, so the browser reserves the right box up front. */
+const INTRINSIC = { width: 561, height: 198 };
+
 export interface LogoProps {
   /** sm 88px (rail, header) · md 120px (login) · lg 160px. */
   size?: LogoSize;
   /**
-   * The wordmark's letters are outlined white, so it only works on a dark
-   * surface (§2). On paper it must sit in a black chip — that is what this
+   * The wordmark's letters are silver with thin outlines, so it only works on a
+   * dark surface (§2). On paper it must sit in a black chip — that is what this
    * turns on. On an ink ground leave it off.
    */
   chip?: boolean;
@@ -20,9 +23,12 @@ export interface LogoProps {
  * §2 — the INOVX wordmark. Never recoloured, stretched, rotated or placed in a
  * coloured shape other than the black chip.
  *
- * The PNG is dropped in by hand at public/brand/inovx-logo.png. Until it lands
- * — and if it ever 404s in production — this falls back to the word set in
- * Anton, which §2 allows as the lockup partner. It never falls back to nothing.
+ * §2 names the asset `public/brand/inovx-logo.png`; what the club supplied is
+ * `public/inovx-wordmark-light.webp`, which is the same mark with an alpha
+ * channel. The path below follows the file that exists.
+ *
+ * The Anton fallback stays: if the asset ever 404s the lockup degrades to the
+ * word rather than to nothing.
  */
 export function Logo({ size = 'sm', chip = false, className }: LogoProps) {
   const [failed, setFailed] = useState(false);
@@ -34,10 +40,10 @@ export function Logo({ size = 'sm', chip = false, className }: LogoProps) {
       ) : (
         <img
           className="logo__img"
-          src="/brand/inovx-logo.png"
+          src="/inovx-wordmark-light.webp"
           alt="INOVX"
-          width={368}
-          height={112}
+          width={INTRINSIC.width}
+          height={INTRINSIC.height}
           onError={() => setFailed(true)}
         />
       )}
@@ -48,7 +54,13 @@ export function Logo({ size = 'sm', chip = false, className }: LogoProps) {
         the DOM and hidden by default so the swap can stay CSS-only, which is
         what lets the rail collapse without a JS breakpoint read.
       */}
-      <span className="logo__x" data-font="display" aria-hidden="true">X</span>
+      <span className="logo__x" aria-hidden="true">
+        {failed ? (
+          <span data-font="display">X</span>
+        ) : (
+          <img className="logo__x-img" src="/inovx-wordmark-light.webp" alt="" />
+        )}
+      </span>
     </span>
   );
 }

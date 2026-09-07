@@ -1,141 +1,132 @@
-import { deflateSync } from 'node:zlib';
+import { createServer } from 'node:http';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /*
-  Generates the PWA icon set §2 asks for.
+  Generates the PWA icon set §2 asks for, from the real wordmark.
 
-  §2 says to generate these FROM public/brand/inovx-logo.png. That file is not
-  in the repo, so this draws the "X" app mark §2 itself falls back to below
-  88px, on the --ink ground, in --paper. It is a placeholder and looks like one.
+  Run it, open http://localhost:4190 in a browser, and it writes the five files
+  into public/icons. Node cannot decode WebP without a dependency and the
+  browser already can, so the rasterising happens there and the bytes come back
+  here to be written.
 
-  When the real logo lands, replace this script's drawing with a decode of the
-  PNG — the sizes, padding and file names below are the ones §2 specifies and
-  should not change.
+  Nothing about this ships: the page is served from memory, not from public/.
 
-  Written by hand rather than with a canvas library so the repo gains no
-  dependency for something that runs once.
+  Rerun it whenever public/inovx-wordmark-light.webp changes. The sizes, the
+  padding and the file names below are the ones §2 specifies — those should not
+  change.
 */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public', 'icons');
+const SOURCE = 'inovx-wordmark-light.webp';
+const PORT = 4190;
 
-const INK = [0x0b, 0x0b, 0x0b];
-const PAPER = [0xf4, 0xef, 0xe0];
-const FLAME = [0xef, 0x4e, 0x24];
+/*
+  Which icons show the whole wordmark and which show the X alone.
 
-/** CRC32, as the PNG spec defines it. */
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n += 1) {
-    let c = n;
-    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
-function crc32(buf) {
-  let c = 0xffffffff;
-  for (const byte of buf) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
-
-function chunk(type, data) {
-  const length = Buffer.alloc(4);
-  length.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([length, body, crc]);
-}
-
-/** `pixels` is a size×size array of [r,g,b]. */
-function png(size, pixels) {
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
-  header[8] = 8; // bit depth
-  header[9] = 2; // truecolour
-  header[10] = 0;
-  header[11] = 0;
-  header[12] = 0;
-
-  // One filter byte (0 = none) per scanline, then RGB triples.
-  const raw = Buffer.alloc(size * (1 + size * 3));
-  let at = 0;
-  for (let y = 0; y < size; y += 1) {
-    raw[at] = 0;
-    at += 1;
-    for (let x = 0; x < size; x += 1) {
-      const [r, g, b] = pixels[y * size + x];
-      raw[at] = r;
-      raw[at + 1] = g;
-      raw[at + 2] = b;
-      at += 3;
-    }
-  }
-
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', header),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
-
-/**
- * The X mark: two diagonal bands, with the second in flame the way the real
- * wordmark's X carries a second colour.
- *
- * `inset` is the fraction of the canvas left clear around the mark — 0.2 for
- * the maskable icon, which §2 requires to survive a circular crop.
- */
-function drawMark(size, inset) {
-  const pixels = new Array(size * size);
-  const pad = size * inset;
-  const span = size - pad * 2;
-  const stroke = span * 0.19;
-  const half = stroke / 2;
-
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      // Normalised inside the mark's own box, so the padding stays empty.
-      const u = (x - pad) / span;
-      const v = (y - pad) / span;
-
-      let colour = INK;
-
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
-        const t = half / span;
-        // Distance from each diagonal, in the mark's own units.
-        const down = Math.abs(u - v) / Math.SQRT2;
-        const up = Math.abs(u + v - 1) / Math.SQRT2;
-
-        if (down < t) colour = PAPER;
-        else if (up < t) colour = FLAME;
-      }
-
-      pixels[y * size + x] = colour;
-    }
-  }
-
-  return pixels;
-}
+  §2 says to generate all of these from the logo, and separately that below 88px
+  the X glyph alone is the app mark. The home-screen and tab sizes render small
+  enough that a 2.8:1 wordmark inside them is an illegible strip, so they take
+  the X; the large sizes, which are used for splash screens and listings, take
+  the full mark.
+*/
+const PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><title>INOVX icons</title></head>
+<body style="background:#222;color:#ccc;font:14px system-ui;padding:24px">
+<p id="status">Generating…</p>
+<div id="preview"></div>
+<script>
+const INK = '#0B0B0B';
+/* The X is the trailing glyph. Measured from the source's glyph gutters. */
+const X_CROP = { x: 422, y: 0, w: 139, h: 198 };
 
 const TARGETS = [
-  { file: 'icon-192.png', size: 192, inset: 0.12 },
-  { file: 'icon-512.png', size: 512, inset: 0.12 },
-  // §2: the maskable icon is the mark centred with 20% safe padding.
-  { file: 'icon-maskable-512.png', size: 512, inset: 0.2 },
-  { file: 'apple-touch-icon.png', size: 180, inset: 0.14 },
-  { file: 'favicon-32.png', size: 32, inset: 0.08 },
+  { file: 'favicon-32.png', size: 32, inset: 0.06, crop: true },
+  { file: 'icon-192.png', size: 192, inset: 0.14, crop: true },
+  { file: 'apple-touch-icon.png', size: 180, inset: 0.14, crop: true },
+  { file: 'icon-512.png', size: 512, inset: 0.1, crop: false },
+  /* §2: the maskable icon is the logo centred with 20% safe padding. */
+  { file: 'icon-maskable-512.png', size: 512, inset: 0.2, crop: false },
 ];
+
+function render(img, size, inset, crop) {
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = INK;
+  ctx.fillRect(0, 0, size, size);
+
+  const sx = crop ? X_CROP.x : 0;
+  const sy = crop ? X_CROP.y : 0;
+  const sw = crop ? X_CROP.w : img.naturalWidth;
+  const sh = crop ? X_CROP.h : img.naturalHeight;
+
+  const box = size * (1 - inset * 2);
+  const scale = Math.min(box / sw, box / sh);
+  const w = sw * scale, h = sh * scale;
+
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, sx, sy, sw, sh, (size - w) / 2, (size - h) / 2, w, h);
+  return c;
+}
+
+const img = new Image();
+img.onerror = () => { document.getElementById('status').textContent = 'Could not load /${SOURCE}'; };
+img.onload = async () => {
+  const files = {};
+  for (const t of TARGETS) {
+    const canvas = render(img, t.size, t.inset, t.crop);
+    files[t.file] = canvas.toDataURL('image/png').split(',')[1];
+    canvas.style.cssText = 'margin:8px;max-width:128px;border:1px solid #555';
+    document.getElementById('preview').append(canvas);
+  }
+  const res = await fetch('/write', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(files),
+  });
+  const body = await res.json();
+  document.getElementById('status').textContent = 'Wrote: ' + body.written.join(', ');
+};
+img.src = '/${SOURCE}';
+</script></body></html>`;
 
 mkdirSync(OUT, { recursive: true });
 
-for (const target of TARGETS) {
-  writeFileSync(join(OUT, target.file), png(target.size, drawMark(target.size, target.inset)));
-  console.log(`wrote public/icons/${target.file} (${target.size}px)`);
-}
+createServer(async (req, res) => {
+  if (req.method === 'POST' && req.url === '/write') {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+
+    try {
+      const files = JSON.parse(body);
+      const written = [];
+      for (const [name, base64] of Object.entries(files)) {
+        writeFileSync(join(OUT, name), Buffer.from(base64, 'base64'));
+        written.push(name);
+      }
+      console.log('wrote', written.join(', '));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ written }));
+      console.log('done — stop this with ctrl-c');
+    } catch (error) {
+      console.error(error);
+      res.writeHead(500).end(String(error));
+    }
+    return;
+  }
+
+  if (req.url === `/${SOURCE}`) {
+    const { readFileSync } = await import('node:fs');
+    res.writeHead(200, { 'Content-Type': 'image/webp' });
+    res.end(readFileSync(join(ROOT, 'public', SOURCE)));
+    return;
+  }
+
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(PAGE);
+}).listen(PORT, () => {
+  console.log(`open http://localhost:${PORT} to generate the icons`);
+});
