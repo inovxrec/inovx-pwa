@@ -1,25 +1,25 @@
-# INOVX84 — Frontend & Operations App
+# InovX Ops — Frontend & Operations Client
 
-Vite + React 19 + TypeScript single-page application and internal operations system for InovX. No Tailwind — plain CSS files per component using the design tokens in `src/styles/tokens.css`.
+Vite, React 19, and TypeScript single-page application for InovX operations. Styled with standard CSS and design tokens (`src/styles/tokens.css`).
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-### 1. Install & Run Development Server
+### Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-### 2. Run Test Suite
+### Automated Tests
 
 ```bash
 npm test
 ```
 
-### 3. Production Build
+### Production Build
 
 ```bash
 npm run build
@@ -27,36 +27,40 @@ npm run build
 
 ---
 
-## 👥 Demo Accounts (4 Role Model)
+## Authentication & Demo Accounts
+
+The application implements a 4-role access model:
 
 | Email | Password | Role | Description |
 |---|---|---|---|
-| `varun@inovx.club` | `demo` | `super_admin` | President / Core Leader (Unrestricted authority) |
-| `sanjeev@inovx.club` | `demo` | `admin` | Tech Lead / Domain Lead (Domain & Board Management) |
-| `faculty@inovx.club` | `demo` | `faculty` | Faculty In-Charge (Read-only club-wide oversight) |
+| `varun@inovx.club` | `demo` | `super_admin` | President / Core Lead (Full system access) |
+| `sanjeev@inovx.club` | `demo` | `admin` | Tech Lead / Domain Lead (Domain & Board management) |
+| `faculty@inovx.club` | `demo` | `faculty` | Faculty In-Charge (Read-only oversight) |
 | `riya@inovx.club` | `demo` | `member` | Design Lead (Member with delegated `task.approve`) |
-| `member@inovx.club` | `demo` | `member` | Media Coordinator / Standard Member |
+| `member@inovx.club` | `demo` | `member` | Standard Member |
 
 ---
 
-## 🛡️ Architecture & Streams
+## Security & Permissions (Stream B)
 
-### Stream B: Permissions, Visibility & Audit
-Stream B implements the server-enforced authorization engine and tri-state granular permissions:
-$$\mathbf{Effective\ Permission(user, key)} = \text{Role Default} + \text{User Grant} - \text{User Revoke}$$
+Authorization is enforced server-side via PostgreSQL Row-Level Security (RLS) and dynamic SQL functions:
 
-* **PostgreSQL Migrations & RLS:** Located in `supabase/migrations/`
-* **Frontend Permission Resolver & Service:** Located in `src/lib/permissions/`
-* **Admin & Permissions UI:** Located in `src/features/permissions/`
-* **Documentation & Integration Guide:** See [`docs/STREAM_B_PERMISSIONS_AND_AUDIT.md`](./docs/STREAM_B_PERMISSIONS_AND_AUDIT.md)
+```text
+effective_permission(user, key) = role_default(user.role, key) + user_grant(user, key) - user_revoke(user, key)
+```
+
+- **Database Migrations:** `supabase/migrations/`
+- **Client Service & Resolver:** `src/lib/permissions/`
+- **Administration UI:** `src/features/permissions/`
+- **Technical Specification:** See [`docs/STREAM_B_PERMISSIONS_AND_AUDIT.md`](./docs/STREAM_B_PERMISSIONS_AND_AUDIT.md)
 
 ---
 
-## 📐 Rules for Building Screens
+## Component Guidelines
 
-1. **Shared Styles & Components:** Don't edit `src/styles/tokens.css`, `src/components/`, or `src/layouts/` without coordinating with the team.
-2. **Design System:** Use pre-built shared components from `src/components/` (`<Button>`, `<Panel>`, `<Pill>`, `<Avatar>`, `<Modal>`).
-3. **Toasts:** Use `const { toast } = useToast(); toast('ACTION COMPLETED');`.
-4. **Permissions Check:** Use `can(session, 'permission.key')` from `src/store/authStore.ts`.
-5. **Mobile Responsive:** Use `@media (max-width: 720px)` in per-component CSS — `AppShell` switches nav-rail to bottom-bar automatically.
+1. **Shared Styles & Components:** Do not modify `src/styles/tokens.css`, `src/components/`, or `src/layouts/` without team alignment.
+2. **UI Primitives:** Use shared components (`<Button>`, `<Panel>`, `<Pill>`, `<Avatar>`, `<Modal>`).
+3. **Session Verification:** Use `can(session, 'permission.key')` from `src/store/authStore.ts` for UI gating.
+4. **Responsive Layouts:** Apply `@media (max-width: 720px)` breakpoints in component stylesheets. `AppShell` handles navigation transitions.
+
 
