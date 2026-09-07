@@ -9,4 +9,7 @@ export const SCREEN_TITLES: Record<string, ReactNode> = {
   calendar: <><span className="accent">Calendar</span></>,
   people: <><span className="accent">People</span></>,
   permissions: <><span className="accent">Permissions</span></>,
+  notifications: <>Comms & <span className="accent">Alerts</span></>,
+  meetings: <>Station <span className="accent">Briefings</span></>,
+  analytics: <>Attendance <span className="accent">Analytics</span></>,
 };

@@ -18,12 +18,15 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
   calendar: { key: 'calendar', label: 'Calendar', path: '/calendar' },
   people: { key: 'people', label: 'People', path: '/people' },
   permissions: { key: 'permissions', label: 'Admin', path: '/permissions' },
+  notifications: { key: 'notifications', label: 'Notifications', path: '/notifications' },
+  meetings: { key: 'meetings', label: 'Briefings', path: '/meetings' },
+  analytics: { key: 'analytics', label: 'Analytics', path: '/analytics' },
 };
 
 const NAV_BY_ROLE: Record<Role, string[]> = {
-  member: ['myday', 'board', 'calendar', 'people'],
-  admin: ['deck', 'board', 'calendar', 'people', 'permissions'],
-  faculty: ['oversight', 'calendar', 'people'],
+  member: ['myday', 'board', 'calendar', 'meetings', 'people', 'notifications'],
+  admin: ['deck', 'board', 'calendar', 'meetings', 'people', 'permissions', 'analytics', 'notifications'],
+  faculty: ['oversight', 'calendar', 'meetings', 'people', 'analytics', 'notifications'],
 };
 
 export function getNavItems(role: Role): NavItem[] {

@@ -16,6 +16,27 @@
 .tb-title .accent { color: var(--chan); }
 .tb-right { display: flex; align-items: center; gap: var(--sp-3); }
 
+.tb-notif-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 13px;
+  position: relative;
+  transition: all var(--t-instant);
+}
+
+.tb-notif-link:hover,
+.tb-notif-link.active {
+  border-color: var(--phosphor);
+  color: var(--phosphor);
+}
+
 @media (max-width: 720px) {
   .topbar { padding: var(--sp-3) var(--sp-4); }
 }
