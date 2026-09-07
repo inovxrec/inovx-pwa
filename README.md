@@ -214,6 +214,22 @@ Five further motions, all off under `prefers-reduced-motion`:
   rather than two separate fades. It measures with `offsetLeft`, not client
   rects, because the strip scrolls.
 - **The rail's flame bar** grows out of its own centre on a destination change.
+- **Stat figures roll into place** like a tape counter. Each digit is a window
+  onto a strip of 0–9 twice, travelling to the second copy of its value, so
+  every digit turns a full cycle whatever it lands on — a 1 that moved one notch
+  would not read as a counter. The real number sits in the DOM as text for a
+  screen reader; the strip is decoration over it.
+- **A brush button repaints on press**, the stroke laid down left to right over
+  220ms. Driven from a class rather than `:active`, which lasts exactly as long
+  as the finger is down and would cut the sweep short on a tap.
+- **The board columns cross-fade** when the filter changes — keyed on the
+  filter, deliberately not on the search text, since re-running it per keystroke
+  would strobe.
+- **A task title morphs from its card into the drawer**, using the View
+  Transitions API where the browser has it and falling back to the plain state
+  change where it does not. The card gives up its `view-transition-name` in the
+  same update the drawer takes it, which is what makes the browser treat them as
+  one element — two elements may never hold the same name at once.
 
 
 - **The playhead** — a flame hairline draws once across the top of a screen as

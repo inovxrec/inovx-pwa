@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTasks } from '../../store/taskStore';
 import { useCommittees } from '../../store/committeeStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
-import { useOpenTask } from '../../hooks/useOpenTask';
+import { TASK_PARAM, useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { useAssignment } from '../../hooks/useAssignment';
 import { BOARDS } from '../../lib/mockTasks';
@@ -50,6 +50,7 @@ export function Board() {
   const isDesktop = useIsDesktop();
   const navigate = useNavigate();
   const openTask = useOpenTask();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
   const can = usePermissionCheck();
   const { canCreate } = useAssignment();
@@ -144,6 +145,7 @@ export function Board() {
   }
 
   const shared = { byState, columns, flashed, onOpen: openTask };
+  const morphingId = searchParams.get(TASK_PARAM) ?? undefined;
   const title = committee ? committee.name : domainBoard ? domainBoard.name : 'All boards';
 
   return (
@@ -263,7 +265,7 @@ export function Board() {
           />
         </Card>
       ) : isDesktop ? (
-        <BoardKanban {...shared} onMove={move} />
+        <BoardKanban {...shared} onMove={move} fadeKey={filter} morphingId={morphingId} />
       ) : (
         <BoardList {...shared} onChangeState={setSheetTask} />
       )}

@@ -33,6 +33,26 @@ export function useOpenTask(): (task: Task | string) => void {
 
       const next = new URLSearchParams(params);
       next.set(TASK_PARAM, id);
+
+      /*
+        A view transition, where the browser supports one, so the card's title
+        travels into the drawer's heading rather than one fading out while the
+        other fades in. The card gives up its `view-transition-name` in the same
+        update that the drawer takes it, which is what makes them one element as
+        far as the browser is concerned.
+
+        Progressive enhancement: without the API this is the plain state change
+        it always was.
+      */
+      const start = (document as Document & {
+        startViewTransition?: (cb: () => void) => void;
+      }).startViewTransition;
+
+      if (typeof start === 'function') {
+        start.call(document, () => setParams(next));
+        return;
+      }
+
       setParams(next);
     },
     [isDesktop, navigate, params, setParams],

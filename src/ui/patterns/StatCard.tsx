@@ -1,5 +1,6 @@
 import { cn } from '../../lib/cn';
 import { Sparkline } from '../charts/Sparkline';
+import { RollingNumber } from './RollingNumber';
 import './StatCard.css';
 
 export interface StatCardProps {
@@ -40,7 +41,16 @@ export function StatCard({
         className,
       )}
     >
-      <span className="stat__value num-xl tnum">{value}</span>
+      {/*
+        A figure rolls into place; a label like "—" or "3/7" just sits there.
+      */}
+      <span className="stat__value num-xl tnum">
+        {typeof value === 'number' ? (
+          <RollingNumber value={value} label={`${value} ${caption}`} />
+        ) : (
+          value
+        )}
+      </span>
 
       <span className="stat__foot">
         <span className="stat__caption label">{caption}</span>

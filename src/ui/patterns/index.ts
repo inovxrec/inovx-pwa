@@ -57,3 +57,6 @@ export type { AccordionProps } from './Accordion';
 
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
+
+export { RollingNumber } from './RollingNumber';
+export type { RollingNumberProps } from './RollingNumber';

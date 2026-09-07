@@ -260,3 +260,27 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .title-reveal { animation: none; clip-path: none; }
 }
+
+/* ---------- VIEW TRANSITIONS ---------- */
+/*
+  The task title morphs from its card into the drawer's heading. Everything else
+  the browser would cross-fade by default is told not to bother: the drawer and
+  the scrim already have their own entrances, and a full-page cross-fade on top
+  of them reads as a double exposure.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--t-slow);
+  animation-timing-function: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

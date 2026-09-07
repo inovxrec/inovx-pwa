@@ -21,6 +21,11 @@ export interface TaskCardProps {
    * change arrived while it was on screen (§9.7).
    */
   justChanged?: boolean;
+  /**
+   * `view-transition-name` for the title, so it can morph into the task
+   * screen's own heading. Omit it while something else holds the same name.
+   */
+  morphName?: string;
   /** Drag props from the board. Omitted everywhere else. */
   draggable?: boolean;
   onDragStart?: (task: Task) => void;
@@ -41,6 +46,7 @@ export function TaskCard({
   onOpen,
   overflow,
   justChanged = false,
+  morphName,
   draggable = false,
   onDragStart,
   onDragEnd,
@@ -128,7 +134,12 @@ export function TaskCard({
         {overflow}
       </div>
 
-      <p className="task-card__title">{task.title}</p>
+      <p
+        className="task-card__title"
+        style={morphName ? ({ viewTransitionName: morphName } as React.CSSProperties) : undefined}
+      >
+        {task.title}
+      </p>
 
       <div className="task-card__foot">
         <StatePill state={task.state} />

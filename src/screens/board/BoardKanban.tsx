@@ -8,6 +8,13 @@ export interface BoardKanbanProps {
   columns: TaskState[];
   /** Ids flashing because they just moved (§9.7). */
   flashed: string[];
+  /**
+   * Changing this cross-fades the columns. It is the active filter, not the
+   * search text — re-running the fade on every keystroke would strobe.
+   */
+  fadeKey?: string;
+  /** The task the drawer is showing, if any. Its card gives up the morph name. */
+  morphingId?: string;
   onOpen: (task: Task) => void;
   onMove: (task: Task, state: TaskState) => void;
 }
@@ -22,7 +29,9 @@ const DONE_WINDOW_DAYS = 7;
  * Drag is a convenience, not the only way — every card opens to a detail screen
  * whose action bar moves it too, so a keyboard user is never stuck (§8).
  */
-export function BoardKanban({ byState, columns, flashed, onOpen, onMove }: BoardKanbanProps) {
+export function BoardKanban({
+  byState, columns, flashed, fadeKey, morphingId, onOpen, onMove,
+}: BoardKanbanProps) {
   const [dragging, setDragging] = useState<Task | null>(null);
   const [showAllDone, setShowAllDone] = useState(false);
 
@@ -33,7 +42,7 @@ export function BoardKanban({ byState, columns, flashed, onOpen, onMove }: Board
   }
 
   return (
-    <div className="board__columns no-scrollbar">
+    <div className="board__columns no-scrollbar" key={fadeKey}>
       {columns.map((state) => {
         const all = byState[state] ?? [];
         const shown = visibleFor(state);
@@ -70,6 +79,12 @@ export function BoardKanban({ byState, columns, flashed, onOpen, onMove }: Board
                 onDragStart={setDragging}
                 onDragEnd={() => setDragging(null)}
                 justChanged={flashed.includes(task.id)}
+                /*
+                  The card hands its title's transition name to the drawer at
+                  the moment the drawer takes over — two elements may not carry
+                  the same name at once.
+                */
+                morphName={morphingId === task.id ? undefined : `task-${task.id}`}
               />
             ))}
           </BoardColumn>

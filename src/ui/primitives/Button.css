@@ -174,3 +174,21 @@
   0%, 100% { opacity: 0.3; }
   50%      { opacity: 1; }
 }
+
+/*
+  The press repaint: the stroke is wiped away and laid back down left to right,
+  the way a brush actually puts it there. One shot per press, 220ms — long
+  enough to read as a stroke, short enough not to delay the action it confirms.
+*/
+.btn--struck .brush {
+  animation: brush-strike 220ms var(--ease-out) both;
+}
+
+@keyframes brush-strike {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 -2% 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--struck .brush { animation: none; }
+}

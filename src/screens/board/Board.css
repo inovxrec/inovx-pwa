@@ -60,7 +60,13 @@
 .board__empty { align-self: stretch; }
 
 /* ---------- DESKTOP: Kanban ---------- */
+/*
+  Keyed on the active filter, so switching one cross-fades the columns instead
+  of swapping them under the pointer. Not keyed on the search text: re-running
+  this on every keystroke would strobe.
+*/
 .board__columns {
+  animation: columns-in var(--t-base) var(--ease-out) both;
   display: flex;
   gap: var(--s-4);
   align-items: flex-start;
@@ -165,3 +171,8 @@
 
 /* Across every board there is no domain to name, so the rule stays short. */
 .board__rule { width: 64px; }
+
+@keyframes columns-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

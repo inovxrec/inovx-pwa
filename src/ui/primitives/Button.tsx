@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { BrushStroke } from '../signature/BrushStroke';
@@ -46,6 +47,15 @@ export function Button({
 }: ButtonProps) {
   const isBrush = BRUSH_VARIANTS.has(variant);
 
+  /**
+   * A press repaints the stroke left to right, the way a brush lays it down.
+   *
+   * Driven from a class rather than :active, because :active lasts exactly as
+   * long as the finger is down — the stroke would be cut off mid-sweep on a
+   * quick tap and left running on a slow one.
+   */
+  const [struck, setStruck] = useState(false);
+
   // The stroke is seeded from the label so it is stable across renders but
   // differs between two buttons sitting on the same screen (§6.1).
   const seed = typeof children === 'string' ? children : variant;
@@ -59,11 +69,20 @@ export function Button({
         `btn--${size}`,
         fullWidth && 'btn--full',
         loading && 'btn--loading',
+        struck && 'btn--struck',
         className,
       )}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}
+      /* After the spread, so a caller's own handler is wrapped, not dropped. */
+      onPointerDown={(event) => {
+        if (isBrush) {
+          setStruck(true);
+          window.setTimeout(() => setStruck(false), 260);
+        }
+        rest.onPointerDown?.(event);
+      }}
     >
       {isBrush && <BrushStroke seed={seed} />}
 

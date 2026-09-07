@@ -150,6 +150,8 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
         ) : (
           <h2
             className={cn('task__title', longTitle ? 'task__title--long' : 'display-3')}
+            /* The other half of the morph — see the note in useOpenTask. */
+            style={{ viewTransitionName: `task-${task.id}` } as React.CSSProperties}
             /*
               Inline-editable for those permitted (§9.8): click turns it into an
               input in place, Escape cancels, blur or Enter saves. It is a button

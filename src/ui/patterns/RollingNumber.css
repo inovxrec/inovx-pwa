@@ -1,0 +1,48 @@
+/*
+  The tape counter. Every length is in em, so it inherits whatever type size the
+  number is set in — num-xl on a stat tile, body elsewhere — without being told.
+*/
+
+.roll { display: inline-block; }
+
+.roll__digits {
+  display: inline-flex;
+  /* Tabular, or the slots jump width as the strip turns past a 1. */
+  font-variant-numeric: tabular-nums;
+}
+
+.roll__slot {
+  display: block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.roll__strip {
+  display: flex;
+  flex-direction: column;
+  animation: roll 900ms var(--ease-out) both;
+}
+
+.roll__digit {
+  display: block;
+  height: 1em;
+  line-height: 1;
+}
+
+@keyframes roll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(calc(var(--target) * -1em)); }
+}
+
+/*
+  Under reduced motion the component renders plain text instead — see the note
+  in RollingNumber.tsx. This only guards a strip caught mid-flight by the
+  setting changing.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .roll__strip {
+    animation: none;
+    transform: translateY(calc(var(--target) * -1em));
+  }
+}
