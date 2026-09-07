@@ -1,4 +1,4 @@
-export type Role = 'member' | 'admin' | 'faculty';
+export type Role = 'super_admin' | 'admin' | 'faculty' | 'member';
 
 export interface NavItem {
   key: string;
@@ -21,9 +21,10 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
 };
 
 const NAV_BY_ROLE: Record<Role, string[]> = {
-  member: ['myday', 'board', 'calendar', 'people'],
+  super_admin: ['myday', 'deck', 'oversight', 'board', 'calendar', 'people', 'permissions'],
   admin: ['deck', 'board', 'calendar', 'people', 'permissions'],
   faculty: ['oversight', 'calendar', 'people'],
+  member: ['myday', 'board', 'calendar', 'people'],
 };
 
 export function getNavItems(role: Role): NavItem[] {

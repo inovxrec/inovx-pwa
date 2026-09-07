@@ -8,9 +8,12 @@ import { AuthContext, type Session } from './authStore';
  * Session should stay the same so nothing downstream needs to change.
  */
 const FAKE_USERS: Record<string, { password: string; session: Session }> = {
-  'riya@inovx.club': { password: 'demo', session: { name: 'Riya S.', initials: 'RS', role: 'admin' } },
-  'member@inovx.club': { password: 'demo', session: { name: 'Ananya R.', initials: 'AR', role: 'member' } },
-  'faculty@inovx.club': { password: 'demo', session: { name: 'Dr. Nair', initials: 'DN', role: 'faculty' } },
+  'varun@inovx.club': { password: 'demo', session: { userId: 'usr_varun', name: 'Varun Sharma', initials: 'VS', role: 'super_admin', domain: 'core' } },
+  'sanjeev@inovx.club': { password: 'demo', session: { userId: 'usr_sanjeev', name: 'Sanjeev Varma', initials: 'SV', role: 'admin', domain: 'technical' } },
+  'riya@inovx.club': { password: 'demo', session: { userId: 'usr_riya', name: 'Riya S.', initials: 'RS', role: 'member', domain: 'design' } },
+  'member@inovx.club': { password: 'demo', session: { userId: 'usr_ananya', name: 'Ananya R.', initials: 'AR', role: 'member', domain: 'media' } },
+  'faculty@inovx.club': { password: 'demo', session: { userId: 'usr_faculty', name: 'Dr. Radhakrishnan', initials: 'RK', role: 'faculty', domain: 'core' } },
+  'faculty@rec.ac.in': { password: 'demo', session: { userId: 'usr_faculty', name: 'Dr. Radhakrishnan', initials: 'RK', role: 'faculty', domain: 'core' } },
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {

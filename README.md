@@ -1,36 +1,62 @@
-# INOVX84 — Frontend
+# INOVX84 — Frontend & Operations App
 
-Vite + React + TypeScript. No Tailwind — plain CSS files per component using
-the design tokens in `src/styles/tokens.css`, same approach as the original
-HTML prototype.
+Vite + React 19 + TypeScript single-page application and internal operations system for InovX. No Tailwind — plain CSS files per component using the design tokens in `src/styles/tokens.css`.
 
-## Run it
+---
 
-```
+## 🚀 Quick Start
+
+### 1. Install & Run Development Server
+
+```bash
 npm install
 npm run dev
 ```
 
-Login with one of the fake accounts (real auth isn't wired yet):
+### 2. Run Test Suite
 
-| Email | Password | Role |
-|---|---|---|
-| riya@inovx.club | demo | admin |
-| member@inovx.club | demo | member |
-| faculty@inovx.club | demo | faculty |
+```bash
+npm test
+```
 
+### 3. Production Build
 
+```bash
+npm run build
+```
 
-## Rules for building your screen
+---
 
-1. **Don't touch `src/styles/tokens.css`, `src/components/`, or `src/layouts/`** without flagging it in the group chat first — everyone imports from these.
-2. Pull shared UI from `src/components/` (`<Button variant="primary">`, `<Panel bracket>`, `<Pill status="progress">`, `<Avatar initials="RS">`) instead of writing your own button/card markup.
-3. Need to show a toast? `const { toast } = useToast(); toast('MOVED — IN PROGRESS');`
-4. Need a delete/cancel confirmation? Use `<Modal>` — no destructive action should fire directly off one click, per the build doc.
-5. Your screen just needs to return JSX for the content area — `AppShell` already handles the nav rail / bottom bar / topbar / title for you. You don't need to touch layout files.
-6. If a screen needs a new domain accent color (e.g. Board should render in `--chan-design`), set it as an inline CSS var on your screen's root div: `style={{ '--chan': 'var(--chan-design)' }}`.
-7. Mobile: don't build separate mobile components. Add `@media (max-width: 720px)` rules to your own CSS file — the shell already switches nav-rail → bottom-bar at that breakpoint automatically.
+## 👥 Demo Accounts (4 Role Model)
 
-## Reference
+| Email | Password | Role | Description |
+|---|---|---|---|
+| `varun@inovx.club` | `demo` | `super_admin` | President / Core Leader (Unrestricted authority) |
+| `sanjeev@inovx.club` | `demo` | `admin` | Tech Lead / Domain Lead (Domain & Board Management) |
+| `faculty@inovx.club` | `demo` | `faculty` | Faculty In-Charge (Read-only club-wide oversight) |
+| `riya@inovx.club` | `demo` | `member` | Design Lead (Member with delegated `task.approve`) |
+| `member@inovx.club` | `demo` | `member` | Media Coordinator / Standard Member |
 
-The original static HTML prototype (`inovx84-screens.html`) is the source of truth for exact markup/copy per screen — copy structure and classnames from it, just split into components.
+---
+
+## 🛡️ Architecture & Streams
+
+### Stream B: Permissions, Visibility & Audit
+Stream B implements the server-enforced authorization engine and tri-state granular permissions:
+$$\mathbf{Effective\ Permission(user, key)} = \text{Role Default} + \text{User Grant} - \text{User Revoke}$$
+
+* **PostgreSQL Migrations & RLS:** Located in `supabase/migrations/`
+* **Frontend Permission Resolver & Service:** Located in `src/lib/permissions/`
+* **Admin & Permissions UI:** Located in `src/features/permissions/`
+* **Documentation & Integration Guide:** See [`docs/STREAM_B_PERMISSIONS_AND_AUDIT.md`](./docs/STREAM_B_PERMISSIONS_AND_AUDIT.md)
+
+---
+
+## 📐 Rules for Building Screens
+
+1. **Shared Styles & Components:** Don't edit `src/styles/tokens.css`, `src/components/`, or `src/layouts/` without coordinating with the team.
+2. **Design System:** Use pre-built shared components from `src/components/` (`<Button>`, `<Panel>`, `<Pill>`, `<Avatar>`, `<Modal>`).
+3. **Toasts:** Use `const { toast } = useToast(); toast('ACTION COMPLETED');`.
+4. **Permissions Check:** Use `can(session, 'permission.key')` from `src/store/authStore.ts`.
+5. **Mobile Responsive:** Use `@media (max-width: 720px)` in per-component CSS — `AppShell` switches nav-rail to bottom-bar automatically.
+

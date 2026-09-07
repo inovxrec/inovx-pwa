@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { useAuth } from '../../store/authStore';
 import './Login.css';
 
-const LANDING_BY_ROLE = { member: '/myday', admin: '/deck', faculty: '/oversight' } as const;
+const LANDING_BY_ROLE = { super_admin: '/deck', member: '/myday', admin: '/deck', faculty: '/oversight' } as const;
 
 export function Login() {
   const { login } = useAuth();

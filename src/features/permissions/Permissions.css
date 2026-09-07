@@ -1,68 +1,320 @@
+.perm-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  height: 100%;
+}
+
+.perm-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .perm-layout {
   display: flex;
   gap: var(--sp-4);
   height: 100%;
+  min-height: 520px;
 }
+
 .perm-members {
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
   border-right: 1px solid var(--line);
   padding-right: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
 }
+
+.perm-search-box {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--t-state);
+}
+
+.perm-search-box:focus {
+  border-color: var(--chan);
+}
+
+.perm-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 480px;
+}
+
 .pm-row {
-  padding: 8px;
-  font-size: 12.5px;
+  padding: 8px 10px;
+  font-size: 12px;
   cursor: pointer;
   border-left: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: transparent;
   transition: color var(--t-state), background var(--t-state), border-color var(--t-state);
 }
+
+.pm-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .pm-row.active {
   border-left-color: var(--chan);
-  background: rgba(255, 179, 71, .06);
+  background: rgba(255, 179, 71, 0.08);
   color: var(--ink);
 }
+
+.pm-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pm-name {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pm-role-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 1px 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+
+.pm-sub {
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+.perm-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  overflow-y: auto;
+}
+
+.perm-member-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: var(--sp-3);
+}
+
+.perm-member-info h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.perm-member-meta {
+  font-size: 11px;
+  color: var(--ink-2);
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.perm-category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--sp-2);
+}
+
+.perm-category-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-top: var(--sp-2);
+}
+
 .perm-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 12.5px;
+  font-size: 12px;
 }
-.tri { display: flex; gap: 4px; }
+
+.perm-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 65%;
+}
+
+.perm-label {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.perm-desc {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+
+.tri {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .tri-btn {
   font-family: var(--font-mono);
   font-size: 9px;
-  padding: 3px 7px;
+  padding: 4px 8px;
   border: 1px solid var(--line-hot);
   color: var(--ink-3);
   text-transform: uppercase;
   cursor: pointer;
+  background: transparent;
   transition: background var(--t-instant), color var(--t-instant), border-color var(--t-instant);
 }
-.tri-btn:active { transform: scale(.94); }
-.tri-btn.active {
+
+.tri-btn:active {
+  transform: scale(0.95);
+}
+
+.tri-btn.active.grant {
   background: var(--chan);
   color: var(--void);
   border-color: var(--chan);
+  font-weight: 600;
 }
+
+.tri-btn.active.revoke {
+  background: var(--chan-events);
+  color: #fff;
+  border-color: var(--chan-events);
+  font-weight: 600;
+}
+
+.tri-btn.active.inherit {
+  background: var(--panel-2);
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
 .preview-mono {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--chan);
   background: var(--panel-2);
   border: 1px solid var(--line);
   padding: var(--sp-3);
-  margin-top: var(--sp-4);
-  line-height: 1.7;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.perm-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--sp-2);
+  gap: var(--sp-2);
+}
+
+.perm-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Audit Drawer */
+.audit-panel {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.audit-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.audit-table th, .audit-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.audit-table th {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.audit-table td {
+  color: var(--ink-2);
+}
+
+.audit-action-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: rgba(255, 179, 71, 0.12);
+  color: var(--chan);
 }
 
 @media (max-width: 720px) {
-  .perm-layout { flex-direction: column; }
+  .perm-layout {
+    flex-direction: column;
+  }
   .perm-members {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--line);
     padding-bottom: var(--sp-3);
+  }
+  .perm-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .perm-meta {
+    max-width: 100%;
   }
 }
