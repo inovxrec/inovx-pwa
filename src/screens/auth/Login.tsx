@@ -58,11 +58,17 @@ export function Login() {
   }
 
   return (
-    <AuthFrame
-      title="INOVX Ops"
-      tagline="the club's own system"
-      footNote="Internal system · accounts are issued by the core team"
-    >
+    /*
+      DEVIATION from §9.1, which puts a display-1 "INOVX OPS" under the logo
+      (§9.1.3) and the "internal system · accounts are issued by the core team"
+      line under the card (§9.1.5). Both were asked to be removed: the wordmark
+      already says INOVX, and the second line told a member something they
+      cannot act on.
+
+      The heading stays in the document, unseen — the screen still needs one h1
+      (§11), and the logo above it is an image.
+    */
+    <AuthFrame title="INOVX Ops" titleHidden tagline="the club's own system">
       <form className="login__form" onSubmit={onSubmit} noValidate>
         <Input
           label="Email"

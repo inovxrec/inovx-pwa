@@ -108,31 +108,37 @@ still in git history if you need to look something up.
    `preserveAspectRatio="none"`, so a full-width button flattens into a smooth
    lozenge rather than reading as hand-painted. Worth a look on
    `/kitchen-sink` before it ends up under every primary action.
-3. **"Forgot password" has no destination.** §9.1 asks for the control but
+3. **The login screen drops two things §9.1 asks for.** The display-1 "INOVX
+   OPS" under the logo (§9.1.3) and the "internal system · accounts are issued
+   by the core team" line under the card (§9.1.5) were both removed on request:
+   the wordmark already says INOVX, and the second line told a member something
+   they could not act on. The `h1` stays in the document, unseen, because the
+   screen still needs exactly one (§11) and the logo above it is an image.
+4. **"Forgot password" has no destination.** §9.1 asks for the control but
    names no screen, and §15 says not to invent one. It currently reveals a line
    saying to ask a core team member, since accounts are issued by hand. Say if
    a real reset flow is wanted.
-4. **Two decorations on My Day.** §9.4 asks for tape on the overdue card *and*
+5. **Two decorations on My Day.** §9.4 asks for tape on the overdue card *and*
    a pin on the announcement, but §6.3 caps a screen at one of the two. The
    tape goes to the overdue block when there is one, otherwise the pin marks
    the announcement. Say which you would rather have.
-5. **The compact task card shows a state word, not just a dot.** §7.10 says
+6. **The compact task card shows a state word, not just a dot.** §7.10 says
    dot alone; §14 item 11 rules out colour-only information. The word rides
    with the dot.
-6. **Red bars.** A domain or member with an overdue task draws its bar in
+7. **Red bars.** A domain or member with an overdue task draws its bar in
    `--st-blocked` instead of its domain colour. The value label always says
    "· N late" alongside, so the colour is never the only signal — but say if
    you would rather the bar always kept its domain colour.
-7. **`--dom-core` is the same value as `--paper`.** A core member's avatar and
+8. **`--dom-core` is the same value as `--paper`.** A core member's avatar and
    a "Core" tag both vanished on a paper card. Both now carry a hairline so
    they still read as a chip — but the token itself is the underlying problem,
    and §3 fixes its value, so it is worth a decision.
-8. **Loading states are designed but unexercised.** Every screen reads from a
+9. **Loading states are designed but unexercised.** Every screen reads from a
    synchronous store, so nothing ever spends a frame loading. `SkeletonTaskCard`
    exists and My Day takes a `loading` prop, but until the store becomes a real
    fetch there is nothing to trigger them. Worth wiring properly the moment the
    API lands, rather than faking a delay now.
-9. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
+10. **The 404 button label.** §9.18 fixes it as "BACK TO MY DAY", but faculty
    have no My Day screen, so it now names whichever landing it actually goes
    to. Flagged in `SystemScreens.tsx`; easy to revert to the literal copy.
 

@@ -11,6 +11,13 @@ export interface AuthFrameProps {
   /** display-1 on login, display-2 on first run (§9.1.3, §9.2). */
   title: string;
   size?: 'display-1' | 'display-2';
+  /**
+   * Drops the headline from the picture but keeps it in the document. The
+   * screen still needs exactly one h1 (§11) even when the design does not want
+   * to show one — the logo above it is an image, and "INOVX" alone is not a
+   * page title.
+   */
+  titleHidden?: boolean;
   /** One line of Instrument Serif italic beneath the headline. */
   tagline?: string;
   /** The paper card's contents. */
@@ -31,6 +38,7 @@ export interface AuthFrameProps {
 export function AuthFrame({
   title,
   size = 'display-1',
+  titleHidden = false,
   tagline,
   children,
   footNote,
@@ -52,7 +60,7 @@ export function AuthFrame({
         <Logo size="md" className="auth__logo" />
 
         <div className="auth__head">
-          <h1 className={cn('auth__title', size)}>{title}</h1>
+          <h1 className={titleHidden ? 'sr-only' : cn('auth__title', size)}>{title}</h1>
           {tagline && <p className="auth__tagline body-lg">{tagline}</p>}
           {/* The sleeve's waveform, in place of a rule under the lockup. */}
           <Waveform seed={title} bars={34} variant="rule" playing className="auth__wave" />
