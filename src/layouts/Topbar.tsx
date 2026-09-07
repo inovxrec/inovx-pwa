@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import './Topbar.css';
 
@@ -14,6 +15,13 @@ export function Topbar({ title, userInitials }: TopbarProps) {
     <div className="topbar">
       <div className="tb-title">{title}</div>
       <div className="tb-right">
+        <NavLink
+          to="/notifications"
+          className={({ isActive }) => `tb-notif-link ${isActive ? 'active' : ''}`}
+          title="Notification Centre & Directives"
+        >
+          ⬡
+        </NavLink>
         <Avatar initials={userInitials} />
       </div>
     </div>

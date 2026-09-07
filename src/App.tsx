@@ -14,6 +14,10 @@ import { TaskDetail } from './features/task-detail/TaskDetail';
 import { Calendar } from './features/calendar/Calendar';
 import { People } from './features/people/People';
 import { Permissions } from './features/permissions/Permissions';
+import { Notifications } from './features/notifications/Notifications';
+import { Meetings } from './features/meetings/Meetings';
+import { AttendanceAnalytics } from './features/analytics/AttendanceAnalytics';
+import { IosInstallPrompt } from './features/pwa/IosInstallPrompt';
 
 /** Sends a signed-in user straight past /login if they land there again. */
 function LoginRoute() {
@@ -34,8 +38,11 @@ function AppRoutes() {
         <Route path="/board" element={<Board />} />
         <Route path="/board/:taskId" element={<TaskDetail />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/meetings" element={<Meetings />} />
+        <Route path="/analytics" element={<AttendanceAnalytics />} />
         <Route path="/people" element={<People />} />
         <Route path="/permissions" element={<Permissions />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
@@ -50,6 +57,7 @@ export default function App() {
         <ToastProvider>
           <TaskProvider>
             <AppRoutes />
+            <IosInstallPrompt />
           </TaskProvider>
         </ToastProvider>
       </AuthProvider>
