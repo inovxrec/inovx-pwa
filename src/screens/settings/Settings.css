@@ -79,3 +79,28 @@
 .settings__about-row dd { margin: 0; color: var(--on-paper); }
 
 .settings__signout { display: flex; }
+
+.settings__note {
+  color: var(--on-paper-mute);
+  padding-bottom: var(--s-3);
+}
+
+/* Push sits above the matrix: a permission, not a preference. */
+.settings__push { padding-bottom: var(--s-3); }
+
+.settings__push-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+}
+
+.settings__push-error {
+  color: var(--st-blocked);
+  font-weight: 600;
+  padding-top: var(--s-2);
+}

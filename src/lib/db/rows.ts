@@ -183,3 +183,42 @@ export interface TenureRow {
   end_date: string;
   is_active: boolean;
 }
+
+export interface OccasionRow {
+  id: Uuid;
+  tenure_id: Uuid;
+  name: string;
+  occasion_type: 'birthday' | 'festival' | 'anniversary' | 'lunar';
+  /** MM-DD. Null on a lunar occasion nobody has confirmed this year's date for. */
+  occasion_date: string | null;
+  confirmed_date: string | null;
+  confirmed_year: number | null;
+  output_domain_id: Uuid | null;
+  lead_days: number;
+  assignment_strategy: 'domain-lead' | 'round-robin' | 'unassigned';
+  is_active: boolean;
+  directory_member_id: Uuid | null;
+}
+
+export interface IntegrationRow {
+  id: Uuid;
+  tenure_id: Uuid;
+  key: string;
+  name: string;
+  status: 'ok' | 'degraded' | 'failing' | 'disabled';
+  note: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
+  sync_requested_at: string | null;
+
+  /** Joined in by the integrations query — the unresolved ones only. */
+  integration_conflicts?: IntegrationConflictRow[];
+}
+
+export interface IntegrationConflictRow {
+  id: Uuid;
+  integration_id: Uuid;
+  summary: string;
+  resolved_at: string | null;
+  created_at: string;
+}

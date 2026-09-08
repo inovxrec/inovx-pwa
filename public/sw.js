@@ -90,3 +90,77 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+/* ---------------------------------------------------------------- web push */
+
+/*
+  A push arrives whether or not INOVX is open — that is the whole point of it.
+  The service worker is the only thing running at that moment, so everything the
+  notification needs has to come in the payload.
+*/
+self.addEventListener('push', (event) => {
+  /*
+    A push with no readable body still deserves a notification. Browsers require
+    that every push shows one — staying silent gets the subscription revoked —
+    so an unreadable payload becomes a plain nudge rather than nothing.
+  */
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  const title = payload.title || 'INOVX';
+  const options = {
+    body: payload.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    // Where tapping it goes, read again in notificationclick below.
+    data: { url: payload.url || '/notifications' },
+    /*
+      Collapses by kind: three comments on one task replace each other rather
+      than stacking three deep on the lock screen. `renotify` still buzzes, so
+      replacing is not the same as going unnoticed.
+    */
+    tag: payload.tag || 'inovx',
+    renotify: true,
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+/*
+  Focus the tab that is already open rather than piling up new ones — someone
+  who taps three notifications should end up with one window, on the last thing
+  they tapped.
+*/
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/notifications';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(target);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});
+
+/*
+  Chrome expires subscriptions periodically and tells the worker when it does.
+  Without this the person silently stops receiving anything and has no way to
+  know — the app resubscribes on next load, and this marks the old one dead.
+*/
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) client.postMessage({ type: 'push-subscription-expired' });
+    }),
+  );
+});

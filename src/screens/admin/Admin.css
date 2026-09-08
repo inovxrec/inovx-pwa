@@ -207,6 +207,7 @@
 .admin__health--ok       { --health: var(--st-done); }
 .admin__health--degraded { --health: var(--st-review); }
 .admin__health--failing  { --health: var(--st-blocked); }
+.admin__health--disabled { --health: var(--paper-line-2); }
 
 .admin__health-word { color: var(--on-paper); }
 .admin__health-time { color: var(--on-paper-mute); }

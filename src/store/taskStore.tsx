@@ -3,7 +3,8 @@ import {
 } from 'react';
 import { describeError, isConfigured } from '../lib/supabase';
 import {
-  deleteTaskLink, domainIdBySlug, fetchTasks, insertChecklistItem, insertComment, insertTask,
+  deleteTask, deleteTaskLink, domainIdBySlug, fetchTasks, insertActivity, insertChecklistItem,
+  insertComment, insertTask,
   setChecklistItem, updateTask, updateTaskStatus,
 } from '../lib/db/queries';
 import type { TaskContext as MapContext } from '../lib/db/map';
@@ -50,6 +51,8 @@ export interface TaskContextValue {
   removeDeliverable: (taskId: string, deliverableId: string) => void;
   addComment: (taskId: string, author: Person, body: string) => void;
   rename: (taskId: string, title: string) => void;
+  /** Deletes a task outright. Throws if the server refuses, so the caller can say so. */
+  remove: (taskId: string) => Promise<void>;
   setDue: (taskId: string, due: string | null) => void;
   reload: () => Promise<void>;
 }
@@ -140,6 +143,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           mapContext,
         );
 
+        // Where the history starts. Named so the log reads as a sentence:
+        // "raised by Lalitha B", then "moved to In progress", and so on.
+        void insertActivity({
+          tenureId,
+          taskId: task.id,
+          actorId: session?.userId ?? null,
+          action: 'created',
+          message: session?.name ? `raised by ${session.name}` : 'raised',
+        }).catch(() => undefined);
+
         setTasks((current) => [task, ...current]);
         return task;
       } catch (caught) {
@@ -164,11 +177,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         ],
       }));
 
-      void updateTaskStatus(id, state).catch((caught) => {
-        // Refused: put it back rather than leave the screen telling a lie.
-        setError(describeError(caught));
-        if (previous) patch(id, (task) => ({ ...task, state: previous, activity: task.activity.slice(1) }));
-      });
+      void updateTaskStatus(id, state)
+        .then(() => {
+          // The history is the point of the log; write it once the move sticks.
+          if (!tenureId) return;
+          return insertActivity({
+            tenureId,
+            taskId: id,
+            actorId: session?.userId ?? null,
+            action: state === 'blocked' ? 'blocked' : 'status_change',
+            message: `moved to ${STATE_LABELS[state]}`,
+          }).catch(() => undefined);
+        })
+        .catch((caught) => {
+          // Refused: put it back rather than leave the screen telling a lie.
+          setError(describeError(caught));
+          if (previous) patch(id, (task) => ({ ...task, state: previous, activity: task.activity.slice(1) }));
+        });
 
       return () => {
         if (!previous) return;
@@ -176,7 +201,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         void updateTaskStatus(id, previous).catch(() => undefined);
       };
     },
-    [patch, tasks],
+    [patch, tasks, tenureId, session?.userId],
   );
 
   const toggleChecklistItem = useCallback(
@@ -208,6 +233,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     },
     [tenureId, tasks, load],
   );
+
+  /*
+    Deletion is not optimistic. Everything else in this store moves the row
+    first and puts it back if the server refuses, because being wrong for a
+    moment about a column is cheap. Being wrong about whether a task still
+    exists is not: the card would vanish, the screen would navigate away, and
+    the row would still be there. So the server goes first.
+  */
+  const remove = useCallback(async (taskId: string) => {
+    await deleteTask(taskId);
+    setTasks((current) => current.filter((task) => task.id !== taskId));
+  }, []);
 
   const removeDeliverable = useCallback(
     (taskId: string, deliverableId: string) => {
@@ -253,11 +290,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       loading: loading || clubLoading,
       error,
       byId, byNumber, forBoard, create, setState, toggleChecklistItem, addChecklistItem,
-      removeDeliverable, addComment, rename, setDue, reload: load,
+      removeDeliverable, addComment, rename, remove, setDue, reload: load,
     }),
     [
       tasks, loading, clubLoading, error, byId, byNumber, forBoard, create, setState,
-      toggleChecklistItem, addChecklistItem, removeDeliverable, addComment, rename, setDue, load,
+      toggleChecklistItem, addChecklistItem, removeDeliverable, addComment, rename, remove, setDue,
+      load,
     ],
   );
 

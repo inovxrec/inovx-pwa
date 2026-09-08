@@ -102,18 +102,12 @@ export function Meetings() {
     );
   }
 
-  if (meetings.length === 0) {
-    return (
-      <Card>
-        <EmptyState
-          sticker={<StickerCalendar size="empty" />}
-          title="No meetings yet"
-          line="nothing has been scheduled or minuted"
-        />
-      </Card>
-    );
-  }
-
+  /*
+    An empty list is not a dead end. This used to return early with the empty
+    state, which meant the one screen that can schedule a meeting hid its own
+    button until a meeting already existed — so the first one could never be
+    scheduled. The action and the dialog stay mounted; only the list is replaced.
+  */
   return (
     <div className="meetings">
       {/* Scheduling is assigning work of a sort, so it takes the same key. */}
@@ -123,6 +117,20 @@ export function Meetings() {
             Schedule a meeting
           </Button>
         </div>
+      )}
+
+      {meetings.length === 0 && (
+        <Card>
+          <EmptyState
+            sticker={<StickerCalendar size="empty" />}
+            title="No meetings yet"
+            line={
+              can('task.assign')
+                ? 'nothing has been scheduled or minuted — schedule the first one above'
+                : 'nothing has been scheduled or minuted'
+            }
+          />
+        </Card>
       )}
 
       {[...byContext].map(([context, list]) => (

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
+import { describeError } from '../../lib/supabase';
 import { LANDING_BY_ROLE } from '../../lib/navConfig';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
@@ -63,6 +64,7 @@ export function FirstRun() {
   const [password, setValue] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState('');
 
   if (!session) return <Navigate to="/login" replace />;
   // Already done — this route must not be re-enterable.
@@ -77,8 +79,24 @@ export function FirstRun() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!valid) return;
+
     setBusy(true);
-    await setPassword(password);
+    setFailed('');
+
+    /*
+      A failure here has to be said out loud. The password may already have
+      changed by the time the second half fails, so silently clearing the form
+      would leave someone typing an issued password that no longer works into a
+      screen that never explains why.
+    */
+    try {
+      await setPassword(password);
+    } catch (caught) {
+      setFailed(describeError(caught));
+      setBusy(false);
+      return;
+    }
+
     setBusy(false);
     navigate('/welcome', { replace: true });
   }
@@ -117,6 +135,12 @@ export function FirstRun() {
             <RuleItem key={rule.id} label={rule.label} passed={rule.passed} />
           ))}
         </ul>
+
+        {failed && (
+          <p className="body-sm firstrun__failed" role="alert">
+            {failed}
+          </p>
+        )}
 
         <Button type="submit" variant="brush" fullWidth disabled={!valid} loading={busy}>
           Continue

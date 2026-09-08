@@ -2,14 +2,16 @@ import { supabase } from '../supabase';
 import type { Committee } from '../../store/committeeStore';
 import type { Domain, Person, Task } from '../tasks';
 import type { AppNotification, Meeting, Member } from '../club';
+import type { AssignmentStrategy, Integration, OccasionRule } from '../admin';
 import {
-  directoryToMember, toAnnouncement, toDomain, toMeeting, toNotification, toPerson, toTask,
+  directoryToMember, toAnnouncement, toDomain, toIntegration, toMeeting, toNotification,
+  toOccasion, toPerson, toTask,
   type TaskContext,
 } from './map';
 import type {
-  AnnouncementRow, AuditRow, CommitteeMemberRow, CommitteeRow, DomainRow, MeetingRow,
-  MemberDirectoryRow, NotificationRow, RecurringRuleRow, TaskRow, TenureRow, UserPermissionRow,
-  UserRow,
+  AnnouncementRow, AuditRow, CommitteeMemberRow, CommitteeRow, DomainRow, IntegrationRow,
+  MeetingRow, MemberDirectoryRow, NotificationRow, OccasionRow, RecurringRuleRow, TaskRow,
+  TenureRow, UserPermissionRow, UserRow,
 } from './rows';
 
 /*
@@ -206,6 +208,36 @@ export async function updateTaskStatus(taskId: string, status: Task['state']): P
   if (error) throw error;
 }
 
+/**
+ * Appends to a task's history.
+ *
+ * The table is insert-only by trigger and by policy, so this is the only way
+ * anything reaches it — and until now nothing called it. The store rendered an
+ * optimistic entry and never wrote one, so every task's activity tab was empty
+ * the moment it was reloaded, on a log the schema goes out of its way to make
+ * immutable.
+ *
+ * Failure is deliberately not surfaced: losing a line of history is not worth
+ * putting an error in front of someone who just moved a card, and the move
+ * itself has already been reported.
+ */
+export async function insertActivity(input: {
+  tenureId: string;
+  taskId: string;
+  actorId: string | null;
+  action: string;
+  message: string;
+}): Promise<void> {
+  const { error } = await supabase.from('task_activity').insert({
+    tenure_id: input.tenureId,
+    task_id: input.taskId,
+    actor_id: input.actorId,
+    action: input.action,
+    message: input.message,
+  });
+  if (error) throw error;
+}
+
 export async function updateTask(taskId: string, patch: Record<string, unknown>): Promise<void> {
   const { error } = await supabase.from('tasks').update(patch).eq('id', taskId);
   if (error) throw error;
@@ -240,6 +272,18 @@ export async function insertComment(
   const { error } = await supabase
     .from('task_comments')
     .insert({ tenure_id: tenureId, task_id: taskId, user_id: userId, content });
+  if (error) throw error;
+}
+
+/**
+ * Removes a task and everything hanging off it.
+ *
+ * The assignees, checklist, links, comments and activity all cascade in the
+ * schema, so this is one statement rather than six. Row level security decides
+ * whether it is allowed — `task.delete` is a super admin key.
+ */
+export async function deleteTask(taskId: string): Promise<void> {
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId);
   if (error) throw error;
 }
 
@@ -291,7 +335,10 @@ export async function savePermissions(
 
 /* ------------------------------------------------------------------ people */
 
-export async function fetchDirectory(tenureId: string): Promise<Member[]> {
+export async function fetchDirectory(
+  tenureId: string,
+  domains: DomainRow[] = [],
+): Promise<Member[]> {
   const { data, error } = await supabase
     .from('member_directory')
     .select(
@@ -301,7 +348,13 @@ export async function fetchDirectory(tenureId: string): Promise<Member[]> {
     .order('name');
 
   if (error) throw error;
-  return ((data ?? []) as MemberDirectoryRow[]).map(directoryToMember);
+
+  const slugById = new Map(domains.map((domain) => [domain.id, toDomain(domain.slug)]));
+  const domainSlug = (id: string | null) => (id ? slugById.get(id) : undefined);
+
+  return ((data ?? []) as MemberDirectoryRow[]).map((row) =>
+    directoryToMember(row, domainSlug),
+  );
 }
 
 /* ---------------------------------------------------------------- meetings */
@@ -401,6 +454,52 @@ export async function fetchNotifications(userId: string): Promise<AppNotificatio
   return ((data ?? []) as NotificationRow[]).map(toNotification);
 }
 
+/* ---------------------------------------------------- notification prefs */
+
+/**
+ * The §9.14 matrix: which events reach someone on which channel.
+ *
+ * Null means they have never opened Settings, which is not the same as wanting
+ * nothing — the caller falls back to the defaults the screen shows.
+ */
+export async function fetchNotificationPrefs(
+  userId: string,
+): Promise<Record<string, Record<string, boolean>> | null> {
+  const { data, error } = await supabase
+    .from('notification_prefs')
+    .select('matrix')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  const matrix = data?.matrix as Record<string, Record<string, boolean>> | undefined;
+  return matrix && Object.keys(matrix).length > 0 ? matrix : null;
+}
+
+/**
+ * Writes the whole matrix back.
+ *
+ * Upsert rather than update: most people have no row until the first time they
+ * change something, and the row's absence is the default rather than an error.
+ */
+export async function saveNotificationPrefs(
+  tenureId: string,
+  userId: string,
+  matrix: Record<string, Record<string, boolean>>,
+): Promise<void> {
+  const { error } = await supabase
+    .from('notification_prefs')
+    .upsert({ tenure_id: tenureId, user_id: userId, matrix }, { onConflict: 'tenure_id,user_id' });
+
+  if (error) throw error;
+}
+
+/** A person's own display name. The server refuses anything else (§12). */
+export async function saveOwnName(userId: string, name: string): Promise<void> {
+  const { error } = await supabase.from('users').update({ name }).eq('id', userId);
+  if (error) throw error;
+}
+
 export async function markNotificationsRead(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const { error } = await supabase
@@ -498,6 +597,97 @@ export async function setRecurringRuleActive(ruleId: string, active: boolean): P
     .from('recurring_rules')
     .update({ is_active: active })
     .eq('id', ruleId);
+
+  if (error) throw error;
+}
+
+/* -------------------------------------------------------------- occasions */
+
+const OCCASION_SELECT =
+  'id, tenure_id, name, occasion_type, occasion_date, confirmed_date, confirmed_year, ' +
+  'output_domain_id, lead_days, assignment_strategy, is_active, directory_member_id';
+
+export async function fetchOccasions(
+  tenureId: string,
+  domains: DomainRow[],
+): Promise<OccasionRule[]> {
+  const { data, error } = await supabase
+    .from('occasions')
+    .select(OCCASION_SELECT)
+    .eq('tenure_id', tenureId)
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) throw error;
+
+  const slugById = new Map(domains.map((domain) => [domain.id, toDomain(domain.slug)]));
+  const domainSlug = (id: string | null) => (id && slugById.get(id)) || 'core';
+
+  return ((data ?? []) as unknown as OccasionRow[]).map((row) => toOccasion(row, domainSlug));
+}
+
+/**
+ * Pins a lunar occasion to a date for one year.
+ *
+ * The year is stored alongside the date so next year's queue knows this
+ * confirmation has expired — without it, a date set once would silently stand
+ * for every year after, which is the exact mistake a lunar calendar punishes.
+ */
+export async function confirmOccasionDate(occasionId: string, date: string): Promise<void> {
+  const { error } = await supabase
+    .from('occasions')
+    .update({ confirmed_date: date, confirmed_year: Number(date.slice(0, 4)) })
+    .eq('id', occasionId);
+
+  if (error) throw error;
+}
+
+/** The outputs sub-panel: which domain picks the work up, and how. */
+export async function updateOccasionOutputs(
+  occasionId: string,
+  patch: {
+    outputDomainId?: string | null;
+    leadDays?: number;
+    strategy?: AssignmentStrategy;
+  },
+): Promise<void> {
+  const row: Record<string, unknown> = {};
+  if ('outputDomainId' in patch) row.output_domain_id = patch.outputDomainId;
+  if (patch.leadDays !== undefined) row.lead_days = patch.leadDays;
+  if (patch.strategy !== undefined) row.assignment_strategy = patch.strategy;
+
+  const { error } = await supabase.from('occasions').update(row).eq('id', occasionId);
+  if (error) throw error;
+}
+
+/* ----------------------------------------------------------- integrations */
+
+export async function fetchIntegrations(tenureId: string): Promise<Integration[]> {
+  const { data, error } = await supabase
+    .from('integrations')
+    .select(
+      'id, tenure_id, key, name, status, note, last_synced_at, last_error, sync_requested_at, ' +
+        'integration_conflicts ( id, integration_id, summary, resolved_at, created_at )',
+    )
+    .eq('tenure_id', tenureId)
+    .order('name');
+
+  if (error) throw error;
+  return ((data ?? []) as unknown as IntegrationRow[]).map(toIntegration);
+}
+
+/**
+ * Asks an integration to sync now.
+ *
+ * There is no job runner in front of this yet, so what it can honestly do is
+ * record that someone asked. The screen says as much rather than flipping the
+ * bar green — a sync that has not happened must not look like one that has.
+ */
+export async function requestIntegrationSync(integrationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('integrations')
+    .update({ sync_requested_at: new Date().toISOString() })
+    .eq('id', integrationId);
 
   if (error) throw error;
 }

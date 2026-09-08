@@ -18,7 +18,9 @@
 }
 
 .panel--drop .panel__body {
-  max-height: calc(320px - 12px);
+  /* The panel's own max-height is measured against the viewport in Panel.tsx;
+     the body just fills whatever that leaves and scrolls if it must. */
+  max-height: inherit;
   overflow-y: auto;
 }
 

@@ -37,7 +37,7 @@ const PRIORITIES = [
  */
 export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
   const { create } = useTasks();
-  const { me, domains, committees, selfOnly } = useAssignment();
+  const { me, domains, committees, selfOnly, canAssignAnyone } = useAssignment();
   const { members } = useClub();
   const boards = useBoards();
   const toast = useToast();
@@ -48,7 +48,15 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
       ? preset.domain
       : preset?.kind === 'committee' && committees.some((c) => c.id === preset.id)
         ? `committee:${preset.id}`
-        : domains[0] ?? (committees[0] ? `committee:${committees[0].id}` : 'me');
+        : /*
+             Opened from no particular board, it lands on your own domain. The
+             list is ordered by name, so falling back to its first entry used to
+             mean whatever sorted first — now that core ops is a board, that is
+             Core, which is the wrong guess for most of the club.
+           */
+          (me && domains.includes(me.domain) ? me.domain : undefined) ??
+          domains[0] ??
+          (committees[0] ? `committee:${committees[0].id}` : 'me');
 
   const [target, setTarget] = useState<string>(initialTarget);
   const [title, setTitle] = useState('');
@@ -85,8 +93,20 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
       return committee?.members ?? [];
     }
 
-    return members.filter((member) => member.domain === target);
-  }, [target, committees, me, members]);
+    const onTheBoard = members.filter((member) => member.domain === target);
+    if (!canAssignAnyone) return onTheBoard;
+
+    /*
+      Everyone else follows, in domain order rather than mixed in, so the list
+      still opens with the people whose board this is. Nobody is hidden: the
+      work a task needs often crosses a boundary the board does not.
+    */
+    const rest = members
+      .filter((member) => member.domain !== target)
+      .sort((a, b) => a.domain.localeCompare(b.domain) || a.name.localeCompare(b.name));
+
+    return [...onTheBoard, ...rest];
+  }, [target, committees, me, members, canAssignAnyone]);
 
   function reset() {
     setTitle('');
@@ -217,7 +237,12 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
               { value: '', label: 'Leave unassigned' },
               ...candidates.map((person) => ({
                 value: person.id,
-                label: person.name,
+                // Anyone from another domain is named with it, so a Management
+                // person in a Design list reads as deliberate, not as a stray.
+                label:
+                  person.domain === target
+                    ? person.name
+                    : `${person.name} — ${DOMAIN_LABELS[person.domain]}`,
                 dot: `var(--dom-${person.domain})`,
               })),
             ]}

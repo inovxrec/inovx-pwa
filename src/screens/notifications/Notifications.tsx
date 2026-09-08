@@ -135,6 +135,8 @@ export function Notifications() {
                     {item.actor && <strong className="alerts__actor">{item.actor.name}</strong>}
                     {item.actor ? ' ' : ''}
                     {item.message}
+                    {/* What was said, under who said it. */}
+                    {item.detail && <span className="alerts__detail">{item.detail}</span>}
                   </span>
 
                   <time className="alerts__age micro" dateTime={item.at}>

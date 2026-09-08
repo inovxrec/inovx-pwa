@@ -48,8 +48,27 @@ function destinationFor(session: Session): string {
   return LANDING_BY_ROLE[session.role];
 }
 
+/*
+  Nothing at all until the stored session has been checked.
+
+  `ready` exists precisely for this moment, and the gates below used to ignore
+  it: on a cold load `session` is null for a beat, so every guard fired, sent
+  the person to /login, and the landing redirect then forwarded them to their
+  own home screen. The address they actually asked for was lost on the way —
+  which broke every deep link in the app, including the one a push notification
+  opens.
+
+  A blank frame is the right thing to render here. It lasts one tick, and the
+  alternative is a login screen that flashes at someone who is already signed
+  in.
+*/
+function AwaitingSession() {
+  return <div className="app-booting" aria-busy="true" aria-live="polite" />;
+}
+
 function LandingRedirect() {
-  const { session } = useAuth();
+  const { session, ready } = useAuth();
+  if (!ready) return <AwaitingSession />;
   if (!session) return <Navigate to="/login" replace />;
   return <Navigate to={destinationFor(session)} replace />;
 }
@@ -59,7 +78,8 @@ function LandingRedirect() {
  * back to the step it is on, which is what makes /first-run unavoidable (§9.2).
  */
 function RequireSession({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, ready } = useAuth();
+  if (!ready) return <AwaitingSession />;
   if (!session) return <Navigate to="/login" replace />;
 
   const destination = destinationFor(session);

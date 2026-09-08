@@ -63,3 +63,9 @@
 .alerts__body { flex: 1; min-width: 0; color: var(--on-paper); }
 .alerts__actor { font-weight: 600; }
 .alerts__age { flex: none; color: var(--on-paper-faint); }
+
+/* The body of the thing, quieter than the line that says who did it. */
+.alerts__detail {
+  display: block;
+  color: var(--on-paper-mute);
+}

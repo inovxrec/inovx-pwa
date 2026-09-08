@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
 import { useClub, useMe } from '../../store/ClubProvider';
+import { usePush } from '../../hooks/usePush';
+import { describeError } from '../../lib/supabase';
+import {
+  fetchNotificationPrefs, saveNotificationPrefs, saveOwnName,
+} from '../../lib/db/queries';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
@@ -18,6 +23,13 @@ const EVENTS = [
   { id: 'review', label: 'My work is approved or sent back' },
   { id: 'comment', label: 'Someone comments or mentions me' },
   { id: 'meeting', label: 'A meeting is scheduled' },
+  { id: 'unclaimed', label: 'Work on my board that nobody has picked up' },
+  /*
+    Oversight, and only the President and Vice President ever receive it — the
+    row is hidden from everyone else rather than shown as a switch that could
+    never fire.
+  */
+  { id: 'oversight', label: 'Work assigned or submitted anywhere in the club' },
 ] as const;
 
 const CHANNELS = [
@@ -30,10 +42,20 @@ type EventId = (typeof EVENTS)[number]['id'];
 type ChannelId = (typeof CHANNELS)[number]['id'];
 type Matrix = Record<EventId, Record<ChannelId, boolean>>;
 
+/*
+  Mirrors `wants_notification` in 20260917000000_core_oversight_notifications.sql.
+  The two are one decision written twice — change them together, or the screen
+  will show a default the database does not honour.
+
+  Meetings push by default because a meeting is the one event that needs the
+  whole club, and nobody should have to opt in to being told about it.
+*/
+const PUSH_BY_DEFAULT: readonly string[] = ['assigned', 'due', 'meeting', 'oversight'];
+
 const DEFAULT_MATRIX = Object.fromEntries(
   EVENTS.map((event) => [
     event.id,
-    { inApp: true, push: event.id === 'assigned' || event.id === 'due', email: false },
+    { inApp: true, push: PUSH_BY_DEFAULT.includes(event.id), email: false },
   ]),
 ) as Matrix;
 
@@ -46,19 +68,77 @@ export function Settings() {
 
   const [matrix, setMatrix] = useState<Matrix>(DEFAULT_MATRIX);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const push = usePush(session?.userId);
 
-  const { members } = useClub();
+  // Only the core team is ever sent oversight, so only they are offered it.
+  const visibleEvents = EVENTS.filter(
+    (event) => event.id !== 'oversight' || session?.role === 'super-admin',
+  );
+
+  const { members, tenureId, reload } = useClub();
   const me = useMe();
   const member = members.find((m) => m.id === me?.id);
 
-  const [name, setName] = useState(session?.name ?? '');
-  const [title, setTitle] = useState(member?.title ?? '');
+  // What the server already holds, so the switches show the truth on arrival.
+  useEffect(() => {
+    if (!session?.userId) return;
+    let cancelled = false;
 
+    fetchNotificationPrefs(session.userId)
+      .then((saved: Record<string, Record<string, boolean>> | null) => {
+        if (cancelled || !saved) return;
+        setMatrix((current) => {
+          const merged = { ...current };
+          for (const event of EVENTS) {
+            merged[event.id] = { ...current[event.id], ...(saved[event.id] ?? {}) };
+          }
+          return merged;
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.userId]);
+
+  const [name, setName] = useState(session?.name ?? '');
+  const title = member?.title ?? '';
+
+  /*
+    Saved as it is switched rather than behind a Save button: it is one small
+    row, and a preferences screen that silently keeps changes in memory is how
+    people end up believing they turned something off.
+  */
   function set(event: EventId, channel: ChannelId, value: boolean) {
-    setMatrix((current) => ({
-      ...current,
-      [event]: { ...current[event], [channel]: value },
-    }));
+    const next: Matrix = { ...matrix, [event]: { ...matrix[event], [channel]: value } };
+    setMatrix(next);
+
+    if (!session?.userId || !tenureId) return;
+
+    void saveNotificationPrefs(tenureId, session.userId, next).catch((caught: unknown) => {
+      // Put the switch back rather than leave it showing a preference nobody holds.
+      setMatrix(matrix);
+      toast.show(describeError(caught), { tone: 'error' });
+    });
+  }
+
+  async function saveProfile() {
+    if (!session?.userId) return;
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === session.name) return;
+
+    setSavingProfile(true);
+    try {
+      await saveOwnName(session.userId, trimmed);
+      await reload();
+      toast.show('Profile saved.', { tone: 'success' });
+    } catch (caught: unknown) {
+      toast.show(describeError(caught), { tone: 'error' });
+    } finally {
+      setSavingProfile(false);
+    }
   }
 
   return (
@@ -79,7 +159,18 @@ export function Settings() {
 
           <div className="settings__fields">
             <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input label="Position" value={title} onChange={(e) => setTitle(e.target.value)} />
+            {/*
+              Read-only for the same reason as the email: a position is the
+              club's claim about someone, not their own, and the server refuses
+              a self-edit of it. An editable box that always failed would be
+              worse than no box.
+            */}
+            <Input
+              label="Position"
+              value={title}
+              readOnly
+              hint="Ask the core team to change this."
+            />
             {/* Read-only: the email is the account, and the core team owns it. */}
             <Input
               label="Email"
@@ -89,7 +180,12 @@ export function Settings() {
             />
           </div>
 
-          <Button variant="outline" onClick={() => toast.show('Profile saved.', { tone: 'success' })}>
+          <Button
+            variant="outline"
+            loading={savingProfile}
+            disabled={!name.trim() || name.trim() === session?.name}
+            onClick={() => void saveProfile()}
+          >
             Save profile
           </Button>
         </Accordion>
@@ -99,6 +195,64 @@ export function Settings() {
             §9.14 — a matrix on desktop, a per-event accordion on mobile, and
             never a horizontally scrolling grid.
           */}
+
+          {/*
+            Push is a per-device permission, not a preference, so it gets its own
+            control above the matrix: the switches below say which events you
+            want, this says whether this particular phone or laptop is allowed
+            to buzz at all. One without the other does nothing.
+          */}
+          <div className="settings__push">
+            {push.state === 'unsupported' && (
+              <p className="body-sm settings__note">
+                This browser cannot show notifications when INOVX is closed.
+              </p>
+            )}
+
+            {push.state === 'needs-install' && (
+              <p className="body-sm settings__note">
+                On iPhone, add INOVX to your home screen first — Safari tabs
+                cannot receive notifications. The Install section below shows how.
+              </p>
+            )}
+
+            {push.state === 'denied' && (
+              <p className="body-sm settings__note">
+                Notifications are blocked for this site. Your browser will not let
+                the app ask again — turn them back on in its site settings.
+              </p>
+            )}
+
+            {(push.state === 'default' || push.state === 'granted') && (
+              <div className="settings__push-row">
+                <span className="body-sm">
+                  {push.subscribed
+                    ? 'This device will buzz when something needs you.'
+                    : 'Get alerts on this device when INOVX is closed.'}
+                </span>
+                <Button
+                  variant={push.subscribed ? 'outline' : 'brush'}
+                  size="sm"
+                  loading={push.busy}
+                  onClick={() => void (push.subscribed ? push.disable() : push.enable())}
+                >
+                  {push.subscribed ? 'Turn off here' : 'Turn on for this device'}
+                </Button>
+              </div>
+            )}
+
+            {push.error && (
+              <p className="body-sm settings__push-error" role="alert">{push.error}</p>
+            )}
+          </div>
+
+          {/*
+            Email still sends nothing, and the matrix should not imply otherwise.
+          */}
+          <p className="body-sm settings__note">
+            In-app and push work now. Email remembers your choice but does not
+            send yet.
+          </p>
           {isDesktop ? (
             <table className="settings__matrix">
               <caption className="sr-only">Which events reach you on which channel</caption>
@@ -113,7 +267,7 @@ export function Settings() {
                 </tr>
               </thead>
               <tbody>
-                {EVENTS.map((event) => (
+                {visibleEvents.map((event) => (
                   <tr key={event.id}>
                     <th scope="row" className="settings__matrix-row body-sm">{event.label}</th>
                     {CHANNELS.map((channel) => (
@@ -132,7 +286,7 @@ export function Settings() {
             </table>
           ) : (
             <div className="settings__events">
-              {EVENTS.map((event) => (
+              {visibleEvents.map((event) => (
                 <Accordion key={event.id} title={event.label}>
                   <div className="settings__switches">
                     {CHANNELS.map((channel) => (

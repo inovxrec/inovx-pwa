@@ -50,3 +50,9 @@
 .firstrun__rule--ok .firstrun__mark { color: var(--st-done); }
 .firstrun__rule--ok .firstrun__ring { fill: var(--st-done); }
 .firstrun__rule--ok .firstrun__tick { opacity: 1; stroke: var(--paper-hi); }
+
+/* Loud enough to be read, and it survives the form being cleared. */
+.firstrun__failed {
+  color: var(--st-blocked);
+  font-weight: 600;
+}

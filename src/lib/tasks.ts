@@ -182,6 +182,20 @@ export function checklistProgress(task: Task): { done: number; total: number } |
   return { done: task.checklist.filter((i) => i.done).length, total: task.checklist.length };
 }
 
+/**
+ * The name to greet someone by, and to match their work on.
+ *
+ * Not `name.split(' ')[0]`: half this club writes its initials before its name
+ * — "M S Varun", "P R Visshwajit", "K Sanjeev Kumar" — so the first word is a
+ * letter, and the app was greeting people as "M". The first part longer than a
+ * single character is the given name for both orders, and for "Adishwar Seelan
+ * S K" it is still "Adishwar".
+ */
+export function givenName(fullName: string): string {
+  const parts = fullName.split(/\s+/).filter(Boolean);
+  return parts.find((part) => part.replace(/\./g, '').length > 1) ?? parts[0] ?? '';
+}
+
 /** "just now", "4h", "3d" — the compact age a feed row shows. */
 export function relativeTime(iso: string, now = Date.now()): string {
   const minutes = Math.round((now - new Date(iso).getTime()) / 60_000);

@@ -231,12 +231,16 @@ export function CommandDeck() {
   );
 
   /*
-    Birthdays are the only occasion the app can work out for itself — the rest
-    of the occasion engine (festivals, the lunar queue) has no table yet, so
-    what follows them is simply the next few dated things.
+    §9.6 asks for an occasions card, and birthdays are the only occasion the
+    deck can work out for itself. What follows them is simply the next few dated
+    things — deadlines and meetings — which is useful but is not an occasion.
+
+    So the card is named after what it actually holds. With no birthdays in the
+    directory it was listing task deadlines under the word "Occasions", which
+    reads as though the club had an occasion called "Sponsor outreach deck".
   */
   const occasions = birthdays.length === 0 && upcoming.length === 0 ? null : (
-    <Card surface="mint" title="Occasions">
+    <Card surface="mint" title={birthdays.length > 0 ? 'Occasions' : "What's coming"}>
       <ul className="deck__list" role="list">
         {birthdays.map((member) => (
           <li className="deck__list-row" key={member.id}>

@@ -52,8 +52,32 @@ export function ClubProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isConfigured);
   const [error, setError] = useState(isConfigured ? '' : NOT_CONFIGURED);
 
+  /*
+    Who is asking. Every read below is decided by row level security, so an
+    anonymous reader gets nothing back — correctly. This provider mounts above
+    the router, which means it first runs on the login screen with nobody signed
+    in; without re-running when a session appears it would keep that empty
+    answer forever, and the club would look like it had no members and no
+    domains to the person who just signed in.
+  */
+  const { session, ready } = useAuth();
+  const userId = session?.userId ?? null;
+
   const load = useCallback(async () => {
     if (!isConfigured) return;
+
+    // Nothing to read as nobody. Held as loading rather than empty: "no members"
+    // is a claim about the club, and not being signed in yet is not that.
+    if (!userId) {
+      setTenureId(null);
+      setDomains([]);
+      setPeople([]);
+      setMembers([]);
+      setCommittees([]);
+      setGrants({});
+      setLoading(!ready);
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -93,7 +117,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
         committeeList.filter((c) => c.members.some((p) => p.id === id)).map((c) => c.name);
 
       try {
-        const directory = await fetchDirectory(tenure.id);
+        const directory = await fetchDirectory(tenure.id, domainRows);
         setMembers(
           directory.length > 0
             ? directory.map((entry) => ({ ...entry, committees: committeesFor(entry.id) }))
@@ -116,8 +140,9 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId, ready]);
 
+  // Re-runs when someone signs in or out, not only on mount.
   useEffect(() => {
     void load();
   }, [load]);
@@ -160,6 +185,13 @@ export interface Board {
 /**
  * The club's domains as boards. Replaces the hardcoded list the screens used
  * to import — the set of domains is the club's to decide, not the frontend's.
+ *
+ * Core ops is one of them. It used to be filtered out on the grounds that
+ * leadership is not a domain of work, but the club raises real work there —
+ * planning, sponsor outreach, anything that belongs to no single domain — and
+ * excluding it meant that work had nowhere to go and no board to open. Its
+ * absence was also a quiet source of bugs: every Select built from this list
+ * rendered empty when the value it was given happened to be `core`.
  */
 export function useBoards(): Board[] {
   const { domains, people } = useClub();
@@ -167,7 +199,6 @@ export function useBoards(): Board[] {
   return useMemo(
     () =>
       domains
-        .filter((row) => row.slug !== 'core')
         .map((row) => ({
           id: row.id,
           slug: row.slug,

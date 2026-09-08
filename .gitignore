@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Edge function secrets — the VAPID private key signs every push and must never
+# be committed. Regenerate with scripts/generate-vapid-keys.mjs if it leaks.
+supabase/functions/.env
+supabase/.env

@@ -8,7 +8,7 @@ import { useOpenTask } from '../../hooks/useOpenTask';
 import { useAnnouncements } from '../../hooks/useAnnouncements';
 import { useClub, useMe } from '../../store/ClubProvider';
 import { upcomingBirthdays } from '../../lib/club';
-import { LEGAL_TRANSITIONS, STATE_LABELS, daysUntil, dueInfo, type Task } from '../../lib/tasks';
+import { LEGAL_TRANSITIONS, STATE_LABELS, daysUntil, dueInfo, type Task, givenName} from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Tag } from '../../ui/primitives/Tag';
@@ -144,7 +144,7 @@ export function MyDay({ loading = false }: MyDayProps) {
       */}
       <header className="myday__greeting">
         <h2 className="display-3 title-reveal">
-          {greeting()}, {session?.name.split(' ')[0] ?? 'there'}
+          {greeting()}, {session ? givenName(session.name) : 'there'}
         </h2>
         <p className="myday__counts body-sm">
           {counts.map((line, index) => (

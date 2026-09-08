@@ -28,10 +28,18 @@ export interface PanelProps {
 export function Panel({ open, onClose, anchorRef, label, children, className }: PanelProps) {
   const isDesktop = useIsDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [position, setPosition] = useState<
+    { top: number; left: number; width: number; maxHeight: number } | null
+  >(null);
 
-  // Anchor the dropdown, flipping it left near the right viewport edge so it
-  // never overflows the screen (§7.6).
+  /*
+    Anchor the dropdown, flipping it left near the right viewport edge and up
+    near the bottom one so it never overflows the screen (§7.6).
+
+    The vertical half matters most for the date picker: a calendar is far taller
+    than a menu, and opening one from a field low in a modal used to run off the
+    bottom of the window with no way to reach the last fortnight.
+  */
   useLayoutEffect(() => {
     if (!open || !isDesktop) return;
 
@@ -41,10 +49,25 @@ export function Panel({ open, onClose, anchorRef, label, children, className }: 
       const rect = anchor.getBoundingClientRect();
       const width = Math.max(rect.width, 200);
       const overflowsRight = rect.left + width > window.innerWidth - 8;
+      const left = overflowsRight ? Math.max(8, rect.right - width) : rect.left;
+
+      const GAP = 6;
+      const EDGE = 8;
+      // Measured, not assumed: the panel is already in the DOM by the time this
+      // layout effect runs, so its real height decides which way it opens.
+      const height = panelRef.current?.offsetHeight ?? 0;
+      const below = window.innerHeight - rect.bottom - GAP - EDGE;
+      const above = rect.top - GAP - EDGE;
+
+      // Flip up only when that genuinely helps — otherwise stay below and let
+      // the panel scroll, which keeps the common case where it fits unchanged.
+      const flip = height > below && above > below;
+
       setPosition({
-        top: rect.bottom + 6,
-        left: overflowsRight ? Math.max(8, rect.right - width) : rect.left,
+        top: flip ? Math.max(EDGE, rect.top - GAP - Math.min(height, above)) : rect.bottom + GAP,
+        left,
         width,
+        maxHeight: Math.max(160, flip ? above : below),
       });
     }
 
@@ -119,7 +142,16 @@ export function Panel({ open, onClose, anchorRef, label, children, className }: 
       className={cn('panel', 'panel--drop', 'surface-paper', className)}
       role="dialog"
       aria-label={label}
-      style={position ? { top: position.top, left: position.left, minWidth: position.width } : undefined}
+      style={
+        position
+          ? {
+              top: position.top,
+              left: position.left,
+              minWidth: position.width,
+              maxHeight: position.maxHeight,
+            }
+          : undefined
+      }
     >
       <div className="panel__body no-scrollbar">{children}</div>
     </div>,

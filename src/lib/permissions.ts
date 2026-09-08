@@ -11,6 +11,7 @@ import type { Role } from '../store/authStore';
 export type PermissionKey =
   | 'board.view'
   | 'task.assign'
+  | 'task.delete'
   | 'approvals.review'
   | 'meetings.view'
   | 'analytics.view'
@@ -40,6 +41,13 @@ const ADMIN: PermissionKey[] = [
 
 const SUPER_ADMIN: PermissionKey[] = [
   ...ADMIN,
+  /*
+    Deleting a task destroys its comments and its activity log with it — the
+    record of what the club decided, not just the card. Nobody below the
+    President and Vice President gets that, and it stays out of ADMIN so a
+    domain lead promoted to admin does not silently inherit it.
+  */
+  'task.delete',
   'admin.members',
   'admin.permissions',
   'admin.integrations',

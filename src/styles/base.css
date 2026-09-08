@@ -284,3 +284,14 @@ a { color: inherit; }
   ::view-transition-old(*),
   ::view-transition-new(*) { animation: none !important; }
 }
+
+/*
+  The frame between "the app started" and "we know who you are".
+
+  Painted the app's own ink rather than left transparent, so a cold load does
+  not flash white before the shell arrives. It is on screen for one tick.
+*/
+.app-booting {
+  min-height: 100dvh;
+  background: var(--ink);
+}

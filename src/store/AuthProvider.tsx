@@ -73,6 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         return;
       }
+      /*
+        USER_UPDATED is this tab changing its own credentials — `setPassword`
+        already knows the outcome and has written the profile itself. Reloading
+        here would race that write and read back the flag it just cleared,
+        putting the person straight back on /first-run with a password that has
+        already changed. A credential is not a profile; nothing to re-read.
+      */
+      if (event === 'USER_UPDATED') return;
+
       // SIGNED_IN also fires on a token refresh; reloading the profile then is
       // cheap and keeps a role change from needing a reload to take effect.
       void loadProfile(next.user.id, next.user.email ?? '').catch(() => setSession(null));
@@ -121,16 +130,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  /**
+   * §9.2 — replaces the issued password, then records that it has been replaced.
+   *
+   * Both halves have to succeed. The credential lives in auth.users and the flag
+   * that decides whether /first-run is still owed lives in public.users, and a
+   * person whose password changed but whose flag did not is locked out of their
+   * own account: the issued password no longer works, and the app keeps sending
+   * them back here. So the flag write is awaited and its failure is raised —
+   * it used to be fired and forgotten from inside a setState updater, where its
+   * error had nowhere to go and React was free to run it twice or not at all.
+   */
   const setPassword = useCallback(async (password: string) => {
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data, error } = await supabase.auth.updateUser({ password });
     if (error) throw error;
 
-    setSession((current) => {
-      if (!current) return current;
-      // The flag is the server's, so it is cleared there too.
-      void supabase.from('users').update({ must_change_password: false }).eq('id', current.userId);
-      return { ...current, mustSetPassword: false };
-    });
+    const userId = data.user?.id;
+    if (!userId) throw new Error('Your session expired. Sign in again to set a password.');
+
+    const { error: flagError } = await supabase
+      .from('users')
+      .update({ must_change_password: false })
+      .eq('id', userId);
+
+    if (flagError) throw flagError;
+
+    setSession((current) => (current ? { ...current, mustSetPassword: false } : current));
   }, []);
 
   const completeOnboarding = useCallback(() => {

@@ -19,6 +19,18 @@ export interface Assignment {
    * form says so rather than showing an empty domain list.
    */
   selfOnly: boolean;
+  /**
+   * True when anyone in the club may be put on a task, not only the people on
+   * the board it is raised for.
+   *
+   * A task belongs to a board, but the work rarely respects the boundary: a
+   * launch raised on Design needs sponsor outreach from Management and a room
+   * booked by Events, and the officers who coordinate it sit in core ops. So
+   * the board's own people are offered first and everyone else stays reachable
+   * behind them, rather than the club being asked to file work by whoever
+   * happens to be in the right domain.
+   */
+  canAssignAnyone: boolean;
 }
 
 /** Stable identity for "no overrides", so the memo below actually holds. */
@@ -63,6 +75,7 @@ export function useAssignment(): Assignment {
       domains,
       committees: mine,
       selfOnly: canCreate && domains.length === 0 && mine.length === 0,
+      canAssignAnyone: role === 'super-admin',
     };
   }, [role, me, edits, committees, everyDomain]);
 }

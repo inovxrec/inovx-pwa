@@ -5,7 +5,7 @@ import { useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { openCountFor, upcomingBirthdays } from '../../lib/club';
 import { useBoards, useClub } from '../../store/ClubProvider';
-import { DOMAIN_LABELS, formatDate, type Domain } from '../../lib/tasks';
+import { DOMAIN_LABELS, formatDate, type Domain, givenName} from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Chip } from '../../ui/primitives/Chip';
 import { Tag } from '../../ui/primitives/Tag';
@@ -187,7 +187,7 @@ export function People() {
                       task.source?.kind === 'occasion' &&
                       task.title
                         .toLowerCase()
-                        .includes(entry.member.name.split(' ')[0].toLowerCase()),
+                        .includes(givenName(entry.member.name).toLowerCase()),
                   );
 
                   return (

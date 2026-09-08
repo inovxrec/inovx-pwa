@@ -28,11 +28,74 @@ Without those two the app still boots and every screen says so rather than
 failing silently: `lib/supabase.ts` reports that it is not configured and the
 providers surface that message.
 
-The app opens at `/login`. Accounts are rows in `public.users`, signed in
-through Supabase auth — there is no seeded login. An account whose
-`must_change_password` is set goes through `/first-run` and then the tour, as
-§9.2 requires; whether the tour has been seen is remembered per email in
-`localStorage` under `inovx.dev.entry`, so clearing that key replays it.
+The app opens at `/login`. Accounts are rows in `public.users` backed by
+`auth.users`, and the two are kept in step by the `handle_new_user` trigger in
+`20260909000000_auth_profile_mirror.sql` — an account with no profile is signed
+straight back out, because a session with no role would be handed a member's
+screens by default. An account whose `must_change_password` is set goes through
+`/first-run` and then the tour, as §9.2 requires; whether the tour has been seen
+is remembered per email in `localStorage` under `inovx.dev.entry`, so clearing
+that key replays it.
+
+### A local stack
+
+The backend lives on the `integration` branch, not on `main` —
+`.git/info/exclude` keeps `supabase/` out of the frontend's history, so SQL
+changes have to be committed there.
+
+```
+supabase start
+npm run db:reset      # applies the migrations, then both seed files
+```
+
+`db:reset` seeds the club from the member sheet — 39 people across the five
+domains and core ops — and then `supabase/seed_local_auth.sql` gives every one
+of them an account that can sign in.
+
+**Everyone's first password is `demo`.** Every profile is marked
+`must_change_password`, so the first sign-in lands on `/first-run` and cannot get
+past it without setting a real one (§9.2). `demo` is four characters and fails
+every rule on that screen, which is the point: it is a door key, not a password,
+and the only screen it opens is the one that replaces it.
+
+Roles come from the sheet, not from seniority:
+
+| Who | Role | Why |
+| --- | --- | --- |
+| President, Vice President | `super_admin` | the only two who hold every admin key |
+| COOs, CTO, Treasurer, Secretary | `admin` | approvals, occasions, recurring rules |
+| Domain leads | `member` | they lead a board; `domains.lead_user_id` records that, and it is not a permission |
+| Everyone else | `member` | |
+
+So `adishwarseelan.sk.2024.csbs@rajalakshmi.edu.in` / `demo` is the super admin
+sign-in, and `lalitha.b.2024.csbs@rajalakshmi.edu.in` / `demo` is the other.
+
+That password is written down in a public repository on purpose: it opens a
+database that lives on one laptop and listens on `127.0.0.1`. It is why that
+file is registered as a **local** seed only — never run `supabase db push
+--include-seed` against staging or production, which would create all 39
+accounts there with it.
+
+The roster has no faculty advisor in it, so nothing currently exercises the
+faculty role (§9.6, read-only). Add an address to `scripts/gen_roster.py`'s
+table and re-run it when there is one.
+
+### Issuing a real account
+
+Staging and production accounts are issued one at a time, from a terminal:
+
+```
+SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service role key> npm run provision -- --email someone@example.edu.in --name "Their Name"
+```
+
+It defaults to `super_admin` on the `core` domain; `--role`, `--domain` and
+`--position` change that, and `--promote` raises an account that already
+exists. The password is generated, printed once, stored nowhere, and good for a
+single sign-in — the app requires a new one before any screen opens.
+
+The service role key bypasses row level security completely. It goes in the
+environment for the length of one command; it must never reach `.env.local`,
+which Vite compiles into the bundle.
 
 **/kitchen-sink** holds the Phase 1 review surface.
 
@@ -369,10 +432,81 @@ the row to move before any round trip — writes it through, and puts the row
 back if the server refuses. Each mutation still returns an `undo` the toast
 can call.
 
-A screen whose data has no table says so, through
-`screens/admin/NotWired.tsx`: it names the table it is waiting on rather than
-showing an empty state, which would be a claim about the club rather than
-about the software.
+A screen whose data has no table says so by naming the table it is waiting on,
+rather than showing an empty state — an empty state is a claim about the club,
+not about the software.
+
+## Notifications
+
+Three channels, at three different stages.
+
+**In-app works.** Database triggers file a row in `notifications` whenever work
+is assigned, a task is approved or sent back, someone comments, or a meeting is
+scheduled — see `20260915000000_notifications.sql`. Triggers rather than client
+code on purpose: a notification must not depend on the sender's browser staying
+open, and RLS correctly stops a member inserting rows for other people.
+
+**Push works, once it is set up.** Web Push is a browser standard, so there is
+no service, no account and no per-message cost — the VAPID key pair below *is*
+the identity, and Chrome, Firefox and Safari each deliver for free.
+
+```
+node scripts/generate-vapid-keys.mjs        # once, then keep them
+# public half  -> VITE_VAPID_PUBLIC_KEY in .env.local
+# private half -> supabase secrets set VAPID_PRIVATE_KEY=...
+npx supabase functions deploy send-push
+```
+
+Then point the database at the function, which is what `deliver_push` calls:
+
+```sql
+insert into app_config (key, value) values
+  ('push_function_url', 'https://<ref>.functions.supabase.co/send-push'),
+  ('service_role_key',  '<service role key>')
+on conflict (key) do update set value = excluded.value;
+```
+
+Unconfigured is a safe state: the trigger files the in-app notification and
+returns, so a missing key costs a buzz rather than breaking the task move that
+caused it.
+
+**Push cannot be tested with `npm run dev`** — `useServiceWorker` deliberately
+skips registration in dev, and no service worker means no push. Use a real
+build:
+
+```
+npm run build && npx vite preview     # http://localhost:4173
+```
+
+Coverage is not uniform, and the UI says so rather than pretending: Android and
+desktop work from an ordinary tab; **iPhone and iPad only after the app is added
+to the home screen**, because Safari gives a plain tab no push at all. That is
+Apple's rule, and §9.16's install card exists to explain it.
+
+**Email sends nothing yet.** The matrix already records who wants it, so the
+answer is waiting when a sender exists. Brevo's free tier (300/day) or Resend's
+(3,000/month, 100/day) both fit a 39-person club; EmailJS does not — 200/month
+is one club-wide announcement every five days, and it is built to send from the
+browser, which is the fragility the triggers were written to avoid.
+
+## Who the server lets in
+
+`20260910000000_real_rls_policies.sql` replaced the foundation migration's
+placeholders, which had enabled RLS everywhere and then granted almost nothing
+— under default-deny that made the whole app read-only for everyone, super
+admins included.
+
+The policies are built on `effective_permission(key)`, which reads a person's
+override out of `user_permissions` and falls back to the role default. Those
+defaults are a copy of `src/lib/permissions.ts`; **change one and you must
+change the other**, or the UI will offer a control the server refuses. §12 still
+holds — the UI hiding a control is a courtesy, and this file is what decides.
+
+`20260911000000_task_activity_cascade.sql` fixes a related foundation bug: the
+immutability trigger on `task_activity` fired on the `ON DELETE CASCADE` from
+its own parent, so **no task that had ever been touched could be deleted**. The
+trigger now covers UPDATE only; deletion through the API was already impossible,
+because the activity log has no DELETE policy.
 
 ## What the backend still owes the frontend
 
@@ -383,11 +517,13 @@ wanted it says it is not wired up instead of inventing a number:
   so the twelve-week activity chart on Insights and Oversight has no week axis
   to plot against, and no stat tile can draw a seven-point sparkline. The
   leaderboard is a standing all-year total for the same reason, and says so.
-- **No occasions engine.** No table for festival, anniversary or lunar rules,
-  the tasks they generate, or the confirmation queue. Birthdays are the one
-  occasion the app can work out for itself, from `member_directory.birthday`.
-- **No integrations table.** Nothing to report sync health, last-sync times or
-  conflicts against, so `/admin/integrations` is a stand-in.
+- **No job runner behind the occasion engine or the syncs.** The tables landed
+  in `20260908000000_occasions_and_integrations.sql` — `occasions`,
+  `integrations`, `integration_conflicts` — so `/admin/occasions` and
+  `/admin/integrations` read and write real rows. Nothing yet turns an occasion
+  into a task at its lead time, and nothing runs a sync: "run now" records
+  `sync_requested_at` and the card keeps showing how stale the last sync is
+  rather than turning green.
 - **No archive figures.** `tenures` carries a name and its dates — not a head
   count, a completed total or a president — so the tenure cards show dates.
 - **`user_permissions` has no scope column.** A `task.assign` grant cannot yet

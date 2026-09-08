@@ -8,7 +8,7 @@ import { ROLE_DEFAULTS, type PermissionKey } from '../../lib/permissions';
 import {
   PERMISSION_GROUPS, type Decision, type PermissionEdits,
 } from '../../lib/permissionGroups';
-import { DOMAIN_LABELS, type Domain } from '../../lib/tasks';
+import { DOMAIN_LABELS, type Domain, givenName} from '../../lib/tasks';
 import type { Role } from '../../store/authStore';
 import { cn } from '../../lib/cn';
 import { Avatar } from '../../ui/primitives/Avatar';
@@ -164,7 +164,7 @@ export function AdminPermissions() {
       }
     }
 
-    const first = member.name.split(' ')[0];
+    const first = givenName(member.name);
     if (able.length === 0) return `${first} will not be able to do anything.`;
     return `${first} will be able to: ${able.join(' · ')}.`;
   })();

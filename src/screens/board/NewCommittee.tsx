@@ -17,6 +17,16 @@ export interface NewCommitteeProps {
   onClose: () => void;
   /** Fires with the new committee's id so the caller can navigate to its board. */
   onCreated: (id: string) => void;
+  /**
+   * The committee being edited, by slug. Absent when creating one.
+   *
+   * The same form does both because they ask the identical question — a name
+   * and who is on it — and two forms would drift apart the first time either
+   * changed.
+   */
+  editing?: string;
+  /** Fires after an edited committee is deleted, so the caller can navigate away. */
+  onDeleted?: () => void;
 }
 
 /**
@@ -26,14 +36,30 @@ export interface NewCommitteeProps {
  * point of a committee is that it crosses them — a flat list would hide the one
  * thing the person making it needs to see.
  */
-export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
-  const { create } = useCommittees();
+export function NewCommittee({ open, onClose, onCreated, editing, onDeleted }: NewCommitteeProps) {
+  const { create, update, remove, byId } = useCommittees();
   const { members: roster } = useClub();
   const boards = useBoards();
   const toast = useToast();
 
-  const [name, setName] = useState('');
-  const [picked, setPicked] = useState<Person[]>([]);
+  const existing = editing ? byId(editing) : undefined;
+
+  const [name, setName] = useState(existing?.name ?? '');
+  const [picked, setPicked] = useState<Person[]>(existing?.members ?? []);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  /*
+    The committee arrives a moment after the modal opens on a cold load, so the
+    form is seeded from it when it appears rather than in an effect that would
+    fight whatever the person has already typed.
+  */
+  const [seeded, setSeeded] = useState<string | undefined>(undefined);
+  if (existing && seeded !== existing.id) {
+    setSeeded(existing.id);
+    setName(existing.name);
+    setPicked(existing.members);
+  }
 
   const byDomain = useMemo(() => {
     const map = new Map<Domain, Member[]>();
@@ -60,14 +86,32 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
   }
 
   function reset() {
-    setName('');
-    setPicked([]);
+    setName(existing?.name ?? '');
+    setPicked(existing?.members ?? []);
+    setConfirmingDelete(false);
   }
 
   async function submit() {
     if (!valid) return;
+    setBusy(true);
+
+    if (existing) {
+      const saved = await update(existing.id, name, picked);
+      setBusy(false);
+
+      if (!saved) {
+        toast.show('Could not save that committee.', { tone: 'error' });
+        return;
+      }
+
+      onClose();
+      toast.show(`${name.trim()} now has ${picked.length} members.`, { tone: 'success' });
+      return;
+    }
 
     const committee = await create(name, picked);
+    setBusy(false);
+
     if (!committee) {
       // The write was refused. Say so rather than closing as though it worked.
       toast.show('Could not create that committee.', { tone: 'error' });
@@ -79,6 +123,57 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
     toast.show(`${committee.name} created with ${picked.length} members.`, { tone: 'success' });
   }
 
+  async function confirmDelete() {
+    if (!existing) return;
+    setBusy(true);
+
+    const gone = await remove(existing.id);
+    setBusy(false);
+
+    if (!gone) {
+      toast.show('Could not delete that committee.', { tone: 'error' });
+      return;
+    }
+
+    setConfirmingDelete(false);
+    onClose();
+    onDeleted?.();
+    toast.show(`${existing.name} deleted. Its tasks stay on their domain boards.`, {
+      tone: 'success',
+    });
+  }
+
+  if (confirmingDelete && existing) {
+    return (
+      <Modal
+        open
+        onClose={() => setConfirmingDelete(false)}
+        title={`Delete ${existing.name}?`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={busy} onClick={() => void confirmDelete()}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        {/*
+          Says what survives as well as what goes. A committee is a grouping,
+          not a container: its work lives on the domain boards either way, and
+          someone deleting one should not have to guess whether they are about
+          to lose it.
+        */}
+        <p className="body-sm">
+          The committee and its {existing.members.length} memberships are removed
+          for everyone. Any task raised under it stays on its domain board.
+        </p>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       open={open}
@@ -86,8 +181,12 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
         reset();
         onClose();
       }}
-      dirty={name.trim().length > 0 || picked.length > 0}
-      title="New committee"
+      dirty={
+        existing
+          ? name.trim() !== existing.name || picked.length !== existing.members.length
+          : name.trim().length > 0 || picked.length > 0
+      }
+      title={existing ? `Edit ${existing.name}` : 'New committee'}
       footer={
         <>
           <Button
@@ -99,8 +198,13 @@ export function NewCommittee({ open, onClose, onCreated }: NewCommitteeProps) {
           >
             Cancel
           </Button>
-          <Button variant="brush" disabled={!valid} onClick={() => void submit()}>
-            Create
+          {existing && (
+            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+              Delete
+            </Button>
+          )}
+          <Button variant="brush" disabled={!valid} loading={busy} onClick={() => void submit()}>
+            {existing ? 'Save' : 'Create'}
           </Button>
         </>
       }

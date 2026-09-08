@@ -6,6 +6,9 @@ import { useIsDesktop } from '../../hooks/useBreakpoint';
 import { useToast } from '../../hooks/useToast';
 import { TASK_PARAM, useOpenTask } from '../../hooks/useOpenTask';
 import { usePermissionCheck } from '../../hooks/usePermission';
+import { describeError } from '../../lib/supabase';
+import { Menu } from '../../ui/primitives/Menu';
+import { Modal } from '../../ui/patterns';
 import { useAssignment } from '../../hooks/useAssignment';
 import { useBoards } from '../../store/ClubProvider';
 import {
@@ -45,7 +48,7 @@ type FilterId = (typeof FILTERS)[number]['id'];
  */
 export function Board() {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
-  const { tasks: allTasks, setState } = useTasks();
+  const { tasks: allTasks, setState, remove } = useTasks();
   const { committees, byId } = useCommittees();
   const isDesktop = useIsDesktop();
   const navigate = useNavigate();
@@ -121,6 +124,15 @@ export function Board() {
     [committees, boards],
   );
 
+  /*
+    Above the early return below: a hook that runs on one render and not the
+    next breaks the order React relies on. These sat under it until oxlint
+    caught them.
+  */
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [editingCommittee, setEditingCommittee] = useState(false);
+
   const current = committee
     ? `/committee/${committee.id}`
     : domainBoard
@@ -145,6 +157,61 @@ export function Board() {
     });
   }
 
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await remove(pendingDelete.id);
+      toast.show(`${pendingDelete.number} deleted.`, { tone: 'success' });
+      setPendingDelete(null);
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  /*
+    §9.7 keeps the card quiet — no per-card menu for the people who cannot use
+    one, so it is built only for a reader holding `task.delete` and left
+    undefined for everyone else. Cancelling and deleting sit together because
+    they answer the same question ("get this off the board") with different
+    force: one is reversible and keeps the record, the other is neither.
+  */
+  const cardMenu = can('task.delete')
+    ? (task: Task) => (
+        /*
+          The menu sits inside the card, and the card opens the task on click.
+          Without this the trigger does both at once — the drawer slides in
+          underneath the menu you just opened.
+        */
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <span
+          className="board__card-menu"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+        <Menu
+          label={`Actions for ${task.number}`}
+          items={[
+            {
+              id: 'cancel',
+              label: 'Move to Cancelled',
+              disabled: task.state === 'cancelled',
+              onSelect: () => move(task, 'cancelled'),
+            },
+            {
+              id: 'delete',
+              label: 'Delete task',
+              destructive: true,
+              onSelect: () => setPendingDelete(task),
+            },
+          ]}
+        />
+        </span>
+      )
+    : undefined;
+
   const shared = { byState, columns, flashed, onOpen: openTask };
   const morphingId = searchParams.get(TASK_PARAM) ?? undefined;
   const title = committee ? committee.name : domainBoard ? domainBoard.name : 'All boards';
@@ -166,6 +233,16 @@ export function Board() {
                   name: p.name, initials: p.initials, channel: p.domain,
                 }))}
               />
+              {/*
+                On the committee's own board, next to the people it is made of —
+                the place someone is standing when they notice the membership is
+                wrong. Same key as creating one.
+              */}
+              {can('task.assign') && (
+                <Button variant="outline-light" size="sm" onClick={() => setEditingCommittee(true)}>
+                  Edit
+                </Button>
+              )}
             </>
           ) : domainBoard ? (
             <>
@@ -266,10 +343,38 @@ export function Board() {
           />
         </Card>
       ) : isDesktop ? (
-        <BoardKanban {...shared} onMove={move} fadeKey={filter} morphingId={morphingId} />
+        <BoardKanban
+          {...shared}
+          onMove={move}
+          fadeKey={filter}
+          morphingId={morphingId}
+          renderOverflow={cardMenu}
+        />
       ) : (
         <BoardList {...shared} onChangeState={setSheetTask} />
       )}
+
+      <Modal
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        title={pendingDelete ? `Delete ${pendingDelete.number}?` : 'Delete task'}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={deleting} onClick={() => void confirmDelete()}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="body-sm">
+          <strong>{pendingDelete?.title}</strong> and everything on it — its
+          checklist, its links, its comments and its activity log — are removed
+          for everyone. This cannot be undone.
+        </p>
+      </Modal>
 
       <StateSheet
         task={sheetTask}
@@ -304,6 +409,16 @@ export function Board() {
           navigate(`/committee/${newId}`);
         }}
       />
+
+      {committee && (
+        <NewCommittee
+          open={editingCommittee}
+          editing={committee.id}
+          onClose={() => setEditingCommittee(false)}
+          onCreated={() => setEditingCommittee(false)}
+          onDeleted={() => navigate('/board/all')}
+        />
+      )}
     </div>
   );
 }

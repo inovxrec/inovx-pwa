@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { daysUntil, type Task, type TaskState } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { BoardColumn, TaskCard } from '../../ui/patterns';
 
 export interface BoardKanbanProps {
+  /** Per-card actions, when the reader has any. Absent for everyone else (§12). */
+  renderOverflow?: (task: Task) => ReactNode;
   byState: Record<TaskState, Task[]>;
   columns: TaskState[];
   /** Ids flashing because they just moved (§9.7). */
@@ -30,7 +32,7 @@ const DONE_WINDOW_DAYS = 7;
  * whose action bar moves it too, so a keyboard user is never stuck (§8).
  */
 export function BoardKanban({
-  byState, columns, flashed, fadeKey, morphingId, onOpen, onMove,
+  byState, columns, flashed, fadeKey, morphingId, onOpen, onMove, renderOverflow,
 }: BoardKanbanProps) {
   const [dragging, setDragging] = useState<Task | null>(null);
   const [showAllDone, setShowAllDone] = useState(false);
@@ -79,6 +81,7 @@ export function BoardKanban({
                 onDragStart={setDragging}
                 onDragEnd={() => setDragging(null)}
                 justChanged={flashed.includes(task.id)}
+                overflow={renderOverflow?.(task)}
                 /*
                   The card hands its title's transition name to the drawer at
                   the moment the drawer takes over — two elements may not carry

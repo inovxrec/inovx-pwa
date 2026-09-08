@@ -20,8 +20,10 @@ import { Tag } from '../../ui/primitives/Tag';
 import { Chip } from '../../ui/primitives/Chip';
 import { Menu, type MenuItem } from '../../ui/primitives/Menu';
 import {
-  ActivityRow, Breadcrumb, Card, CommentItem, LinkChip, TabPanel, Tabs,
+  ActivityRow, Breadcrumb, Card, CommentItem, LinkChip, Modal, TabPanel, Tabs,
 } from '../../ui/patterns';
+import { useToast } from '../../hooks/useToast';
+import { describeError } from '../../lib/supabase';
 
 /** Beyond this many words the title stops being Anton and becomes Inter (§9.8). */
 const ANTON_WORD_LIMIT = 6;
@@ -57,6 +59,30 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
   const primary = primaryAction(task, can('approvals.review'));
   const editable = can('task.assign');
 
+  const { remove } = useTasks();
+  const toast = useToast();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  /*
+    Deletion is confirmed, not undone. Everything else destructive in this app
+    offers an Undo toast, but the comments and the activity log go with the task
+    and an Undo could not put them back — so the question is asked first, and it
+    names what is about to be lost.
+  */
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await remove(task.id);
+      toast.show(`${task.number} deleted.`, { tone: 'success' });
+      setConfirmingDelete(false);
+      onBack();
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+      setDeleting(false);
+    }
+  }
+
   /** Every legal move that is not already the primary button (§9.8). */
   const overflowItems: MenuItem[] = LEGAL_TRANSITIONS[task.state]
     .filter((state) => state !== primary?.to)
@@ -65,6 +91,16 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
       label: `Move to ${STATE_LABELS[state]}`,
       onSelect: () => onMove(state),
     }));
+
+  // §12: absent rather than disabled for anyone without the key.
+  if (can('task.delete')) {
+    overflowItems.push({
+      id: 'delete',
+      label: 'Delete task',
+      destructive: true,
+      onSelect: () => setConfirmingDelete(true),
+    });
+  }
 
   const longTitle = task.title.split(/\s+/).length > ANTON_WORD_LIMIT;
 
@@ -351,6 +387,28 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
           )}
         </Card>
       </div>
+
+      <Modal
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        title={`Delete ${task.number}?`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={deleting} onClick={() => void confirmDelete()}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="body-sm">
+          <strong>{task.title}</strong> and everything on it — its checklist, its
+          links, its comments and its activity log — are removed for everyone.
+          This cannot be undone.
+        </p>
+      </Modal>
 
       {/* §9.8 — sticky, and exactly one primary action, or none. */}
       {primary && (

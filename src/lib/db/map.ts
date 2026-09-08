@@ -3,9 +3,10 @@ import type {
   ActivityEntry, Comment, Deliverable, Domain, Person, Task, TaskState,
 } from '../tasks';
 import type { AppNotification, Meeting, Member, NotificationKind } from '../club';
+import type { Integration, OccasionRule } from '../admin';
 import type {
-  AnnouncementRow, AttendanceRow, CommitteeRow, MeetingRow, MemberDirectoryRow,
-  NotificationRow, TaskRow, UserRow,
+  AnnouncementRow, AttendanceRow, CommitteeRow, IntegrationRow, MeetingRow, MemberDirectoryRow,
+  NotificationRow, OccasionRow, TaskRow, UserRow,
 } from './rows';
 
 /*
@@ -61,12 +62,25 @@ export function toMember(row: UserRow, committees: string[] = [], birthday = '')
 }
 
 /** The directory is the roster; a user row is an account. They are not the same. */
-export function directoryToMember(row: MemberDirectoryRow): Member {
+/**
+ * A directory row as the club's screens read it.
+ *
+ * `domainSlug` resolves the row's `domain_id`, which is the only trustworthy
+ * answer. It used to read `domain_name` through `toDomain`, but that column
+ * holds a display name — "Media & PR", "Core Ops" — and `toDomain` answers
+ * `core` for anything it does not recognise. So every person in Media & PR was
+ * quietly filed under Core: no error, no empty state, just the wrong domain on
+ * their card and their absence from their own board's list.
+ */
+export function directoryToMember(
+  row: MemberDirectoryRow,
+  domainSlug?: (id: string | null) => Domain | undefined,
+): Member {
   return {
     id: row.linked_user_id ?? row.id,
     name: row.name,
     initials: initialsFor({ name: row.name, initials: null }),
-    domain: toDomain(row.domain_name),
+    domain: domainSlug?.(row.domain_id) ?? toDomain(row.domain_name),
     title: row.role_label ?? 'Member',
     committees: [],
     // The schema stores a full date; the app only ever wants the day and month.
@@ -221,7 +235,9 @@ export function toNotification(row: NotificationRow): AppNotification {
   return {
     id: row.id,
     kind,
-    message: row.body,
+    // The title says who did what; the body says what it was.
+    message: row.title || row.body,
+    detail: row.title ? row.body : undefined,
     at: row.created_at,
     read: row.is_read,
     to: row.link ?? undefined,
@@ -243,3 +259,52 @@ export function committeeName(row: CommitteeRow): string {
 }
 
 export type { AttendanceRow };
+
+/* --------------------------------------------------------------- occasions */
+
+/**
+ * An occasion row as the admin screen reads it.
+ *
+ * The screen shows one date per occasion, but the schema keeps two: a repeating
+ * MM-DD for anything on the solar calendar, and a full `confirmed_date` for a
+ * lunar occasion someone has pinned to this year. A confirmation from a past
+ * year is deliberately not carried forward — that is precisely the fact the
+ * queue exists to surface.
+ */
+export function toOccasion(
+  row: OccasionRow,
+  domainSlug: (id: string | null) => Domain,
+  year = new Date().getFullYear(),
+): OccasionRule {
+  const confirmedThisYear = row.confirmed_year === year ? row.confirmed_date : null;
+  const date = row.occasion_date ?? (confirmedThisYear ? confirmedThisYear.slice(5) : null);
+
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.occasion_type,
+    date,
+    outputDomain: domainSlug(row.output_domain_id),
+    leadDays: row.lead_days,
+    strategy: row.assignment_strategy,
+    needsDate: date === null,
+  };
+}
+
+/* ------------------------------------------------------------ integrations */
+
+export function toIntegration(row: IntegrationRow): Integration {
+  return {
+    id: row.id,
+    name: row.name,
+    health: row.status,
+    lastSync: row.last_synced_at,
+    syncRequestedAt: row.sync_requested_at,
+    // `last_error` is the more useful line when there is one: the note explains
+    // what the integration is for, the error explains why it is amber.
+    note: row.last_error || row.note || '',
+    conflicts: (row.integration_conflicts ?? [])
+      .filter((conflict) => !conflict.resolved_at)
+      .map((conflict) => ({ id: conflict.id, summary: conflict.summary })),
+  };
+}

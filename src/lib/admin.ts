@@ -3,22 +3,20 @@ import { startOfToday, type Domain, type Person } from './tasks';
 /*
   Shapes and helpers for the eight admin screens (§9.15).
 
-  Two of these have tables behind them — recurring_rules and audit_log — and are
-  fetched in `lib/db/queries.ts`. The rest do not exist in the foundation
-  schema, so their screens say the feature is not wired up yet rather than
-  showing invented rows:
+  Everything here is fetched in `lib/db/queries.ts`: recurring_rules and
+  audit_log from the foundation migration, occasions and integrations from
+  `20260908000000_occasions_and_integrations.sql`. The one thing still without a
+  table is the per-tenure archive figures — member counts and completed-task
+  counts for a past year — so the archive screen counts what it can and says so.
 
-    · occasions (the whole occasion engine: rules, outputs, the lunar queue)
-    · integrations and their sync health
-    · tenure archive figures beyond the tenure row itself
-
-  Listed in the README so the backend team knows what the frontend is waiting
-  for. Nothing here fabricates a stand-in.
+  Nothing here fabricates a stand-in.
 */
 
 /* ------------------------------------------------------------- occasions */
 
 export type OccasionType = 'birthday' | 'festival' | 'anniversary' | 'lunar';
+
+export type AssignmentStrategy = 'domain-lead' | 'round-robin' | 'unassigned';
 
 export interface OccasionRule {
   id: string;
@@ -28,7 +26,13 @@ export interface OccasionRule {
   date: string | null;
   outputDomain: Domain;
   leadDays: number;
-  strategy: 'domain-lead' | 'round-robin' | 'unassigned';
+  strategy: AssignmentStrategy;
+  /**
+   * True while the occasion has no date this year — the lunar queue's whole
+   * membership test. Kept explicit rather than derived from `date` being null,
+   * because a confirmed date is stored as a full date for one year and an
+   * unconfirmed lunar occasion has neither.
+   */
   needsDate?: boolean;
 }
 
@@ -39,7 +43,7 @@ export const OCCASION_TYPE_LABELS: Record<OccasionType, string> = {
   lunar: 'Lunar',
 };
 
-export const STRATEGY_LABELS: Record<OccasionRule['strategy'], string> = {
+export const STRATEGY_LABELS: Record<AssignmentStrategy, string> = {
   'domain-lead': 'Domain lead',
   'round-robin': 'Round robin',
   unassigned: 'Left unassigned',
@@ -126,21 +130,25 @@ export function nextOccurrences(
 
 /* ---------------------------------------------------------- integrations */
 
-export type SyncHealth = 'ok' | 'degraded' | 'failing';
+export type SyncHealth = 'ok' | 'degraded' | 'failing' | 'disabled';
 
 export interface Integration {
   id: string;
   name: string;
   health: SyncHealth;
-  lastSync: string;
+  /** Null when it has never run — which is not the same as being healthy. */
+  lastSync: string | null;
+  /** Set while a sync has been asked for but nothing has reported back. */
+  syncRequestedAt: string | null;
   note: string;
-  conflicts: string[];
+  conflicts: Array<{ id: string; summary: string }>;
 }
 
 export const HEALTH_LABELS: Record<SyncHealth, string> = {
   ok: 'Healthy',
   degraded: 'Degraded',
   failing: 'Failing',
+  disabled: 'Turned off',
 };
 
 /* -------------------------------------------------------------- archive */

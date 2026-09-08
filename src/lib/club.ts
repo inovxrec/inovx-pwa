@@ -1,4 +1,4 @@
-import { daysUntil, dueInfo, startOfToday, type Person, type Task } from './tasks';
+import { daysUntil, dueInfo, startOfToday, type Person, type Task, givenName} from './tasks';
 import type { Role } from '../store/authStore';
 
 /*
@@ -96,6 +96,15 @@ export interface AppNotification {
   actor?: Person;
   /** The sentence, with the actor's name rendered separately by the row. */
   message: string;
+  /**
+   * What was actually said or changed, under the headline.
+   *
+   * A comment's headline is "Sandhiya P commented on #0003" and its detail is
+   * the comment. Showing only the detail — which is what this screen did — left
+   * a row reading "Hall 2 is free on the 14th." with no clue who said it or
+   * about what.
+   */
+  detail?: string;
   at: string;
   read: boolean;
   /** Where tapping the row goes (§9.13). */
@@ -161,7 +170,7 @@ export function calendarEvents(
       glance whether the work behind a birthday is actually done (§9.9). Matched
       on the person's name until tasks carry an occasion id.
     */
-    const first = entry.member.name.split(' ')[0].toLowerCase();
+    const first = givenName(entry.member.name).toLowerCase();
     const generated = tasks.filter((task) => task.title.toLowerCase().includes(first));
 
     events.push({
