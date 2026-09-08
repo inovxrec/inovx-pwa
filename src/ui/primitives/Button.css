@@ -1,0 +1,194 @@
+/* §7.1 — every variant specifies all six states: rest, hover, focus-visible,
+   active, disabled, loading. */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+
+  border-radius: var(--r-md);
+  transition: background-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              transform var(--t-fast) linear;
+}
+
+/* Press feedback (§10) — 90ms, linear, scale to 0.97. */
+.btn:not(:disabled):active { transform: scale(0.97); }
+
+ /*
+   Loading is disabled at the DOM level so it can't be clicked, but it is its
+   own state visually — only a genuinely disabled button dims to 40%.
+ */
+.btn:disabled:not(.btn--loading) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--loading { cursor: progress; }
+
+.btn--full { width: 100%; }
+
+.btn__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.btn__icon { display: inline-flex; width: 18px; height: 18px; }
+.btn__icon svg { width: 100%; height: 100%; }
+
+/* ---------- SIZES ---------- */
+/* md follows the density table: 44px on mobile, 40px from desktop. */
+.btn--sm { height: 34px; padding: 0 var(--s-3); font-size: 13px; }
+.btn--md { height: var(--d-btn-h); padding: 0 var(--s-4); font-size: 14px; }
+.btn--lg { height: 48px; padding: 0 var(--s-5); font-size: 15px; }
+
+/* ---------- BRUSH (§6.1) ---------- */
+/* Label padding is 12px 22px; the stroke extends past it on every side. */
+.btn--brush,
+.btn--brush-ink {
+  padding: 12px 22px;
+  height: auto;
+  min-height: var(--d-btn-h);
+  border-radius: 0;               /* the shape comes from the stroke, not a radius */
+  font-size: 15px;
+  isolation: isolate;
+}
+
+.btn--brush     { color: var(--flame); }   /* currentColor fills the stroke */
+.btn--brush-ink { color: var(--ink); }
+
+.btn--brush .btn__label     { color: var(--on-flame); }
+.btn--brush-ink .btn__label { color: var(--paper); }
+
+/* Hover scales the stroke only, not the label. No colour change (§6.1). */
+.btn--brush:not(:disabled):hover .brush,
+.btn--brush-ink:not(:disabled):hover .brush { transform: scale(1.02); }
+
+.btn--brush:not(:disabled):active .brush,
+.btn--brush-ink:not(:disabled):active .brush { transform: scale(0.985); }
+
+/* The whole-button press scale would double up with the stroke scale. */
+.btn--brush:not(:disabled):active,
+.btn--brush-ink:not(:disabled):active { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--brush:hover .brush,
+  .btn--brush-ink:hover .brush { transform: none; }
+}
+
+/* ---------- SOLID ---------- */
+.btn--solid {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn--solid:not(:disabled):hover  { background: var(--ink-raised); }
+.btn--solid:not(:disabled):active { background: var(--ink-sunken); }
+
+/* ---------- OUTLINE (on paper) ---------- */
+.btn--outline {
+  background: transparent;
+  color: var(--on-paper);
+  border: var(--b-bold) solid var(--ink);
+}
+.btn--outline:not(:disabled):hover  { background: var(--paper-lo); }
+.btn--outline:not(:disabled):active { background: var(--paper-line); }
+
+/* ---------- OUTLINE-LIGHT (on black) ---------- */
+.btn--outline-light {
+  background: transparent;
+  color: var(--on-ink);
+  border: var(--b-bold) solid var(--ink-line-2);
+}
+.btn--outline-light:not(:disabled):hover  { border-color: var(--on-ink-mute); }
+.btn--outline-light:not(:disabled):active { background: var(--ink-raised); }
+
+/* ---------- GHOST ---------- */
+/* The one variant set in Inter rather than Anton. */
+.btn--ghost {
+  background: transparent;
+  color: var(--on-paper-mute);
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 0 var(--s-2);
+}
+.btn--ghost:not(:disabled):hover  { color: var(--on-paper); }
+.btn--ghost:not(:disabled):active { color: var(--on-paper); }
+
+/* On a black ground the ghost has to read against ink, not paper. */
+.surface-ink .btn--ghost { color: var(--on-ink-mute); }
+.surface-ink .btn--ghost:not(:disabled):hover { color: var(--on-ink); }
+
+/* ---------- DANGER ---------- */
+/* Always opens a confirm — never fires straight off the click. */
+.btn--danger {
+  background: transparent;
+  color: var(--st-blocked);
+  border: var(--b-bold) solid var(--st-blocked);
+}
+.btn--danger:not(:disabled):hover  { background: var(--flame-soft); }
+.btn--danger:not(:disabled):active { background: var(--flame-soft); }
+
+/* ---------- LOADING (§7.1) ---------- */
+/* The real label stays in the flow, hidden, so the width is pinned exactly. */
+.btn--loading .btn__label {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn__ghost-label { visibility: hidden; }
+
+.btn__dots { display: inline-flex; gap: 4px; align-items: center; }
+
+.btn__dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: btn-dot 1400ms ease-in-out infinite;
+}
+
+.btn--brush .btn__dots i     { background: var(--on-flame); }
+.btn--brush-ink .btn__dots i { background: var(--paper); }
+
+.btn__dots i:nth-child(2) { animation-delay: 160ms; }
+.btn__dots i:nth-child(3) { animation-delay: 320ms; }
+
+@keyframes btn-dot {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+
+/*
+  The press repaint: the stroke is wiped away and laid back down left to right,
+  the way a brush actually puts it there. One shot per press, 220ms — long
+  enough to read as a stroke, short enough not to delay the action it confirms.
+*/
+.btn--struck .brush {
+  animation: brush-strike 220ms var(--ease-out) both;
+}
+
+@keyframes brush-strike {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 -2% 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--struck .brush { animation: none; }
+}

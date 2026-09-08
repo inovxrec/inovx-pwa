@@ -1,0 +1,99 @@
+/* §7.15 — bottom-centre above the nav on mobile, bottom-right on desktop. */
+
+.toast-stack {
+  position: fixed;
+  z-index: var(--z-toast);
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-bottom) + var(--s-3) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--d-page-x);
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .toast-stack {
+    left: auto;
+    right: var(--d-page-x);
+    bottom: var(--s-5);
+    align-items: flex-end;
+  }
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--s-3) var(--s-2) var(--s-3) calc(var(--s-3) + var(--s-2));
+  border-radius: var(--r-md);
+  box-shadow: var(--sticker-shadow);
+  overflow: hidden;
+  pointer-events: auto;
+  animation: toast-in var(--t-base) var(--ease-out) both;
+}
+
+/* The 4px left bar in the semantic colour (§7.15). */
+.toast__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--toast-accent, var(--ink));
+}
+
+.toast--success { --toast-accent: var(--st-done); }
+.toast--error   { --toast-accent: var(--st-blocked); }
+
+.toast__body {
+  flex: 1;
+  min-width: 0;
+  color: var(--on-paper);
+}
+
+.toast__action { flex: none; }
+
+.toast__close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+}
+
+.toast__close svg { width: 14px; height: 14px; }
+
+/* The thin flame line that runs out with the 4s timer. */
+.toast__timer {
+  position: absolute;
+  left: 4px;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--flame);
+  transform-origin: left center;
+  animation: toast-timer 4s linear both;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes toast-timer {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/*
+  Under reduced motion the global rule in base.css collapses both animations,
+  so the toast simply appears and the timer line sits empty. The toast still
+  dismisses on its own after 4s — that is a JS timer, not an animation.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .toast__timer { display: none; }
+}

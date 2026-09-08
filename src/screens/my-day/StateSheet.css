@@ -1,0 +1,31 @@
+/* §9.7 — legal transitions only, at the 52px row height the sheet fork uses. */
+
+.state-sheet__task {
+  color: var(--on-paper-mute);
+  padding-bottom: var(--s-2);
+}
+
+.state-sheet__list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.state-sheet__option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-sm);
+  text-align: left;
+}
+
+.state-sheet__option:hover  { background: var(--paper-lo); }
+.state-sheet__option:active { background: var(--paper-lo); }
+
+.state-sheet__label {
+  font-size: 15px;
+  color: var(--on-paper);
+}

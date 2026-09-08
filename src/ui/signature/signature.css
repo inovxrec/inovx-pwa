@@ -1,0 +1,162 @@
+/* §6.3 and §6.4 — decoration. Nothing here is interactive or announced. */
+
+.halftone {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--on-ink-faint) 1px, transparent 1px);
+  background-size: 6px 6px;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.tape {
+  position: absolute;
+  top: -8px;
+  width: 84px;
+  height: 26px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.tape--top-left  { left: -8px;  transform: rotate(-4deg); }
+.tape--top-right { right: -8px; transform: rotate(4deg); }
+
+.pin {
+  position: absolute;
+  top: -8px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  color: var(--on-paper);
+  pointer-events: none;
+}
+
+.pin svg { width: 100%; height: 100%; }
+
+/*
+  ---------- RECORD-SLEEVE MOTIFS ----------
+  The waveform and the grooves. Both are decorative, both are monochrome and
+  inherit currentColor or a surface token, and neither ever animates — §10
+  allows exactly one looping animation in the product and it is the skeleton.
+
+  On the gradient in .grooves: §1.2 bans gradients as a decorative colour ramp.
+  This is the same technique §6.4 already mandates for .halftone — hard colour
+  stops used to generate a repeating line pattern, with no ramp anywhere in it.
+*/
+
+.wave {
+  display: block;
+  width: 100%;
+  fill: currentColor;
+}
+
+.wave--block { height: 40px; }
+
+/* The divider form — a played phrase in place of a hairline rule. */
+.wave--rule {
+  height: 20px;
+  opacity: 0.7;
+}
+
+.grooves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image: repeating-radial-gradient(
+    circle at var(--groove-x, 50%) var(--groove-y, 50%),
+    transparent 0,
+    transparent 13px,
+    var(--on-ink-faint) 13px,
+    var(--on-ink-faint) 14px
+  );
+  /* Fades out before the edges so it reads as pressed, not as a target. */
+  mask-image: radial-gradient(
+    circle at var(--groove-x, 50%) var(--groove-y, 50%),
+    black 30%,
+    transparent 78%
+  );
+}
+
+/*
+  ---------- SLEEVE MARKS ----------
+  Registration marks at a card's corners, the way a printed sleeve carries its
+  crop marks. Not a border — §5.2 is explicit that cards have none — but four
+  short rules that stop well short of meeting.
+*/
+.sleeve { position: relative; }
+
+.sleeve::before,
+.sleeve::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0.28;
+}
+
+.sleeve::before {
+  top: 10px;
+  left: 10px;
+  border-top: 1.5px solid var(--on-surface, var(--on-paper));
+  border-left: 1.5px solid var(--on-surface, var(--on-paper));
+}
+
+.sleeve::after {
+  right: 10px;
+  bottom: 10px;
+  border-right: 1.5px solid var(--on-surface, var(--on-paper));
+  border-bottom: 1.5px solid var(--on-surface, var(--on-paper));
+}
+
+/*
+  ---------- TRACK NUMBERS ----------
+  Leading-zero tabular numerals, as a sleeve lists its tracks. For ordered lists
+  where the position is part of the reading — the leaderboard, a stepper.
+*/
+.track-no {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--on-surface-faint, var(--on-paper-faint));
+}
+
+/*
+  The waveform plays in once on mount — bars growing out of the centre line,
+  left to right, like a needle finding the groove. One-shot: §10 allows exactly
+  one looping animation in the product and it is the skeleton pulse.
+*/
+.wave--play rect {
+  transform-origin: center;
+  animation: wave-play 260ms var(--ease-out) both;
+}
+
+@keyframes wave-play {
+  from { transform: scaleY(0.08); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/*
+  The playing state: each bar breathes about the centre line on its own period.
+
+  DEVIATION from §10, which allows one looping animation in the product and
+  forbids ambient movement. Asked for directly, and confined to the entry
+  screens' decorative wave — nothing inside the signed-in app plays, so the
+  rule still holds everywhere a person is trying to get work done.
+*/
+.wave--playing rect {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wave-bounce 1s var(--ease) infinite alternate both;
+}
+
+@keyframes wave-bounce {
+  from { transform: scaleY(0.34); }
+  to   { transform: scaleY(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave--play rect { animation: none; }
+  /* It stops dead, rather than slowing down. */
+  .wave--playing rect { animation: none; transform: none; }
+}

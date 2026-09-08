@@ -1,0 +1,33 @@
+/* §9.6 — read-only, single column, capped so the prose keeps its measure. */
+
+.oversight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  max-width: 900px;
+}
+
+.oversight__hero p { color: var(--on-paper); }
+
+.oversight__late { color: var(--st-blocked); font-weight: 700; }
+
+.oversight__list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.oversight__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: var(--s-1) 0;
+}
+
+.oversight__row + .oversight__row {
+  border-top: var(--b-hair) solid var(--surface-line);
+}
+
+.oversight__row-name { flex: 1; min-width: 0; color: var(--on-paper); }
+.oversight__row-meta { flex: none; color: var(--on-paper-mute); }

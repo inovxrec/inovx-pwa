@@ -1,0 +1,123 @@
+/* §9.3 — four full-screen cards on the ink ground. */
+
+.welcome {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6) var(--d-page-x);
+  background: var(--ink);
+  overflow: hidden;
+}
+
+.welcome__texture {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 33vh;
+  pointer-events: none;
+}
+
+.welcome__skip {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--d-page-x);
+  z-index: 1;
+  /* The skip sits on ink, so it takes the ink ghost colours. */
+  color: var(--on-ink-mute);
+}
+
+.welcome__skip .btn--ghost { color: var(--on-ink-mute); }
+.welcome__skip .btn--ghost:not(:disabled):hover { color: var(--on-ink); }
+
+.welcome__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+  min-height: min(640px, 82dvh);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-6);
+  border-radius: var(--r-xl);
+}
+
+/*
+  Centred in the card rather than top-aligned: the card is a fixed height so it
+  does not jump between slides, and left at the top the shorter slides read as
+  half-finished (§5.4).
+*/
+.welcome__slide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-4);
+  /* Page-transition motion, reused: fade plus an 8px rise (§10). */
+  animation: welcome-in var(--t-slow) var(--ease-out) both;
+}
+
+.welcome__sticker { color: var(--on-paper); }
+
+/* §1.2 bans centred body paragraphs — the slide reads left-aligned. */
+.welcome__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: var(--read-max);
+  color: var(--on-paper-mute);
+}
+
+.welcome__install {
+  align-self: stretch;
+  margin-top: var(--s-2);
+}
+
+.welcome__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: var(--b-hair) solid var(--paper-line);
+}
+
+.welcome__dots {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  list-style: none;
+}
+
+/* 8px visual, 44px hit area (§14 item 15). */
+.welcome__dot {
+  display: block;
+  width: 44px;
+  height: 44px;
+  padding: 18px;
+  border-radius: var(--r-pill);
+  background-clip: content-box;
+  background-color: var(--paper-lo);
+  border: none;
+  transition: background-color var(--t-base) var(--ease);
+}
+
+.welcome__dot--on { background-color: var(--flame); }
+
+@keyframes welcome-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome__slide { animation: none; }
+}
+
+/* One phrase of waveform under each slide's headline. */
+.welcome__wave {
+  width: 160px;
+  color: var(--on-paper-faint);
+}

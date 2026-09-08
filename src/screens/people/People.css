@@ -1,0 +1,84 @@
+/* §9.10 — a three-column card grid on desktop, a 56px list on mobile. */
+
+.people { display: flex; flex-direction: column; gap: var(--s-4); }
+
+.people__tabs { border-bottom-color: var(--ink-line); }
+.people__tabs .tabs__tab { color: var(--on-ink-mute); }
+.people__tabs .tabs__tab--on,
+.people__tabs .tabs__tab:hover { color: var(--on-ink); }
+
+.people__panel { display: flex; flex-direction: column; gap: var(--s-4); }
+
+.people__controls { display: flex; flex-direction: column; gap: var(--s-3); }
+
+@media (min-width: 1024px) {
+  .people__controls { flex-direction: row; align-items: center; gap: var(--s-4); }
+  .people__search { width: 280px; flex: none; }
+}
+
+.people__filters {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.people__filters > * { scroll-snap-align: start; flex: none; }
+
+.people__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--d-card-gap);
+  list-style: none;
+}
+
+.people__card { height: 100%; }
+
+.people__card-head { display: flex; align-items: center; gap: var(--s-3); }
+
+.people__card-id { min-width: 0; }
+.people__name { color: var(--on-paper); }
+.people__title { color: var(--on-paper-mute); }
+
+.people__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.people__meta-item { color: var(--on-paper-mute); }
+
+.people__list-card { padding: var(--s-2) var(--d-card-pad); }
+
+.people__list { display: flex; flex-direction: column; list-style: none; }
+.people__list > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.people__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+}
+
+.people__row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.people__row-name { color: var(--on-paper); }
+.people__row-title { color: var(--on-paper-faint); }
+.people__row-count { flex: none; color: var(--on-paper-mute); }
+
+.people__date { flex: none; width: 52px; color: var(--on-paper-mute); }
+
+.people__poster {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-sm);
+}
+
+.people__poster:hover { background: var(--paper-lo); }
+.people__poster-num { color: var(--on-paper-faint); }
+.people__none { flex: none; color: var(--on-paper-faint); }

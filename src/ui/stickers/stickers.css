@@ -1,0 +1,17 @@
+/* §6.2 — sizes are fixed to the three the document allows. */
+.sticker {
+  color: inherit;
+  animation: sticker-in 200ms var(--ease-out) both;
+}
+
+.sticker--inline { width: 48px;  height: 48px; }
+.sticker--empty  { width: 96px;  height: 96px; }
+.sticker--hero   { width: 132px; height: 132px; }
+
+/* The one allowed shadow, and only when the sticker sits on paper as decoration. */
+.sticker--stuck { filter: drop-shadow(4px 4px 0 var(--ink)); }
+
+@keyframes sticker-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

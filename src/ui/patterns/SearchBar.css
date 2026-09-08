@@ -1,0 +1,82 @@
+/* §7.19 — pill input, 18px leading icon, clear ✕, ⌘K hint on desktop. */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--d-input-h);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--paper-line-2);
+  background: var(--paper-hi);
+  color: var(--on-paper);
+  min-width: 0;
+}
+
+.search--on-ink {
+  border-color: var(--ink-line-2);
+  background: var(--ink-raised);
+  color: var(--on-ink);
+}
+
+.search:focus-within {
+  border-color: var(--flame);
+  border-width: var(--b-bold);
+  /* The 3px flame-soft ring §7.5 asks for, drawn as an outline, not a shadow. */
+  outline: 3px solid var(--flame-soft);
+  outline-offset: 0;
+}
+
+.search__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--on-paper-mute);
+}
+
+.search--on-ink .search__icon { color: var(--on-ink-mute); }
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: none;
+  font-size: 15px;
+  outline: none;
+}
+
+.search__input::placeholder { color: var(--on-paper-faint); }
+.search--on-ink .search__input::placeholder { color: var(--on-ink-faint); }
+
+/* The UA's own clear button would sit beside ours. */
+.search__input::-webkit-search-cancel-button { display: none; }
+
+.search__clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  color: var(--on-paper-mute);
+}
+
+.search--on-ink .search__clear { color: var(--on-ink-mute); }
+.search__clear svg { width: 14px; height: 14px; }
+.search__clear:hover { background: var(--paper-lo); }
+.search--on-ink .search__clear:hover { background: var(--ink-line); }
+
+.search__kbd {
+  flex: none;
+  padding: 3px var(--s-1);
+  border-radius: var(--r-xs);
+  border: var(--b-hair) solid var(--ink-line-2);
+  color: var(--on-ink-faint);
+  font-family: inherit;
+}
+
+.search--on-paper .search__kbd {
+  border-color: var(--paper-line-2);
+  color: var(--on-paper-faint);
+}

@@ -1,0 +1,164 @@
+/*
+  Phase 1 review route. This file is the one place allowed to lay out specimens
+  rather than product content — it still reads every value from a token.
+*/
+
+.ks { min-height: 100dvh; background: var(--ink); }
+
+/* ---------- HERO ---------- */
+.ks-hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--s-9) var(--d-page-x) var(--s-8);
+  background: var(--ink);
+}
+
+.ks-hero__inner {
+  position: relative;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* The hero is an ink ground, so the mark needs no chip (§2). */
+.ks-hero .logo { align-self: flex-start; }
+
+.ks-hero__sub {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--on-ink-mute);
+}
+
+/* ---------- LAYOUT ---------- */
+.ks-main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--d-page-x) var(--s-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+}
+
+.ks-section {
+  border-radius: var(--r-lg);
+  padding: var(--d-card-pad);
+}
+
+/* An ink section sits on the ink page, so it needs a hairline to read at all. */
+.ks-section.surface-ink { border: var(--b-hair) solid var(--ink-line); }
+
+.ks-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-4);
+  border-bottom: var(--b-hair) solid var(--surface-line);
+}
+
+.ks-section__note { color: var(--on-surface-mute); }
+
+.ks-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.ks-row { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.ks-row__label { color: var(--on-surface-faint); }
+
+.ks-row__items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ks-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-4);
+}
+
+@media (min-width: 768px) {
+  .ks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.ks-stack { display: flex; flex-direction: column; gap: var(--s-3); }
+.ks-stack--grow { flex: 1; min-width: 220px; }
+
+/* ---------- SPECIMENS ---------- */
+.ks-swatch {
+  display: flex;
+  align-items: flex-end;
+  width: 108px;
+  height: 64px;
+  padding: var(--s-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+}
+
+.ks-swatch--dark { color: var(--on-flame); }
+
+/* The stroke has no label here, so it needs a box to paint inside. */
+.ks-brush {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 44px;
+  color: var(--flame);
+}
+
+.ks-deco {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 64px;
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  color: var(--on-paper);
+}
+
+.ks-quote {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--on-surface-mute);
+}
+
+.ks-popover-trigger {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  border: var(--b-bold) solid var(--ink);
+  color: var(--on-paper);
+}
+
+/* Temporary review links to the Phase 2 shell and system screens. */
+.ks-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  border: var(--b-bold) solid var(--ink);
+  color: var(--on-paper);
+  font-size: 13.5px;
+  text-decoration: none;
+}
+.ks-link:hover { background: var(--paper-lo); }
+
+.ks-hero__wave {
+  width: 260px;
+  color: var(--on-ink-faint);
+}

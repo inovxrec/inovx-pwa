@@ -1,0 +1,28 @@
+/* §7.1 — icon buttons. 40px visual, and already at the 44px touch minimum
+   once the tap area is counted, so no extra hit-slop is needed on mobile. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  transition: background-color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              transform var(--t-fast) linear;
+}
+
+.icon-btn__glyph { width: 18px; height: 18px; display: inline-flex; }
+.icon-btn__glyph svg { width: 100%; height: 100%; }
+
+.icon-btn--paper { color: var(--on-paper); border-color: var(--ink); }
+.icon-btn--ink   { color: var(--on-ink);   border-color: var(--ink-line-2); }
+
+.icon-btn--paper:not(:disabled):hover { background: var(--paper-lo); }
+.icon-btn--ink:not(:disabled):hover   { border-color: var(--on-ink-mute); }
+
+.icon-btn:not(:disabled):active { transform: scale(0.97); }
+
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }

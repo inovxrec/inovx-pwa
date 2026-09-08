@@ -1,0 +1,43 @@
+/* §7.11 — the number is the chart; the sparkline only carries shape. */
+
+.stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--d-card-pad);
+  border-radius: var(--r-lg);
+  text-align: left;
+  /* The at-risk border must not change the tile's height (§7.10's rule). */
+  border: var(--b-bold) solid transparent;
+}
+
+.stat--link { cursor: pointer; }
+.stat--link:hover { background: var(--paper-hi); }
+.stat--link:active { background: var(--paper-lo); }
+
+.stat__value {
+  color: var(--on-paper);
+  line-height: 0.95;
+}
+
+.stat__foot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.stat__caption { color: var(--on-paper-mute); }
+.stat__delta { color: var(--on-paper-faint); }
+
+.stat__spark {
+  position: absolute;
+  top: var(--d-card-pad);
+  right: var(--d-card-pad);
+}
+
+/* Over threshold (§9.5.1). The tile also reads as red in its sparkline, and the
+   caption still names what it counts, so the border is not the only signal. */
+.stat--risk { border-color: var(--st-blocked); }
+.stat--risk .stat__value { color: var(--st-blocked); }

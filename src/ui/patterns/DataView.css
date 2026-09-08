@@ -1,0 +1,102 @@
+/* §7.12 — a real table on desktop, compact cards on mobile. */
+
+.dataview { width: 100%; overflow-x: auto; }
+
+.dataview__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataview__th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 38px;
+  padding: 0 var(--s-3);
+  text-align: left;
+  background: var(--paper-lo);
+  color: var(--on-paper-mute);
+  white-space: nowrap;
+}
+
+.surface-mint .dataview__th { background: var(--mint-lo); }
+
+.dataview__th:first-child { border-radius: var(--r-xs) 0 0 var(--r-xs); }
+.dataview__th:last-child  { border-radius: 0 var(--r-xs) var(--r-xs) 0; }
+
+.dataview__tr { border-bottom: var(--b-hair) solid var(--paper-line); }
+.dataview__tr:hover { background: var(--paper-hi); }
+.surface-mint .dataview__tr:hover { background: var(--mint-hi); }
+
+.dataview__td {
+  height: var(--d-table-row);
+  padding: 0 var(--s-3);
+  font-size: 13.5px;
+  color: var(--on-paper);
+}
+
+/* Numeric columns are right-aligned and tabular (§7.12). */
+.dataview__cell--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row actions appear on hover at the trailing edge. */
+.dataview__actions { text-align: right; opacity: 0; }
+.dataview__tr:hover .dataview__actions,
+.dataview__tr:focus-within .dataview__actions { opacity: 1; }
+
+/* ---------- MOBILE ---------- */
+
+.dataview__cards {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.dataview__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) 0;
+  border-bottom: var(--b-hair) solid var(--paper-line);
+}
+
+.dataview__card:last-child { border-bottom: none; }
+
+.dataview__card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.dataview__card-lead {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-paper);
+  min-width: 0;
+}
+
+.dataview__card-second {
+  flex: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-paper);
+}
+
+.dataview__card-rest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.dataview__card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.dataview__card-row dt { color: var(--on-paper-mute); }
+.dataview__card-row dd { margin: 0; color: var(--on-paper); }

@@ -1,0 +1,51 @@
+/* Picking people from more than one domain (§0). */
+
+.committee-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.committee-form__roster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.committee-form__legend { color: var(--on-paper-mute); }
+
+.committee-form__domain {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.committee-form__domain-name { padding: 0; }
+
+.committee-form__people {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-left: var(--s-2);
+}
+
+.committee-form__person {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+}
+
+/* The checkbox owns the name, so the avatar and title trail it. */
+.committee-form__check { flex: 1; min-width: 0; }
+.committee-form__title { color: var(--on-paper-faint); }
+
+.committee-form__summary {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  color: var(--on-paper-mute);
+}

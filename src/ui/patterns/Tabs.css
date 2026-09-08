@@ -1,0 +1,57 @@
+/* §7.13 — Anton uppercase, 40px tall, 2px flame underline on the active tab. */
+
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-4);
+  overflow-x: auto;
+  border-bottom: var(--b-hair) solid var(--surface-line, var(--paper-line));
+  /* Fade masks at the edges so a cut-off tab reads as scrollable (§7.13). */
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+.tabs__tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 40px;
+  padding: 0 var(--s-1);
+  flex: none;
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--on-surface-mute, var(--on-paper-mute));
+  transition: color var(--t-base) var(--ease);
+}
+
+/*
+  One rule for the whole strip, travelling to whichever tab is active. It slides
+  a little slower than a state change so the movement reads as deliberate rather
+  than as a snap.
+*/
+.tabs__rule {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: var(--b-bold);
+  background: var(--flame);
+  border-radius: var(--r-pill);
+  transition:
+    transform var(--t-slow) var(--ease-out),
+    width var(--t-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.tabs__tab:hover { color: var(--on-surface, var(--on-paper)); }
+.tabs__tab--on { color: var(--on-surface, var(--on-paper)); }
+
+.tabs__count {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--on-surface-faint, var(--on-paper-faint));
+}

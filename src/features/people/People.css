@@ -1,9 +1,0 @@
-.person-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-.person-name { font-size: 13px; font-weight: 600; }
-.person-sub { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }

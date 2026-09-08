@@ -1,0 +1,13 @@
+/*
+  §6.1 — the stroke sits behind the label and extends ~6px past the label box on
+  all sides, which is why it is inset by a negative amount rather than 0.
+*/
+.brush {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  pointer-events: none;
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--ease);
+}

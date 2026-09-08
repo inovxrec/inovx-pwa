@@ -1,0 +1,28 @@
+/* §7.17 — the only looping animation in the product (§10). */
+.skeleton {
+  display: block;
+  background: var(--paper-lo);
+  animation: skeleton-pulse 1400ms ease-in-out infinite;
+}
+
+.surface-ink .skeleton { background: var(--ink-raised); }
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--d-card-pad);
+  border-radius: var(--r-lg);
+}
+
+.skeleton-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}

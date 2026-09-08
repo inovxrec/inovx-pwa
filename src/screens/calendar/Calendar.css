@@ -1,0 +1,249 @@
+/* §9.9 — the layer chips are shared; the grid and the agenda are not. */
+
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.cal__layers {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.cal__layers > * { scroll-snap-align: start; flex: none; }
+
+/* ---------- DESKTOP: month grid ---------- */
+
+.month { display: flex; flex-direction: column; gap: var(--s-3); }
+
+.month__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.month__title { flex: none; color: var(--on-paper); min-width: 260px; }
+.month__today { margin-left: auto; }
+
+.month__weekdays,
+.month__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.month__weekday {
+  padding: 0 var(--s-2) var(--s-1);
+  color: var(--on-paper-mute);
+}
+
+.month__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 96px;
+  padding: var(--s-1);
+  border-radius: var(--r-xs);
+  background: var(--paper);
+  /* Keeps the today outline from changing the cell's size. */
+  border: var(--b-bold) solid transparent;
+  overflow: hidden;
+}
+
+.month__cell--weekend { background: var(--paper-lo); }
+.month__cell--outside { opacity: 0.4; }
+.month__cell--today   { border-color: var(--ink); }
+
+.month__date { color: var(--on-paper-mute); padding: 2px; }
+.month__cell--today .month__date { color: var(--on-paper); font-weight: 700; }
+
+.month__events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  min-width: 0;
+}
+
+/*
+  A chip is identified by its leading bar and by the text it carries, never by
+  its fill alone — the four layer colours are too close to tell apart.
+*/
+.month__chip {
+  display: block;
+  width: 100%;
+  padding: 3px var(--s-1) 3px 6px;
+  border-left: 3px solid var(--layer, var(--on-paper-faint));
+  border-radius: 3px;
+  background: var(--paper-hi);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--on-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.month__chip:hover:not(:disabled) { background: var(--paper-lo); }
+.month__chip:disabled { cursor: default; }
+
+.month__chip--deadlines { --layer: var(--st-progress); }
+.month__chip--occasions { --layer: var(--dom-media); }
+.month__chip--meetings  { --layer: var(--dom-management); }
+.month__chip--events    { --layer: var(--dom-events); }
+
+.month__chip--late {
+  --layer: var(--st-blocked);
+  color: var(--st-blocked);
+  font-weight: 600;
+}
+
+.month__more {
+  align-self: flex-start;
+  padding: 2px var(--s-1);
+  color: var(--on-paper-mute);
+}
+
+.month__more:hover { color: var(--on-paper); }
+
+/* ---------- MOBILE: agenda ---------- */
+
+.agenda { display: flex; flex-direction: column; gap: var(--s-3); }
+
+.agenda__strip {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.agenda__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  width: 44px;
+  min-height: 52px;
+  padding: var(--s-1);
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--ink-line);
+  color: var(--on-ink-mute);
+}
+
+.agenda__day-num { font-size: 15px; font-weight: 600; }
+
+/* A day that has something on it is marked by a dot, not by colour alone. */
+.agenda__day--has {
+  border-color: var(--ink-line-2);
+  color: var(--on-ink);
+}
+
+.agenda__day--has::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--flame);
+}
+
+.agenda__day--today {
+  border-color: var(--paper);
+  color: var(--on-ink);
+}
+
+.agenda__list { display: flex; flex-direction: column; gap: var(--s-4); }
+
+.agenda__group { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.agenda__heading {
+  position: sticky;
+  top: var(--header-h);
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.agenda__badge {
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: var(--flame);
+  color: var(--on-flame);
+}
+
+.agenda__card { padding: var(--s-2) var(--d-card-pad); }
+
+.agenda__events { display: flex; flex-direction: column; list-style: none; }
+
+.agenda__events > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.agenda__event {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+  text-align: left;
+}
+
+.agenda__event:disabled { cursor: default; }
+
+.agenda__layer {
+  flex: none;
+  width: 4px;
+  align-self: stretch;
+  border-radius: var(--r-pill);
+  background: var(--layer, var(--on-paper-faint));
+}
+
+.agenda__layer--deadlines { --layer: var(--st-progress); }
+.agenda__layer--occasions { --layer: var(--dom-media); }
+.agenda__layer--meetings  { --layer: var(--dom-management); }
+.agenda__layer--events    { --layer: var(--dom-events); }
+
+.agenda__event-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agenda__event-label { color: var(--on-paper); }
+.agenda__event-kind { color: var(--on-paper-faint); }
+
+.agenda__late { flex: none; color: var(--st-blocked); font-weight: 700; }
+
+/* The poster tasks an occasion generated (§9.9). */
+.agenda__generated {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  padding: 0 0 var(--s-2) calc(var(--s-3) + 4px);
+}
+
+.agenda__generated-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  text-align: left;
+}
+
+.agenda__generated-num { flex: none; color: var(--on-paper-faint); }
+.agenda__generated-title { flex: 1; min-width: 0; color: var(--on-paper); }

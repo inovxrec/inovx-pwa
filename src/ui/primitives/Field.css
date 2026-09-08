@@ -1,0 +1,112 @@
+/* §7.5 — Input and Textarea share this shell so the two never drift apart. */
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.field__label { color: var(--on-paper-mute); }
+.field--on-ink .field__label { color: var(--on-ink-mute); }
+
+.field__count { color: var(--on-paper-faint); font-variant-numeric: tabular-nums; }
+.field--on-ink .field__count { color: var(--on-ink-faint); }
+.field__count--warn { color: var(--st-blocked); }
+
+.field__shell {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--d-input-h);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  border: 1.5px solid var(--paper-line-2);
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+
+.field--on-ink .field__shell {
+  background: var(--ink-raised);
+  border-color: var(--ink-line-2);
+}
+
+.field__shell--area { height: auto; padding: var(--s-3); align-items: flex-start; }
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--on-paper);
+}
+
+.field--on-ink .field__input { color: var(--on-ink); }
+
+.field__input::placeholder { color: var(--on-paper-faint); }
+.field--on-ink .field__input::placeholder { color: var(--on-ink-faint); }
+
+.field__input--area { resize: none; line-height: 1.55; }
+
+.field__affix {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--on-paper-mute);
+  flex: none;
+}
+.field--on-ink .field__affix { color: var(--on-ink-mute); }
+.field__affix svg { width: 100%; height: 100%; }
+
+/*
+  Focus lives on the shell, not the input, so the whole field reads as focused.
+  A 3px flame-soft ring, no glow and no shadow (§7.5). The global focus-visible
+  outline is suppressed here because the shell already draws the ring.
+*/
+.field__shell:focus-within {
+  border-color: var(--flame);
+  border-width: var(--b-bold);
+  box-shadow: 0 0 0 3px var(--flame-soft);
+}
+.field__input:focus-visible { outline: none; }
+
+/* ---------- ERROR ---------- */
+.field--error .field__shell {
+  border-color: var(--st-blocked);
+  border-width: var(--b-bold);
+}
+.field--error .field__shell:focus-within { box-shadow: 0 0 0 3px var(--flame-soft); }
+
+.field__error { color: var(--st-blocked); }
+.field__hint  { color: var(--on-paper-mute); }
+.field--on-ink .field__hint { color: var(--on-ink-mute); }
+
+/* ---------- DISABLED ---------- */
+.field__input:disabled { cursor: not-allowed; }
+.field__shell:has(.field__input:disabled) { opacity: 0.4; }
+
+/*
+  A read-only field must not look like one you can type in. It keeps its label
+  and stays focusable so it can be read and copied, but it sits on the card's
+  own surface rather than the raised input fill, and it takes no focus colour.
+*/
+.field__input[readonly],
+.field__shell:has(.field__input[readonly]) {
+  background: transparent;
+  color: var(--on-paper-mute);
+}
+
+.field__shell:has(.field__input[readonly]) {
+  border-style: dashed;
+}
+
+.field__shell:has(.field__input[readonly]):focus-within {
+  border-color: var(--paper-line-2);
+  border-width: 1.5px;
+  outline: none;
+}

@@ -1,0 +1,99 @@
+/* §9.4 — the member landing screen. */
+
+/*
+  Capped rather than run to the full content width. A compact row is a title at
+  one end and a due date at the other; stretched across 1200px the two stop
+  reading as one row, which is the opposite of the confident density §5.4 asks
+  for. The cards keep their own internal alignment at every width below this.
+*/
+.myday {
+  display: flex;
+  flex-direction: column;
+  max-width: 880px;
+}
+
+/* Block 1 sits on the ink ground, not a card (§9.4). */
+.myday__greeting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-bottom: var(--s-4);
+}
+
+.myday__greeting h2 { color: var(--on-ink); }
+
+.myday__counts { color: var(--on-ink-mute); }
+.myday__sep { color: var(--on-ink-faint); }
+.myday__overdue { color: var(--st-blocked); font-weight: 600; }
+
+.myday__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+}
+
+/*
+  Rows sit directly on the card with a hairline between them rather than as
+  separate cards — that would be a third surface, which §5.1 rules out.
+*/
+.myday__rows {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.myday__rows > li + li {
+  border-top: var(--b-hair) solid var(--paper-line);
+}
+
+.surface-mint .myday__rows > li + li {
+  border-top-color: var(--mint-line);
+}
+
+/* The row card is transparent so the card's own surface shows through. */
+.myday__row-card { background: transparent; }
+
+.myday__row {
+  position: relative;
+  overflow: hidden;
+}
+
+.myday__row .task-card { transform: translateX(var(--swipe, 0)); }
+
+/* The label revealed behind a swiped row (§9.4). */
+.myday__swipe-hint {
+  position: absolute;
+  left: var(--s-2);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--st-done);
+}
+
+.myday__waiting {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.myday__waiting .task-card { flex: 1; min-width: 0; background: transparent; }
+
+.myday__waiting-age {
+  flex: none;
+  padding-right: var(--s-2);
+  color: var(--on-paper-faint);
+}
+
+.myday__people {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  list-style: none;
+}
+
+.myday__person {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.myday__announcement { color: var(--on-paper-mute); }

@@ -1,0 +1,73 @@
+/* §7.19 — deliverable links, styled as a Chip (§7.2). */
+
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 34px;
+  border-radius: var(--r-pill);
+  border: var(--b-bold) solid var(--ink);
+  background: transparent;
+}
+
+.link-chip__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  height: 100%;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  color: var(--on-paper);
+}
+
+.link-chip__link:hover { background: var(--paper-lo); }
+
+.link-chip__provider {
+  flex: none;
+  color: var(--on-paper-faint);
+}
+
+.link-chip__label {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link-chip__glyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--on-paper-mute);
+}
+
+/*
+  A warning, not an error: the border stays ink and only the glyph is amber, so
+  the chip does not read as broken (§9.8).
+*/
+.link-chip__warn {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--st-review);
+}
+
+.link-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
+  border-radius: var(--r-pill);
+  color: var(--on-paper-mute);
+}
+
+.link-chip__remove svg { width: 14px; height: 14px; }
+.link-chip__remove:hover { background: var(--paper-lo); color: var(--on-paper); }
+
+/* The remove button eats the link's trailing padding so the chip stays 34px. */
+.link-chip:has(.link-chip__remove) .link-chip__link { padding-right: var(--s-2); }

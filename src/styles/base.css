@@ -1,0 +1,286 @@
+/*
+  INOVX STUDIO — base styles. §3 (theme), §4 (type scale), §10 (motion),
+  §11 (focus). Fonts are loaded from index.html so the <link rel=preconnect>
+  can sit in <head> ahead of the stylesheet.
+*/
+@import './tokens.css';
+
+/* ---------- RESET ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, h1, h2, h3, h4, p, figure, blockquote, dl, dd,
+ul, ol, fieldset, legend { margin: 0; padding: 0; }
+
+ul[role='list'], ol[role='list'] { list-style: none; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/*
+  Dark-grounded only — there is no light mode and no theme toggle (§3).
+  The ground is painted explicitly so nothing borrows a host background.
+*/
+:root { color-scheme: dark; }
+
+body {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, picture, svg, video, canvas { display: block; max-width: 100%; }
+
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button { background: none; border: none; padding: 0; cursor: pointer; }
+
+a { color: inherit; }
+
+/* Anton reads as words, not letters, because the caps come from CSS (§11). */
+[data-font='display'] { font-family: Anton, 'Arial Narrow', Impact, sans-serif; }
+
+/* ---------- FOCUS (§11) ---------- */
+/*
+  2px flame outline at 2px offset on every interactive element, on paper and on
+  ink alike. This is never removed — if a component needs a different shape it
+  overrides border-radius, not the ring itself.
+*/
+:focus-visible {
+  outline: var(--b-bold) solid var(--flame);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ---------- TYPE SCALE (§4.1) ---------- */
+/*
+  These ten classes are the entire type system. A font-size declared anywhere
+  else is a bug. Anton is uppercased here, never by typing in caps.
+*/
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.num-xl {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.display-1 {
+  font-size: clamp(40px, 9vw, 76px);
+  line-height: 0.88;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.display-2 {
+  font-size: clamp(28px, 5.5vw, 44px);
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.display-3 {
+  font-size: clamp(20px, 3.4vw, 28px);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.display-4 {
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+.num-xl {
+  font-size: clamp(32px, 6vw, 52px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.body-lg  { font-size: 17px;   line-height: 1.55; text-wrap: pretty; }
+.body     { font-size: 15px;   line-height: 1.55; text-wrap: pretty; }
+.body-sm  { font-size: 13.5px; line-height: 1.5;  text-wrap: pretty; }
+
+.label {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.micro {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Running text never exceeds the measure (§4.2). */
+.read-width { max-width: var(--read-max); }
+
+/* Any number in a column or a stat is tabular (§4.2). */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- SURFACES (§5.1) ---------- */
+/*
+  Setting a surface flips the local text colour, so children can use
+  --on-surface / --on-surface-mute without knowing which stock they sit on.
+*/
+.surface-paper {
+  background: var(--paper);
+  color: var(--on-paper);
+  --on-surface: var(--on-paper);
+  --on-surface-mute: var(--on-paper-mute);
+  --on-surface-faint: var(--on-paper-faint);
+  --surface-line: var(--paper-line);
+  --surface-line-2: var(--paper-line-2);
+}
+
+.surface-mint {
+  background: var(--mint);
+  color: var(--on-paper);
+  --on-surface: var(--on-paper);
+  --on-surface-mute: var(--on-paper-mute);
+  --on-surface-faint: var(--on-paper-faint);
+  --surface-line: var(--mint-line);
+  --surface-line-2: var(--paper-line-2);
+}
+
+.surface-ink {
+  background: var(--ink);
+  color: var(--on-ink);
+  --on-surface: var(--on-ink);
+  --on-surface-mute: var(--on-ink-mute);
+  --on-surface-faint: var(--on-ink-faint);
+  --surface-line: var(--ink-line);
+  --surface-line-2: var(--ink-line-2);
+}
+
+/* ---------- SCROLLERS ---------- */
+/* Chip rows and panels scroll without a visible scrollbar (§7.2, §7.6). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ---------- VISUALLY HIDDEN ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- REDUCED MOTION (§10) ---------- */
+/*
+  Hard requirement: every transform and transition is disabled. Opacity fades
+  of 100ms or less may remain, so components express fades as their own
+  animation and transforms separately.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    /*
+      Delays too. A staggered child whose animation is collapsed to nothing but
+      whose delay survives would sit at its from-state — invisible — for the
+      length of that delay.
+    */
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- LIST STAGGER (§10) ---------- */
+/*
+  Lists stagger their children by 20ms each, capped at 6, then render the rest
+  at once. Put .stagger on the list; every direct child takes part.
+
+  The cap is what keeps a long board column from taking a second to appear —
+  past the sixth card the delay stops growing.
+*/
+.stagger > * {
+  animation: stagger-in 200ms var(--ease-out) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 20ms; }
+.stagger > *:nth-child(3) { animation-delay: 40ms; }
+.stagger > *:nth-child(4) { animation-delay: 60ms; }
+.stagger > *:nth-child(5) { animation-delay: 80ms; }
+.stagger > *:nth-child(n+6) { animation-delay: 100ms; }
+
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * { animation: none; }
+}
+
+/* ---------- TITLE REVEAL ---------- */
+/*
+  A screen's headline wipes up into place behind a hard edge, the way a title
+  card resolves — no fade, no drift, just the mask moving. It is the one piece
+  of motion on arrival that is doing something other than easing an opacity.
+
+  Opted into per headline rather than matched by position in the tree: a screen
+  knows which of its headings is *the* title, and a structural selector would
+  have to guess at nesting depth and would silently stop matching the moment a
+  wrapper moved.
+
+  Clip-path only. A transform here would fight the page transition's own rise,
+  and clipping the page container itself would make it a containing block for
+  anything fixed inside it.
+*/
+.title-reveal {
+  animation: title-reveal 520ms var(--ease-out) 60ms both;
+}
+
+@keyframes title-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 -12% 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-reveal { animation: none; clip-path: none; }
+}
+
+/* ---------- VIEW TRANSITIONS ---------- */
+/*
+  The task title morphs from its card into the drawer's heading. Everything else
+  the browser would cross-fade by default is told not to bother: the drawer and
+  the scrim already have their own entrances, and a full-page cross-fade on top
+  of them reads as a double exposure.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--t-slow);
+  animation-timing-function: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

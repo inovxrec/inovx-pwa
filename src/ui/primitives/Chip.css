@@ -1,0 +1,90 @@
+/* §7.2 — the outlined pill. The workhorse of the system. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 34px;
+  padding: 0 var(--s-3) 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: transparent;
+  white-space: nowrap;
+  transition: background-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              transform var(--t-fast) linear;
+}
+
+/* The label token carries the type; the chip only owns the shape. */
+.chip__label { line-height: 1; }
+
+.chip__icon { display: inline-flex; width: 16px; height: 16px; }
+.chip__icon svg { width: 100%; height: 100%; }
+
+.chip--on-paper { border: var(--b-bold) solid var(--ink); color: var(--on-paper); }
+.chip--on-ink   { border: 1.5px solid var(--ink-line-2);  color: var(--on-ink); }
+
+button.chip:not(:disabled):active { transform: scale(0.97); }
+
+.chip--disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- TOGGLE (filter) ---------- */
+.chip--toggle:not(.chip--disabled):hover { background: var(--paper-lo); }
+
+.chip--toggle.chip--selected {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.chip--on-ink.chip--toggle:not(.chip--disabled):hover { background: var(--ink-raised); }
+
+.chip--on-ink.chip--toggle.chip--selected {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--paper);
+}
+
+/* ---------- REMOVABLE ---------- */
+.chip--removable { padding-right: var(--s-2); }
+
+.chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  opacity: 0.7;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.chip__remove:hover { opacity: 1; }
+.chip__remove svg { width: 100%; height: 100%; }
+
+/* ---------- CHANNEL ---------- */
+/* Domain stock always carries --ink text and an --ink border (§3). */
+.chip--channel {
+  color: var(--ink);
+  border-color: var(--ink);
+  border-width: var(--b-bold);
+}
+
+/* ---------- CHIP ROW (§7.2) ---------- */
+/*
+  Rows scroll horizontally on mobile and never wrap to a third line. Applied to
+  the container, not the chip.
+*/
+.chip-row {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: var(--s-1);
+}
+.chip-row::-webkit-scrollbar { height: 0; }
+.chip-row > * { scroll-snap-align: start; flex: none; }
+
+@media (min-width: 1024px) {
+  .chip-row { flex-wrap: wrap; overflow-x: visible; }
+}

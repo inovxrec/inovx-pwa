@@ -1,0 +1,73 @@
+/* §9.15 — the frame all eight admin screens share. */
+
+.admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* The section's own nav, scrolling rather than wrapping on a phone. */
+.admin__tabs {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+}
+
+.admin__tab {
+  flex: none;
+  scroll-snap-align: start;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--ink-line-2);
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-ink-mute);
+  transition: color var(--t-fast) linear, background-color var(--t-fast) linear;
+}
+
+.admin__tab:hover { color: var(--on-ink); }
+
+.admin__tab--on {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--ink);
+}
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+}
+
+.admin-page__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.admin-page__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.admin-page__title { color: var(--on-ink); }
+.admin-page__desc { color: var(--on-ink-mute); max-width: var(--read-max); }
+
+.admin-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}

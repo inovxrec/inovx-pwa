@@ -1,0 +1,11 @@
+/* §9.18 — sits directly below the sticky header, on the raised ink surface. */
+.offline {
+  position: sticky;
+  top: calc(var(--header-h) + env(safe-area-inset-top));
+  z-index: var(--z-sticky);
+  padding: var(--s-2) var(--d-page-x);
+  background: var(--ink-raised);
+  color: var(--on-ink-mute);
+  border-bottom: var(--b-hair) solid var(--ink-line);
+  text-align: center;
+}

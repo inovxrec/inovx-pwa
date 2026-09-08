@@ -1,0 +1,162 @@
+/* §9.5 — single column on mobile, a 12-column grid on desktop. */
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+}
+
+.deck__actions { display: flex; justify-content: flex-end; }
+
+/* 2×2 on mobile, four across on desktop — never a horizontal scroll (§7.11). */
+.deck__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--d-card-gap);
+}
+
+@media (min-width: 1024px) {
+  .deck__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* The 8/4 split (§9.5). */
+.deck__split {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: var(--d-card-gap);
+  align-items: start;
+}
+
+.deck__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  min-width: 0;
+}
+
+.deck__strips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* ---------- APPROVAL QUEUE (§9.5.3) ---------- */
+
+.deck__queue {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+/*
+  The card gets its own line rather than sharing one with the chip and the
+  buttons. The queue lives in the narrow side column, and side by side the
+  card's title — the only part that says what is being approved — was the
+  flexible element, so it collapsed to nothing.
+*/
+.deck__queue-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'card    card'
+    'waiting actions';
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+}
+
+.deck__queue-row + .deck__queue-row {
+  border-top: var(--b-hair) solid var(--paper-line);
+}
+
+.deck__queue-card {
+  grid-area: card;
+  background: transparent;
+}
+
+.deck__waiting {
+  grid-area: waiting;
+  justify-self: start;
+  padding: 4px var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--paper-lo);
+  color: var(--on-paper-mute);
+}
+
+/* Past three days the chip turns blocked — and still says how long (§9.5.3). */
+.deck__waiting--stale {
+  background: var(--flame-soft);
+  color: var(--st-blocked);
+  font-weight: 700;
+}
+
+.deck__decide {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+/* The mobile "Review" button sits in the same cell. */
+.deck__queue-row > .btn { grid-area: actions; justify-self: end; }
+
+/* ---------- ATTENTION (§9.5.4) ---------- */
+
+.deck__attention {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.deck__attention-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  padding: var(--s-2) 0;
+}
+
+.deck__attention-row + .deck__attention-row {
+  border-top: var(--b-hair) solid var(--mint-line);
+}
+
+.deck__attention-line {
+  flex: 1;
+  min-width: 160px;
+  color: var(--on-paper);
+}
+
+.deck__none { color: var(--on-paper-mute); }
+
+/* ---------- SMALL LISTS ---------- */
+
+.deck__list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.deck__list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: var(--s-1) 0;
+}
+
+.deck__list-row + .deck__list-row {
+  border-top: var(--b-hair) solid var(--surface-line);
+}
+
+.deck__list-name { flex: 1; min-width: 0; color: var(--on-paper); }
+.deck__list-meta { flex: none; color: var(--on-paper-mute); }
+
+/* ---------- MOBILE REVIEW SHEET ---------- */
+
+.deck__sheet-title { color: var(--on-paper); padding-bottom: var(--s-3); }
+
+.deck__sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}

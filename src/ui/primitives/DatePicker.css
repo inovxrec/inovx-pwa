@@ -1,0 +1,119 @@
+/* §7.19 — the trigger matches an Input; the calendar lives in a Panel. */
+
+.datepicker { display: flex; flex-direction: column; gap: 6px; }
+
+.datepicker__label { color: var(--on-paper-mute); }
+.datepicker--on-ink .datepicker__label { color: var(--on-ink-mute); }
+
+.datepicker__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  height: var(--d-input-h);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  border: 1.5px solid var(--paper-line-2);
+  color: var(--on-paper);
+  font-size: 15px;
+  text-align: left;
+}
+
+.datepicker--on-ink .datepicker__trigger {
+  background: var(--ink-raised);
+  border-color: var(--ink-line-2);
+  color: var(--on-ink);
+}
+
+.datepicker__trigger svg { width: 16px; height: 16px; flex: none; }
+
+.datepicker__trigger:focus-visible {
+  outline: none;
+  border-color: var(--flame);
+  border-width: var(--b-bold);
+  box-shadow: 0 0 0 3px var(--flame-soft);
+}
+
+.datepicker__trigger:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.datepicker--error .datepicker__trigger {
+  border-color: var(--st-blocked);
+  border-width: var(--b-bold);
+}
+
+.datepicker__value--empty { color: var(--on-paper-faint); }
+.datepicker--on-ink .datepicker__value--empty { color: var(--on-ink-faint); }
+
+.datepicker__error { color: var(--st-blocked); }
+.datepicker__hint  { color: var(--on-paper-mute); }
+
+/* ---------- CALENDAR ---------- */
+.cal { padding: var(--s-2); min-width: 268px; }
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+
+.cal__month { color: var(--on-paper); }
+
+.cal__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  color: var(--on-paper);
+  transition: background-color var(--t-fast) var(--ease);
+}
+.cal__nav:hover { background: var(--paper-lo); }
+.cal__nav svg { width: 16px; height: 16px; }
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal__weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  color: var(--on-paper-faint);
+}
+
+.cal__blank { height: 34px; }
+
+.cal__day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border-radius: var(--r-xs);
+  font-size: 13.5px;
+  color: var(--on-paper);
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+@media (max-width: 1023px) {
+  .cal__day, .cal__blank { height: 42px; }
+}
+
+.cal__day:hover { background: var(--paper-lo); }
+
+/* Today is outlined; the selection is filled. Both readable without colour. */
+.cal__day--today { box-shadow: inset 0 0 0 var(--b-bold) var(--ink); }
+
+.cal__day--selected {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cal__day--in-range { background: var(--flame-soft); }

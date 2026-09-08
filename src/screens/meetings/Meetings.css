@@ -1,0 +1,123 @@
+/* §9.11 — the list, grouped by context, and the detail below it. */
+
+.meetings { display: flex; flex-direction: column; max-width: 900px; }
+
+.meetings__card { padding: var(--s-2) var(--d-card-pad); }
+
+.meetings__list { display: flex; flex-direction: column; list-style: none; }
+.meetings__list > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.meetings__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+  text-align: left;
+}
+
+.meetings__row:hover { background: var(--paper-hi); }
+
+.meetings__date { flex: none; width: 52px; color: var(--on-paper-mute); }
+
+.meetings__row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.meetings__title { color: var(--on-paper); }
+.meetings__attendees { color: var(--on-paper-faint); }
+
+/* ---------- DETAIL ---------- */
+
+.meeting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-card-gap);
+  max-width: 900px;
+}
+
+.meeting__head { display: flex; flex-direction: column; gap: var(--s-1); }
+.meeting__context { color: var(--on-ink-mute); }
+.meeting__title { color: var(--on-ink); }
+.meeting__meta { color: var(--on-ink-mute); }
+
+/* The scheduling action sits above the list. */
+.meetings__actions { display: flex; padding-bottom: var(--s-2); }
+
+.meetings__where { flex: none; color: var(--on-paper-faint); }
+
+/* Where the meeting is, on the detail's header. */
+.meeting__where {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding-top: var(--s-2);
+}
+
+.meeting__place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 14px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--ink-line-2);
+  color: var(--on-ink);
+}
+
+.meeting__place-key { color: var(--on-ink-faint); }
+
+/* On the ink header the chip has to invert its own paper styling. */
+.meeting__where .link-chip { border-color: var(--ink-line-2); }
+.meeting__where .link-chip__link { color: var(--on-ink); }
+.meeting__where .link-chip__link:hover { background: var(--ink-raised); }
+.meeting__where .link-chip__provider,
+.meeting__where .link-chip__glyph { color: var(--on-ink-mute); }
+
+.meeting__attendance { display: flex; flex-direction: column; list-style: none; }
+.meeting__attendance > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.meeting__attendee {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+}
+
+.meeting__attendee-name { flex: 1; min-width: 120px; color: var(--on-paper); }
+
+.meeting__segments { flex: none; }
+
+.meeting__attendance-read {
+  flex: none;
+  color: var(--on-paper-mute);
+  text-transform: capitalize;
+}
+
+.meeting__actions { display: flex; flex-direction: column; list-style: none; }
+.meeting__actions > li + li { border-top: var(--b-hair) solid var(--paper-line); }
+
+.meeting__action {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  min-height: var(--d-list-row);
+  padding: var(--s-2) 0;
+}
+
+.meeting__action-body {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--on-paper);
+}
+
+.meeting__action-owner { color: var(--on-paper-faint); }
+.meeting__none { color: var(--on-paper-mute); }
+
+.meeting__draft { display: flex; flex-direction: column; gap: var(--s-3); }
+.meeting__draft-note { color: var(--on-paper-mute); }

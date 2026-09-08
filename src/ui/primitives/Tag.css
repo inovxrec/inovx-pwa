@@ -1,0 +1,19 @@
+/* §7.3 — solid fill, --ink text, 22px tall. Non-interactive by design. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-xs);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* The one fill dark enough to need light text. */
+.tag--flame { color: var(--on-flame); }
+
+/* §9.12 — leaderboard ranks 2 and 3. */
+.tag--ink { color: var(--paper); }
+
+/* The core channel is the paper colour, so it needs its own edge. */
+.tag--core { box-shadow: inset 0 0 0 1.5px var(--paper-line-2); }

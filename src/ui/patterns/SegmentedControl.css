@@ -1,0 +1,55 @@
+/* §7.13 — a pill container, 2px ink border, 4px padding, sliding ink thumb. */
+
+.segmented {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0;
+  padding: 4px;
+  border: var(--b-bold) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: transparent;
+}
+
+.segmented__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--segment-count));
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  transform: translateX(calc(100% * var(--segment-index)));
+  transition: transform var(--t-base) var(--ease);
+}
+
+/* Nothing chosen yet — no thumb, and every label reads as unselected. */
+.segmented--unset .segmented__thumb { display: none; }
+
+.segmented__item {
+  position: relative;
+  z-index: 1;
+  height: 32px;
+  padding: 0 var(--s-3);
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--on-paper-mute);
+  border-radius: var(--r-pill);
+  transition: color var(--t-base) var(--ease);
+  white-space: nowrap;
+}
+
+.segmented__item:hover { color: var(--on-paper); }
+.segmented__item--on   { color: var(--paper); }
+
+/* On an ink ground the container's border and thumb invert. */
+.surface-ink .segmented,
+.segmented--on-ink { border-color: var(--ink-line-2); }
+
+.segmented--on-ink .segmented__thumb { background: var(--paper); }
+.segmented--on-ink .segmented__item { color: var(--on-ink-mute); }
+.segmented--on-ink .segmented__item:hover { color: var(--on-ink); }
+.segmented--on-ink .segmented__item--on { color: var(--ink); }

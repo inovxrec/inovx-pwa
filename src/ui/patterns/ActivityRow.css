@@ -1,0 +1,58 @@
+/* §7.19 — the two feed rows behind the ACTIVITY | COMMENTS tabs (§9.8). */
+
+.activity {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  list-style: none;
+}
+
+.activity__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--paper-line-2);
+  transform: translateY(-2px);
+}
+
+.activity__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--on-paper-mute);
+}
+
+.activity__actor { color: var(--on-paper); font-weight: 600; }
+
+.activity__age {
+  flex: none;
+  color: var(--on-paper-faint);
+}
+
+.comment {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  list-style: none;
+  border-top: var(--b-hair) solid var(--paper-line);
+}
+
+.comment:first-child { border-top: none; }
+
+.comment__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.comment__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.comment__name { font-size: 13.5px; color: var(--on-paper); }
+.comment__age { color: var(--on-paper-faint); }

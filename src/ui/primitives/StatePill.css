@@ -1,0 +1,36 @@
+/* §7.4 — 24px, pill, 1.5px border in the state colour. */
+.state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 24px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1.5px solid var(--state);
+  white-space: nowrap;
+}
+
+.state-pill--on-paper { color: var(--on-paper); }
+.state-pill--on-ink   { color: var(--on-ink); }
+
+.state-pill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--state);
+  flex: none;
+}
+
+/* Shape hints for the two states people confuse (§7.4). */
+.state-pill--blocked { box-shadow: 0 0 0 var(--b-bold) var(--st-blocked) inset; }
+
+.state-pill--done {
+  background: var(--st-done);
+  border-color: var(--st-done);
+  color: var(--on-flame);
+}
+.state-pill--done .state-pill__dot { background: var(--on-flame); }
+
+/* Cancelled reads as withdrawn rather than as another live state. */
+.state-pill--cancelled { opacity: 0.7; }
