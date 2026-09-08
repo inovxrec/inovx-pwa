@@ -13,6 +13,12 @@ port = 54322
 shadow_port = 54320
 major_version = 15
 
+# seed.sql builds the club; seed_local_auth.sql gives it accounts that can sign
+# in. The order matters — the auth rows reuse the profile ids from seed.sql.
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql", "./seed_local_auth.sql"]
+
 [db.pooler]
 enabled = false
 port = 54329
@@ -20,8 +26,15 @@ pool_mode = "transaction"
 default_pool_size = 20
 max_client_conn = 100
 
+# The frontend talks to exactly four services: db, auth, rest and the kong
+# gateway in front of them. It subscribes to no realtime channel, uploads to no
+# bucket, and invokes no edge function — grep the src tree and you will find
+# none of them. Everything below is a developer convenience, and on a 16GB
+# machine already running Docker the full stack leaves under a gigabyte free,
+# which shows up as auth timeouts and "Database connection error" rather than as
+# anything that names memory. Turn one back on when you actually want it.
 [studio]
-enabled = true
+enabled = false
 port = 54323
 
 [auth]
@@ -32,4 +45,28 @@ jwt_expiry = 3600
 enable_signup = false
 
 [functions.bulk-import-members]
+verify_jwt = true
+
+# Logflare is a log explorer for Studio, not something the app talks to, and it
+# is the heaviest container in the stack — on a machine already running other
+# projects it loses its health check and takes Studio down with it. Off by
+# default; turn it back on if you actually want the log explorer.
+[analytics]
+enabled = false
+
+[storage]
+# no bucket is read or written
+enabled = false
+
+[realtime]
+# nothing subscribes to a channel
+enabled = false
+
+[edge_runtime]
+# On for send-push, which the notifications trigger calls. Turn it off again if
+# the stack is short of memory and push is not being worked on.
+enabled = true
+
+[functions.send-push]
+# Called by a database trigger with the service role key, not by a browser.
 verify_jwt = true
