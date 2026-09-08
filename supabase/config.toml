@@ -39,13 +39,19 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
+# Where the app actually is. `config push` sends this to the hosted project, so
+# a literal localhost here would put localhost links in every password reset
+# email the club receives. Driven by the environment so the same file is correct
+# locally and hosted:
+#
+#   SUPABASE_AUTH_SITE_URL=https://inovx.vercel.app npx supabase config push
+site_url = "env(SUPABASE_AUTH_SITE_URL)"
 # The reset link lands on /first-run, which is already the screen that sets a
 # password. Both ports are here because push only works on a production build.
 additional_redirect_urls = [
-  "https://localhost:5173",
   "http://localhost:5173/first-run",
   "http://localhost:4173/first-run",
+  "env(SUPABASE_AUTH_REDIRECT_URL)",
 ]
 jwt_expiry = 3600
 enable_signup = false
@@ -53,15 +59,23 @@ enable_signup = false
 # Locally, mail goes to Mailpit at http://localhost:54324 and never leaves the
 # machine — open it to read a reset link during development.
 #
-# On the hosted project this is configured in the dashboard instead:
-#   Authentication -> Emails -> SMTP Settings
-#     host  smtp-relay.brevo.com      port 587
-#     user  <your Brevo SMTP login>   pass <your Brevo SMTP key>
-#     sender  a verified Brevo sender address
-#
 # Supabase's own email sender is rate limited to a handful per hour, which is
 # not enough for 39 people to reset a password on the same afternoon. That limit
 # is the reason to configure SMTP at all.
+#
+# Uncomment and push once a sender is verified in Brevo. The key is read from
+# the environment and never committed:
+#
+#   SUPABASE_AUTH_SITE_URL=https://<the hosted app> #   SUPABASE_AUTH_REDIRECT_URL=https://<the hosted app>/first-run #   BREVO_SMTP_KEY=<the key> #   npx supabase config push
+#
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp-relay.brevo.com"
+# port = 587
+# user = "<your Brevo SMTP login>"
+# pass = "env(BREVO_SMTP_KEY)"
+# admin_email = "<your verified Brevo sender>"
+# sender_name = "INOVX Ops"
 
 [functions.bulk-import-members]
 verify_jwt = true
