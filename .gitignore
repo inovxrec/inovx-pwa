@@ -27,3 +27,8 @@ dist-ssr
 # be committed. Regenerate with scripts/generate-vapid-keys.mjs if it leaks.
 supabase/functions/.env
 supabase/.env
+
+# Issued passwords, written once by scripts/provision-roster.mjs and meant to be
+# handed out and deleted. Never committed.
+roster-passwords.csv
+*-passwords.csv
