@@ -40,9 +40,28 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["https://localhost:5173"]
+# The reset link lands on /first-run, which is already the screen that sets a
+# password. Both ports are here because push only works on a production build.
+additional_redirect_urls = [
+  "https://localhost:5173",
+  "http://localhost:5173/first-run",
+  "http://localhost:4173/first-run",
+]
 jwt_expiry = 3600
 enable_signup = false
+
+# Locally, mail goes to Mailpit at http://localhost:54324 and never leaves the
+# machine — open it to read a reset link during development.
+#
+# On the hosted project this is configured in the dashboard instead:
+#   Authentication -> Emails -> SMTP Settings
+#     host  smtp-relay.brevo.com      port 587
+#     user  <your Brevo SMTP login>   pass <your Brevo SMTP key>
+#     sender  a verified Brevo sender address
+#
+# Supabase's own email sender is rate limited to a handful per hour, which is
+# not enough for 39 people to reset a password on the same afternoon. That limit
+# is the reason to configure SMTP at all.
 
 [functions.bulk-import-members]
 verify_jwt = true
