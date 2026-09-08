@@ -1,0 +1,17 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.st-todo { color: var(--st-todo); } .st-todo .dot { background: var(--st-todo); }
+.st-progress { color: var(--st-progress); } .st-progress .dot { background: var(--st-progress); }
+.st-review { color: var(--st-review); } .st-review .dot { background: var(--st-review); }
+.st-done { color: var(--st-done); } .st-done .dot { background: var(--st-done); }
+.st-blocked { color: var(--st-blocked); } .st-blocked .dot { background: var(--st-blocked); }
+.st-proposed { color: var(--st-proposed); } .st-proposed .dot { background: var(--st-proposed); }
+.st-cancelled { color: var(--st-cancelled); } .st-cancelled .dot { background: var(--st-cancelled); }
