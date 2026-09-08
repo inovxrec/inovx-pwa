@@ -14,7 +14,7 @@ import './Login.css';
  * issued by the core team.
  */
 export function Login() {
-  const { session, login } = useAuth();
+  const { session, login, requestPasswordReset } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -22,6 +22,35 @@ export function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showReset, setShowReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  /**
+   * Sends the link, and says the same thing either way.
+   *
+   * "We have sent one if that address has an account" reads as evasive, and is
+   * the point: a form that said "no such account" would hand an attacker a way
+   * to test which of the club's addresses are real, which is exactly what the
+   * single sign-in error above refuses to do.
+   */
+  async function sendReset() {
+    const address = email.trim();
+    if (!address) {
+      setError('Enter your email first.');
+      return;
+    }
+
+    setResetting(true);
+    setError(null);
+    try {
+      await requestPasswordReset(address);
+    } catch {
+      // Deliberately not surfaced — see above.
+    } finally {
+      setResetting(false);
+      setResetSent(true);
+    }
+  }
 
   // Already signed in — nothing to do here. The gates downstream decide whether
   // that means first run, the tour, or the landing screen.
@@ -109,15 +138,33 @@ export function Login() {
           </div>
 
           {/*
-            §9.1 asks for the control but names no destination, and §15 says not
-            to invent a screen. Accounts are issued by hand, so a reset is a
-            conversation, not a self-service flow — the button says so in place.
+            A real reset now that there is somewhere for the email to come from.
+            It stays in place rather than becoming its own screen: the address is
+            already typed above, and §15 says not to invent a screen for it.
           */}
           {showReset && (
-            <p id="login-reset" className="login__reset body-sm">
-              Ask a core team member to reset it — accounts and passwords are
-              issued by hand.
-            </p>
+            <div id="login-reset" className="login__reset">
+              {resetSent ? (
+                <p className="body-sm">
+                  If that address has an account, a link is on its way. It lets
+                  you set a new password and expires after an hour.
+                </p>
+              ) : (
+                <>
+                  <p className="body-sm">
+                    We will email a link to set a new one.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={resetting}
+                    onClick={() => void sendReset()}
+                  >
+                    Send the link
+                  </Button>
+                </>
+              )}
+            </div>
           )}
         </div>
 

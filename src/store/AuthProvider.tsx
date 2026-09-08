@@ -74,6 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       /*
+        Arriving from a reset link. The session is real but only meant for
+        setting a password, so the person is put on /first-run regardless of
+        what their profile says — `mustSetPassword` is what that screen gates on.
+      */
+      if (event === 'PASSWORD_RECOVERY') {
+        void loadProfile(next.user.id, next.user.email ?? '')
+          .then(() => setSession((current) => (current ? { ...current, mustSetPassword: true } : current)))
+          .catch(() => setSession(null));
+        return;
+      }
+
+      /*
         USER_UPDATED is this tab changing its own credentials — `setPassword`
         already knows the outcome and has written the profile itself. Reloading
         here would race that write and read back the flag it just cleared,
@@ -158,6 +170,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession((current) => (current ? { ...current, mustSetPassword: false } : current));
   }, []);
 
+  /**
+   * Emails a link that signs the person in long enough to set a new password.
+   *
+   * Supabase returns the same result for an unknown address, and this passes
+   * that through rather than reporting it: the sign-in form deliberately refuses
+   * to say which half was wrong, and a reset form that leaked the answer would
+   * undo that.
+   */
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      // Lands back in the app; the recovery event below routes them onward.
+      redirectTo: `${window.location.origin}/first-run`,
+    });
+    if (error) throw error;
+  }, []);
+
   const completeOnboarding = useCallback(() => {
     setSession((current) => {
       if (!current) return current;
@@ -168,7 +196,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, ready, login, logout, setPassword, completeOnboarding }}
+      value={{
+        session, ready, login, logout, setPassword, requestPasswordReset, completeOnboarding,
+      }}
     >
       {children}
     </AuthContext.Provider>

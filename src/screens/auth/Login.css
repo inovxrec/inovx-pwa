@@ -35,3 +35,11 @@
   color: var(--st-blocked);
   font-weight: 600;
 }
+
+/* The reset panel unfolds under the field the address was typed into. */
+.login__reset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}

@@ -483,11 +483,50 @@ desktop work from an ordinary tab; **iPhone and iPad only after the app is added
 to the home screen**, because Safari gives a plain tab no push at all. That is
 Apple's rule, and §9.16's install card exists to explain it.
 
-**Email sends nothing yet.** The matrix already records who wants it, so the
-answer is waiting when a sender exists. Brevo's free tier (300/day) or Resend's
-(3,000/month, 100/day) both fit a 39-person club; EmailJS does not — 200/month
-is one club-wide announcement every five days, and it is built to send from the
-browser, which is the fragility the triggers were written to avoid.
+**Email is wired for Brevo and needs an account.** Two separate uses:
+
+*Password resets.* Supabase's own sender is rate limited to a handful an hour,
+which is not enough for 39 people to reset on the same afternoon. Configure SMTP
+in the dashboard under **Authentication → Emails → SMTP Settings**:
+
+```
+host    smtp-relay.brevo.com        port  587
+user    <Brevo SMTP login>          pass  <Brevo SMTP key>
+sender  <a verified Brevo sender>
+```
+
+Once that is set, "Forgot password" on the sign-in screen is a real flow: it
+emails a link that lands on `/first-run`, which is already the screen that sets
+a password. It says the same thing whether or not the address has an account —
+a form that said "no such account" would let anyone test which of the club's
+addresses are real.
+
+*Notification email.* `functions/send-digest` sends one summary per person
+rather than one email per event, which is both kinder and the only thing that
+fits 300 emails a day. It reads the same matrix the Settings screen writes, and
+email is off by default there, so it sends to nobody until someone opts in.
+
+```
+npx supabase functions deploy send-digest
+npx supabase secrets set BREVO_API_KEY=xkeysib-...   DIGEST_FROM_EMAIL=inovx@yourdomain.com DIGEST_FROM_NAME="INOVX Ops"   APP_URL=https://<where the app is hosted>
+```
+
+Then schedule it — once a day is the point of a digest:
+
+```sql
+select cron.schedule('nightly-digest', '0 18 * * *', $$
+  select net.http_post(
+    url := 'https://<ref>.functions.supabase.co/send-digest',
+    headers := jsonb_build_object('Authorization', 'Bearer ' ||
+      (select value from app_config where key = 'service_role_key'))
+  );
+$$);
+```
+
+**The sending address is the part to sort out first.** Sending as
+`@rajalakshmi.edu.in` needs DNS records the college IT department controls; if
+they will not add them, verify a single sender address in Brevo instead — it
+works without DNS, with weaker deliverability.
 
 ## Who the server lets in
 

@@ -46,6 +46,12 @@ export interface AuthContextValue {
   logout: () => void;
   /** Completes §9.2 and lets the person out of /first-run. */
   setPassword: (password: string) => Promise<void>;
+  /**
+   * Sends a reset link. Resolves the same way whether or not the address has an
+   * account — telling an anonymous caller which emails are real is the same
+   * mistake §9.1 avoids on the sign-in form.
+   */
+  requestPasswordReset: (email: string) => Promise<void>;
   /** Completes §9.3, whether the tour was finished or skipped. */
   completeOnboarding: () => void;
 }
