@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useTasks } from '../../store/taskStore';
+import { useClub } from '../../store/ClubProvider';
+import { candidatesForDomain } from '../../lib/club';
 import type { PermissionKey } from '../../lib/permissions';
 import {
   DOMAIN_LABELS, LEGAL_TRANSITIONS, STATE_LABELS, checklistProgress, dueInfo,
@@ -10,6 +12,7 @@ import { IconChevronLeft, IconPlus } from '../../ui/icons';
 import { Button } from '../../ui/primitives/Button';
 import { IconButton } from '../../ui/primitives/IconButton';
 import { Input } from '../../ui/primitives/Input';
+import { Select } from '../../ui/primitives/Select';
 import { Textarea } from '../../ui/primitives/Textarea';
 import { Checkbox } from '../../ui/primitives/Checkbox';
 import { ProgressBar } from '../../ui/primitives/ProgressBar';
@@ -43,7 +46,10 @@ export interface TaskBodyProps {
  * halves of fork #3 cannot drift apart.
  */
 export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyProps) {
-  const { rename, toggleChecklistItem, addChecklistItem, addComment, removeDeliverable } = useTasks();
+  const {
+    rename, toggleChecklistItem, addChecklistItem, addComment, removeDeliverable, setAssignees,
+  } = useTasks();
+  const { members } = useClub();
 
   // Activity leads for anyone who reviews; comments for everyone else (§9.8).
   const [tab, setTab] = useState<'activity' | 'comments'>(
@@ -58,6 +64,22 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
   const progress = checklistProgress(task);
   const primary = primaryAction(task, can('approvals.review'));
   const editable = can('task.assign');
+
+  /*
+    Reassignment, held as a draft so the sheet can be cancelled. Committing is
+    one write; editing it name by name against the server would mean a task
+    passing through states nobody chose — including, for a moment, nobody
+    assigned at all, which under `tasks_read` changes who can see it.
+  */
+  const canAssign = can('task.assign');
+  const [reassigning, setReassigning] = useState(false);
+  const [draftAssignees, setDraftAssignees] = useState<Person[]>(task.assignees);
+  const [savingAssignees, setSavingAssignees] = useState(false);
+
+  const assignable = useMemo(
+    () => candidatesForDomain(members, task.domain, canAssign),
+    [members, task.domain, canAssign],
+  );
 
   const { remove } = useTasks();
   const toast = useToast();
@@ -80,6 +102,29 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
     } catch (caught) {
       toast.show(describeError(caught), { tone: 'error' });
       setDeleting(false);
+    }
+  }
+
+  /*
+    Kept open on failure. Reassigning is two statements behind PostgREST rather
+    than one transaction, so a refusal can land after the old list is already
+    gone — closing the sheet would hide the one control that can put it right.
+  */
+  async function commitAssignees() {
+    setSavingAssignees(true);
+    try {
+      await setAssignees(task.id, draftAssignees);
+      toast.show(
+        draftAssignees.length === 0
+          ? `${task.number} is unassigned.`
+          : `${task.number} assigned to ${draftAssignees.map((p) => p.name).join(', ')}.`,
+        { tone: 'success' },
+      );
+      setReassigning(false);
+    } catch (caught) {
+      toast.show(describeError(caught), { tone: 'error' });
+    } finally {
+      setSavingAssignees(false);
     }
   }
 
@@ -231,7 +276,7 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
           <dl className="task__meta">
             <div className="task__meta-row">
               <dt className="label">Assignees</dt>
-              <dd>
+              <dd className="task__assignees">
                 {task.assignees.length > 0 ? (
                   <AvatarStack
                     people={task.assignees.map((p) => ({
@@ -240,6 +285,26 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
                   />
                 ) : (
                   <Avatar size={24} unassigned />
+                )}
+
+                {/*
+                  Only for whoever may assign. Being ON a task is enough to edit
+                  it, but not enough to rewrite who is on it: `replaceAssignees`
+                  clears the table before refilling it, and an assignee removing
+                  themselves would lose the right to finish the write halfway
+                  through. `task.assign` survives it.
+                */}
+                {canAssign && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDraftAssignees(task.assignees);
+                      setReassigning(true);
+                    }}
+                  >
+                    {task.assignees.length > 0 ? 'Change' : 'Assign'}
+                  </Button>
                 )}
               </dd>
             </div>
@@ -408,6 +473,73 @@ export function TaskBody({ task, me, can, onMove, onBack, showBack }: TaskBodyPr
           links, its comments and its activity log — are removed for everyone.
           This cannot be undone.
         </p>
+      </Modal>
+
+      <Modal
+        open={reassigning}
+        onClose={() => setReassigning(false)}
+        title={`Who is on ${task.number}?`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setReassigning(false)}>Cancel</Button>
+            <Button variant="brush" loading={savingAssignees} onClick={() => void commitAssignees()}>
+              Save
+            </Button>
+          </>
+        }
+      >
+        <div className="task__reassign">
+          <Select
+            label="Add someone"
+            value=""
+            placeholder={draftAssignees.length === 0 ? 'Nobody yet' : 'Add someone else'}
+            options={assignable
+              .filter((person) => !draftAssignees.some((p) => p.id === person.id))
+              .map((person) => ({
+                value: person.id,
+                label:
+                  person.domain === task.domain
+                    ? person.name
+                    : `${person.name} — ${DOMAIN_LABELS[person.domain]}`,
+                dot: `var(--dom-${person.domain})`,
+              }))}
+            onChange={(value) => {
+              const person = assignable.find((p) => p.id === (value as string));
+              if (person) setDraftAssignees((current) => [...current, person]);
+            }}
+          />
+
+          {draftAssignees.length > 0 ? (
+            <ul className="task__reassign-chips">
+              {draftAssignees.map((person, index) => (
+                <li key={person.id}>
+                  <Chip
+                    variant="removable"
+                    removeLabel={`Take ${person.name} off ${task.number}`}
+                    onRemove={() =>
+                      setDraftAssignees((current) => current.filter((p) => p.id !== person.id))
+                    }
+                  >
+                    {index === 0 && draftAssignees.length > 1
+                      ? `${person.name} · lead`
+                      : person.name}
+                  </Chip>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            /*
+              Said plainly, because under the current read policy an unassigned
+              task is visible to its whole board while an assigned one is not.
+              Emptying this list is a decision about who can see the task, and
+              the sheet should not let someone make it by accident.
+            */
+            <p className="body-sm task__reassign-note">
+              With nobody on it, {task.number} goes back to everyone on{' '}
+              {DOMAIN_LABELS[task.domain]} and anyone there can pick it up.
+            </p>
+          )}
+        </div>
       </Modal>
 
       {/* §9.8 — sticky, and exactly one primary action, or none. */}

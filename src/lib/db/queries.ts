@@ -50,7 +50,7 @@ export async function fetchUsers(tenureId: string): Promise<UserRow[]> {
   const { data, error } = await supabase
     .from('users')
     .select(
-      'id, tenure_id, email, name, initials, role, domain_id, domain, position_title, status, must_change_password, avatar_url',
+      'id, tenure_id, email, name, initials, role, domain_id, domain, position_title, status, must_change_password, avatar_url, viewer_kind',
     )
     .eq('tenure_id', tenureId)
     .eq('status', 'active')
@@ -65,7 +65,7 @@ export async function fetchProfile(userId: string): Promise<UserRow | null> {
   const { data, error } = await supabase
     .from('users')
     .select(
-      'id, tenure_id, email, name, initials, role, domain_id, domain, position_title, status, must_change_password, avatar_url',
+      'id, tenure_id, email, name, initials, role, domain_id, domain, position_title, status, must_change_password, avatar_url, viewer_kind',
     )
     .eq('id', userId)
     .maybeSingle();
@@ -285,6 +285,105 @@ export async function insertComment(
 export async function deleteTask(taskId: string): Promise<void> {
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
   if (error) throw error;
+}
+
+/**
+ * Replaces who is on a task.
+ *
+ * Delete-then-insert rather than working out the difference, for the same
+ * reason `savePermissions` does it: the list is short, the caller already knows
+ * the answer it wants, and diffing would be three round trips to save one.
+ *
+ * `is_primary` follows position, so the order the caller passes is the order
+ * the board leads with — reordering is a reassignment, not a special case.
+ *
+ * Not a transaction, because PostgREST has no way to ask for one. The window
+ * between the two statements is a task that briefly has nobody on it; under the
+ * read policy that makes it briefly visible to its whole domain rather than
+ * invisible, which is the safer of the two ways to be wrong for 40ms.
+ *
+ * WHO MAY CALL THIS
+ * -----------------
+ * Only somebody who holds `task.assign`, or who raised the task. Not merely an
+ * assignee — and that is not a policy preference, it is the delete above.
+ * `may_edit_task` grants an assignee the right to edit their own task by virtue
+ * of being on it, so an assignee who takes themselves off has, between these
+ * two statements, destroyed the thing that made them allowed to run the second
+ * one. The insert is refused and the task is left with nobody on it.
+ *
+ * `task.assign` and `created_by` both survive the delete, so callers holding
+ * either can never land in that state. TaskBody gates the control on exactly
+ * that, and the server refuses anyone else regardless.
+ */
+export async function replaceAssignees(
+  tenureId: string,
+  taskId: string,
+  userIds: string[],
+): Promise<void> {
+  const { error: clearError } = await supabase
+    .from('task_assignees')
+    .delete()
+    .eq('task_id', taskId);
+
+  if (clearError) throw clearError;
+  if (userIds.length === 0) return;
+
+  const { error } = await supabase.from('task_assignees').insert(
+    userIds.map((userId, index) => ({
+      tenure_id: tenureId,
+      task_id: taskId,
+      user_id: userId,
+      is_primary: index === 0,
+    })),
+  );
+
+  if (error) throw error;
+}
+
+/* ----------------------------------------------------------------- viewers */
+
+export interface InviteResult {
+  /** False when the account was made but the reset mail did not go out. */
+  emailed: boolean;
+  /** Set only when `emailed` is false — what to tell the person who invited. */
+  warning?: string;
+}
+
+/**
+ * Issues a read-only account to a faculty coordinator or support-committee
+ * member, and mails them a link to set their own password.
+ *
+ * Goes through an edge function because creating an account needs the service
+ * role, which the browser must never hold. The function checks that the caller
+ * is a super admin against the database rather than trusting the token's claim,
+ * so this being callable is not the thing keeping it safe.
+ */
+export async function inviteViewer(input: {
+  name: string;
+  email: string;
+  viewerKind: 'faculty_coordinator' | 'support_committee';
+}): Promise<InviteResult> {
+  const { data, error } = await supabase.functions.invoke('invite-viewer', {
+    body: input,
+  });
+
+  /*
+    `functions.invoke` reports a non-2xx as a FunctionsHttpError whose message
+    is "Edge Function returned a non-2xx status code" — true, and useless to
+    whoever pressed the button. The function puts the real reason in the body,
+    so it is read back out here.
+  */
+  if (error) {
+    const response = (error as { context?: Response }).context;
+    if (response) {
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      if (body?.error) throw new Error(body.error);
+    }
+    throw error;
+  }
+
+  const result = data as { emailed?: boolean; warning?: string };
+  return { emailed: result?.emailed ?? false, warning: result?.warning };
 }
 
 export async function deleteTaskLink(linkId: string): Promise<void> {

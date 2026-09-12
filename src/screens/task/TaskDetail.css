@@ -96,6 +96,39 @@
 .task__meta-row dt { color: var(--on-paper-mute); flex: none; }
 .task__meta-row dd { margin: 0; text-align: right; }
 
+/*
+  The stack and its Change button read as one value, right-aligned with every
+  other row's answer rather than pushed apart by the row's space-between.
+*/
+.task__assignees {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.task__reassign {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.task__reassign-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task__reassign-note {
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-hi);
+  color: var(--on-paper-mute);
+}
+
 .task__due--late { color: var(--st-blocked); font-weight: 600; }
 .task__priority { text-transform: capitalize; }
 

@@ -4,7 +4,7 @@ import {
 import { describeError, isConfigured } from '../lib/supabase';
 import {
   deleteTask, deleteTaskLink, domainIdBySlug, fetchTasks, insertActivity, insertChecklistItem,
-  insertComment, insertTask,
+  insertComment, insertTask, replaceAssignees,
   setChecklistItem, updateTask, updateTaskStatus,
 } from '../lib/db/queries';
 import type { TaskContext as MapContext } from '../lib/db/map';
@@ -51,6 +51,13 @@ export interface TaskContextValue {
   removeDeliverable: (taskId: string, deliverableId: string) => void;
   addComment: (taskId: string, author: Person, body: string) => void;
   rename: (taskId: string, title: string) => void;
+  /**
+   * Replaces who is on a task. First in the list becomes the primary assignee.
+   *
+   * Throws if the server refuses, so the sheet that called it can stay open and
+   * say so rather than closing on a change that did not happen.
+   */
+  setAssignees: (taskId: string, people: Person[]) => Promise<void>;
   /** Deletes a task outright. Throws if the server refuses, so the caller can say so. */
   remove: (taskId: string) => Promise<void>;
   setDue: (taskId: string, due: string | null) => void;
@@ -275,6 +282,37 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     [patch],
   );
 
+  /*
+    Server first, unlike most of this store.
+
+    Reassigning is one of the few writes that can change whether the person
+    doing it may still SEE the task: under `tasks_read` a task belongs to its
+    assignees, so an admin taking themselves off one they did not raise is
+    handing it away. Moving the local copy first would blank the screen on the
+    strength of a write that might yet be refused, and putting it back would
+    mean restoring a task the reader can no longer read.
+  */
+  const setAssignees = useCallback(
+    async (taskId: string, people: Person[]) => {
+      if (!tenureId) return;
+
+      await replaceAssignees(tenureId, taskId, people.map((person) => person.id));
+      patch(taskId, (task) => ({ ...task, assignees: people }));
+
+      void insertActivity({
+        tenureId,
+        taskId,
+        actorId: session?.userId ?? null,
+        action: 'assigned',
+        message:
+          people.length === 0
+            ? 'left unassigned'
+            : `assigned to ${people.map((person) => person.name).join(', ')}`,
+      }).catch(() => undefined);
+    },
+    [tenureId, patch, session?.userId],
+  );
+
   const setDue = useCallback(
     (taskId: string, due: string | null) => {
       patch(taskId, (task) => ({ ...task, due }));
@@ -290,12 +328,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       loading: loading || clubLoading,
       error,
       byId, byNumber, forBoard, create, setState, toggleChecklistItem, addChecklistItem,
-      removeDeliverable, addComment, rename, remove, setDue, reload: load,
+      removeDeliverable, addComment, rename, setAssignees, remove, setDue, reload: load,
     }),
     [
       tasks, loading, clubLoading, error, byId, byNumber, forBoard, create, setState,
-      toggleChecklistItem, addChecklistItem, removeDeliverable, addComment, rename, remove, setDue,
-      load,
+      toggleChecklistItem, addChecklistItem, removeDeliverable, addComment, rename, setAssignees,
+      remove, setDue, load,
     ],
   );
 

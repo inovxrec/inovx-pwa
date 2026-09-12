@@ -3,8 +3,10 @@ import { useTasks } from '../../store/taskStore';
 import { useAssignment } from '../../hooks/useAssignment';
 import { useToast } from '../../hooks/useToast';
 import { useBoards, useClub } from '../../store/ClubProvider';
+import { candidatesForDomain } from '../../lib/club';
 import { DOMAIN_LABELS, type Domain, type Person, type Task } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
+import { Chip } from '../../ui/primitives/Chip';
 import { DatePicker } from '../../ui/primitives/DatePicker';
 import { Input } from '../../ui/primitives/Input';
 import { Select } from '../../ui/primitives/Select';
@@ -63,7 +65,16 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [due, setDue] = useState<string | null>(null);
-  const [assigneeId, setAssigneeId] = useState<string>('');
+  /*
+    Several people, in the order they were added. `task_assignees` has always
+    been a many-to-many table and `insertTask` has always taken a list — this
+    form was the only thing in the stack that could hold one name, and a poster
+    that needs an illustrator and a copywriter had to be raised twice.
+
+    Order is kept because `insertTask` writes `is_primary` for the first of
+    them, so whoever is named first is the one the board leads with.
+  */
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
 
   const targets = useMemo(
     () => [
@@ -93,27 +104,33 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
       return committee?.members ?? [];
     }
 
-    const onTheBoard = members.filter((member) => member.domain === target);
-    if (!canAssignAnyone) return onTheBoard;
-
-    /*
-      Everyone else follows, in domain order rather than mixed in, so the list
-      still opens with the people whose board this is. Nobody is hidden: the
-      work a task needs often crosses a boundary the board does not.
-    */
-    const rest = members
-      .filter((member) => member.domain !== target)
-      .sort((a, b) => a.domain.localeCompare(b.domain) || a.name.localeCompare(b.name));
-
-    return [...onTheBoard, ...rest];
+    return candidatesForDomain(members, target, canAssignAnyone);
   }, [target, committees, me, members, canAssignAnyone]);
+
+  /*
+    The people actually put on it, in the order they were added — mapped from
+    the ids rather than filtered out of `candidates`, because filtering would
+    hand back the candidate list's order and the first name is not arbitrary:
+    `insertTask` writes it as the primary assignee.
+
+    Changing the target empties `assigneeIds`, so a stale id cannot survive
+    here; the `filter` is for the race where the club list reloads underneath
+    an open form.
+  */
+  const chosen = useMemo(
+    () =>
+      assigneeIds
+        .map((id) => candidates.find((person) => person.id === id))
+        .filter((person): person is Person => Boolean(person)),
+    [assigneeIds, candidates],
+  );
 
   function reset() {
     setTitle('');
     setDescription('');
     setPriority('medium');
     setDue(null);
-    setAssigneeId('');
+    setAssigneeIds([]);
     setTarget(initialTarget);
   }
 
@@ -136,10 +153,7 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
 
     const board = boards.find((b) => b.domain === domain);
 
-    const assignees: Person[] =
-      target === 'me' && me
-        ? [me]
-        : candidates.filter((person) => person.id === assigneeId);
+    const assignees: Person[] = target === 'me' && me ? [me] : chosen;
 
     const task = await create({
       title: trimmed,
@@ -211,8 +225,8 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
           options={targets}
           onChange={(value) => {
             setTarget(value as string);
-            // The old assignee may not be on the new target.
-            setAssigneeId('');
+            // The old assignees may not be on the new target.
+            setAssigneeIds([]);
           }}
         />
 
@@ -229,25 +243,66 @@ export function NewTask({ open, onClose, onCreated, preset }: NewTaskProps) {
         )}
 
         {target !== 'me' && candidates.length > 0 && (
-          <Select
-            label="Assign to"
-            value={assigneeId}
-            placeholder="Leave unassigned"
-            options={[
-              { value: '', label: 'Leave unassigned' },
-              ...candidates.map((person) => ({
-                value: person.id,
-                // Anyone from another domain is named with it, so a Management
-                // person in a Design list reads as deliberate, not as a stray.
-                label:
-                  person.domain === target
-                    ? person.name
-                    : `${person.name} — ${DOMAIN_LABELS[person.domain]}`,
-                dot: `var(--dom-${person.domain})`,
-              })),
-            ]}
-            onChange={(value) => setAssigneeId(value as string)}
-          />
+          <div className="new-task__assignees">
+            {/*
+              The select adds; it never holds the answer. Its value is pinned
+              empty so it reads as "add someone" every time it is opened, and
+              whoever has already been added is shown below as chips rather than
+              hidden inside a closed dropdown.
+            */}
+            <Select
+              label="Assign to"
+              value=""
+              placeholder={chosen.length === 0 ? 'Leave unassigned' : 'Add someone else'}
+              options={candidates
+                .filter((person) => !assigneeIds.includes(person.id))
+                .map((person) => ({
+                  value: person.id,
+                  // Anyone from another domain is named with it, so a Management
+                  // person in a Design list reads as deliberate, not as a stray.
+                  label:
+                    person.domain === target
+                      ? person.name
+                      : `${person.name} — ${DOMAIN_LABELS[person.domain]}`,
+                  dot: `var(--dom-${person.domain})`,
+                }))}
+              onChange={(value) => {
+                const id = value as string;
+                if (id) setAssigneeIds((current) => [...current, id]);
+              }}
+            />
+
+            {chosen.length > 0 && (
+              <ul className="new-task__chips">
+                {chosen.map((person, index) => (
+                  <li key={person.id}>
+                    <Chip
+                      variant="removable"
+                      removeLabel={`Take ${person.name} off this task`}
+                      onRemove={() =>
+                        setAssigneeIds((current) => current.filter((id) => id !== person.id))
+                      }
+                    >
+                      {/*
+                        The first name added is the primary assignee — that is
+                        what `insertTask` writes and what the board card leads
+                        with — so the form says so rather than leaving the order
+                        looking incidental.
+                      */}
+                      {index === 0 && chosen.length > 1 ? `${person.name} · lead` : person.name}
+                    </Chip>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {chosen.length === 0 && (
+              <p className="body-sm new-task__note">
+                Left unassigned, this goes to everyone on the board and anyone
+                there can pick it up.
+              </p>
+            )}
+          </div>
         )}
 
         <div className="new-task__row">

@@ -22,6 +22,52 @@ export interface Member extends Person {
   committees: string[];
   /** Day and month only; the year is nobody's business. */
   birthday: string;
+  /**
+   * The address, where the source knew it. Present so the roster and the
+   * account list can be reconciled — they have no id in common until somebody
+   * fills in `member_directory.linked_user_id`.
+   */
+  email?: string;
+  /**
+   * Set only for `role: 'faculty'` — which of the two read-only groups this is.
+   * The role is what decides access; this only decides what they are called.
+   */
+  viewerKind?: ViewerKind;
+}
+
+export type ViewerKind = 'faculty_coordinator' | 'support_committee';
+
+export const VIEWER_KIND_LABELS: Record<ViewerKind, string> = {
+  faculty_coordinator: 'Faculty coordinator',
+  support_committee: 'Support committee',
+};
+
+/**
+ * Who may be put on a task raised for a domain, board's own people first.
+ *
+ * A task belongs to a board, but the work rarely respects the boundary — the
+ * reasoning `useAssignment.canAssignAnyone` spells out. So the domain's own
+ * members open the list and everyone else follows in domain order, rather than
+ * being mixed in where a Management name in a Design list would read as a
+ * mistake.
+ *
+ * Shared by the new-task form and the reassignment sheet. They offered subtly
+ * different lists while each had its own copy of this, which meant a task could
+ * be raised for somebody it could not afterwards be reassigned to.
+ */
+export function candidatesForDomain<T extends Person>(
+  people: T[],
+  domain: string,
+  canAssignAnyone: boolean,
+): T[] {
+  const onTheBoard = people.filter((person) => person.domain === domain);
+  if (!canAssignAnyone) return onTheBoard;
+
+  const rest = people
+    .filter((person) => person.domain !== domain)
+    .sort((a, b) => a.domain.localeCompare(b.domain) || a.name.localeCompare(b.name));
+
+  return [...onTheBoard, ...rest];
 }
 
 /** How many open tasks each member is carrying, straight from the store. */
