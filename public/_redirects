@@ -1,0 +1,4 @@
+# Every path that is not a real file is the app's own router's business.
+# Without this a deep link — including the one a push notification opens —
+# would 404 instead of reaching the screen it names.
+/*    /index.html   200

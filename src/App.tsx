@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { Suspense, lazy, useCallback, useState } from 'react';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './store/AuthProvider';
 import { TaskProvider } from './store/taskStore';
@@ -11,31 +11,47 @@ import type { PermissionKey } from './lib/permissions';
 import { AppShell, type RouteHandle } from './ui/nav';
 import { UpdatePrompt } from './ui/nav/UpdatePrompt';
 import { LogoIntro } from './ui/brand/LogoIntro';
-import { KitchenSink } from './screens/kitchen-sink/KitchenSink';
 import { Login } from './screens/auth/Login';
 import { FirstRun } from './screens/auth/FirstRun';
-import { Welcome } from './screens/onboarding/Welcome';
-import { MyDay } from './screens/my-day/MyDay';
-import { Board } from './screens/board/Board';
-import { TaskDetail } from './screens/task/TaskDetail';
-import { CommandDeck } from './screens/deck/CommandDeck';
-import { OversightDeck } from './screens/oversight/OversightDeck';
-import { Insights } from './screens/insights/Insights';
-import { Calendar } from './screens/calendar/Calendar';
-import { People } from './screens/people/People';
-import { Meetings, MeetingDetail } from './screens/meetings/Meetings';
-import { Notifications } from './screens/notifications/Notifications';
-import { Settings } from './screens/settings/Settings';
 import { ADMIN_SCREENS, AdminShell } from './screens/admin/AdminFrame';
-import { AdminMembers } from './screens/admin/AdminMembers';
-import { AdminPermissions } from './screens/admin/AdminPermissions';
-import { AdminOccasions } from './screens/admin/AdminOccasions';
-import { AdminRecurring } from './screens/admin/AdminRecurring';
-import { AdminApprovals } from './screens/admin/AdminApprovals';
-import { AdminIntegrations } from './screens/admin/AdminIntegrations';
-import { AdminArchive } from './screens/admin/AdminArchive';
-import { AdminAudit } from './screens/admin/AdminAudit';
 import { Forbidden, NotFound, RouteError, ServerError } from './screens/system/SystemScreens';
+
+/*
+  Everything past the front door is fetched when it is first opened.
+
+  These used to be static imports, which meant one bundle carrying every screen
+  in the app: someone looking at the sign-in form downloaded the admin section,
+  the charts and the kitchen sink before they could type their email. On college
+  wifi that is the difference between the app feeling instant and feeling broken.
+
+  Login and FirstRun stay eager on purpose — they are the first thing anyone
+  sees, and a spinner in front of a password field to save a few kilobytes would
+  be a worse trade.
+*/
+const KitchenSink = lazy(() => import('./screens/kitchen-sink/KitchenSink').then((m) => ({ default: m.KitchenSink })));
+const Welcome = lazy(() => import('./screens/onboarding/Welcome').then((m) => ({ default: m.Welcome })));
+const MyDay = lazy(() => import('./screens/my-day/MyDay').then((m) => ({ default: m.MyDay })));
+const Board = lazy(() => import('./screens/board/Board').then((m) => ({ default: m.Board })));
+const TaskDetail = lazy(() => import('./screens/task/TaskDetail').then((m) => ({ default: m.TaskDetail })));
+const CommandDeck = lazy(() => import('./screens/deck/CommandDeck').then((m) => ({ default: m.CommandDeck })));
+const OversightDeck = lazy(() => import('./screens/oversight/OversightDeck').then((m) => ({ default: m.OversightDeck })));
+const Insights = lazy(() => import('./screens/insights/Insights').then((m) => ({ default: m.Insights })));
+const Calendar = lazy(() => import('./screens/calendar/Calendar').then((m) => ({ default: m.Calendar })));
+const People = lazy(() => import('./screens/people/People').then((m) => ({ default: m.People })));
+const Meetings = lazy(() => import('./screens/meetings/Meetings').then((m) => ({ default: m.Meetings })));
+const MeetingDetail = lazy(() => import('./screens/meetings/Meetings').then((m) => ({ default: m.MeetingDetail })));
+const Notifications = lazy(() => import('./screens/notifications/Notifications').then((m) => ({ default: m.Notifications })));
+const Settings = lazy(() => import('./screens/settings/Settings').then((m) => ({ default: m.Settings })));
+
+// The eight admin screens, which only a handful of people ever open.
+const AdminMembers = lazy(() => import('./screens/admin/AdminMembers').then((m) => ({ default: m.AdminMembers })));
+const AdminPermissions = lazy(() => import('./screens/admin/AdminPermissions').then((m) => ({ default: m.AdminPermissions })));
+const AdminOccasions = lazy(() => import('./screens/admin/AdminOccasions').then((m) => ({ default: m.AdminOccasions })));
+const AdminRecurring = lazy(() => import('./screens/admin/AdminRecurring').then((m) => ({ default: m.AdminRecurring })));
+const AdminApprovals = lazy(() => import('./screens/admin/AdminApprovals').then((m) => ({ default: m.AdminApprovals })));
+const AdminIntegrations = lazy(() => import('./screens/admin/AdminIntegrations').then((m) => ({ default: m.AdminIntegrations })));
+const AdminArchive = lazy(() => import('./screens/admin/AdminArchive').then((m) => ({ default: m.AdminArchive })));
+const AdminAudit = lazy(() => import('./screens/admin/AdminAudit').then((m) => ({ default: m.AdminAudit })));
 
 /**
  * Where a signed-in person belongs right now. The entry flow is a queue: set
@@ -269,7 +285,15 @@ export default function App() {
           <ToastProvider>
             <UpdatePrompt />
             {!introDone && <LogoIntro onDone={dismiss} />}
-            <RouterProvider router={router} />
+            {/*
+              One boundary around the router, because every screen below is a
+              lazy chunk and React needs somewhere to wait. The fallback is the
+              same ink ground the shell paints on, so a screen arriving reads as
+              the page filling in rather than as a flash of something else.
+            */}
+            <Suspense fallback={<AwaitingSession />}>
+              <RouterProvider router={router} />
+            </Suspense>
           </ToastProvider>
         </TaskProvider>
       </ClubProvider>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { useIsDesktop } from '../../hooks/useBreakpoint';
@@ -13,7 +13,17 @@ import { Header } from './Header';
 import { MoreSheet } from './MoreSheet';
 import { OfflineBanner } from './OfflineBanner';
 import { PageTransition } from './PageTransition';
-import { TaskDrawer } from '../../screens/task/TaskDetail';
+/*
+  Fetched when a task is first opened, not before.
+
+  As a static import this dragged TaskBody — and through it the whole patterns
+  barrel, 242 KB — into the entry chunk, so every visitor downloaded the task
+  drawer to look at the sign-in form. It only ever renders on desktop, after
+  someone clicks a card.
+*/
+const TaskDrawer = lazy(() =>
+  import('../../screens/task/TaskDetail').then((m) => ({ default: m.TaskDrawer })),
+);
 import './AppShell.css';
 
 /** Route handles carry their own title so the header doesn't map paths itself. */
@@ -97,7 +107,13 @@ export function AppShell() {
           It renders nothing when the param is absent, and nothing on mobile,
           where the task is a route of its own.
         */}
-        {isDesktop && <TaskDrawer />}
+        {/* No fallback: the drawer animates in, and a spinner behind it would
+            only flash. The board underneath stays interactive either way. */}
+        {isDesktop && (
+          <Suspense fallback={null}>
+            <TaskDrawer />
+          </Suspense>
+        )}
       </div>
 
       {!isDesktop && (
