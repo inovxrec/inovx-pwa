@@ -25,6 +25,13 @@ const EVENTS = [
   { id: 'meeting', label: 'A meeting is scheduled' },
   { id: 'unclaimed', label: 'Work on my board that nobody has picked up' },
   /*
+    Only the domain that owns an occasion's output is ever sent these — Design,
+    unless a super admin has pointed the occasion somewhere else — so the row is
+    hidden from everyone else rather than offered as a switch that would never
+    fire, exactly as `oversight` is below.
+  */
+  { id: 'birthday', label: 'A club birthday needs a poster' },
+  /*
     Oversight, and only the President and Vice President ever receive it — the
     row is hidden from everyone else rather than shown as a switch that could
     never fire.
@@ -50,7 +57,9 @@ type Matrix = Record<EventId, Record<ChannelId, boolean>>;
   Meetings push by default because a meeting is the one event that needs the
   whole club, and nobody should have to opt in to being told about it.
 */
-const PUSH_BY_DEFAULT: readonly string[] = ['assigned', 'due', 'meeting', 'oversight'];
+const PUSH_BY_DEFAULT: readonly string[] = [
+  'assigned', 'due', 'meeting', 'oversight', 'birthday',
+];
 
 const DEFAULT_MATRIX = Object.fromEntries(
   EVENTS.map((event) => [
@@ -71,14 +80,28 @@ export function Settings() {
   const [savingProfile, setSavingProfile] = useState(false);
   const push = usePush(session?.userId);
 
-  // Only the core team is ever sent oversight, so only they are offered it.
-  const visibleEvents = EVENTS.filter(
-    (event) => event.id !== 'oversight' || session?.role === 'super-admin',
-  );
-
   const { members, tenureId, reload } = useClub();
   const me = useMe();
   const member = members.find((m) => m.id === me?.id);
+
+  /*
+    A switch is offered only to people the event can actually reach (§14 item
+    13 — a control that could never do anything does not belong on the screen).
+
+    Oversight goes to the core team alone. Birthdays go to the domain that owns
+    the occasion's output, which is Design unless a super admin has repointed a
+    particular occasion on §9.15's screen; this reads the common case rather
+    than fetching every occasion to find out, so a repointed occasion notifies
+    that domain correctly but its members will not find the switch here until
+    the default moves with it.
+  */
+  const visibleEvents = EVENTS.filter((event) => {
+    if (event.id === 'oversight') return session?.role === 'super-admin';
+    if (event.id === 'birthday') {
+      return member?.domain === 'design' || session?.role === 'super-admin';
+    }
+    return true;
+  });
 
   // What the server already holds, so the switches show the truth on arrival.
   useEffect(() => {
