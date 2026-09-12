@@ -269,16 +269,15 @@ export function Settings() {
           </div>
 
           {/*
-            Email still sends nothing, and the matrix should not imply otherwise
-            — which matters more now that every cell starts switched on. A row
-            of ticks is a promise, and this is the line that keeps it from being
-            a false one.
+            All three channels deliver now. The remaining caveat is real and
+            specific — the digest is a scheduled job, so email is never instant
+            — and saying so is what stops someone reporting a bug because a
+            comment did not reach their inbox within the minute.
           */}
           <p className="body-sm settings__note">
-            Everything starts switched on. In-app works now, and push works on
-            any device you turn it on for, below. Email has no sender configured
-            yet — those ticks record what you want and send nothing until it
-            does.
+            Everything starts switched on. In-app is instant, push reaches any
+            device you turn it on for below, and email arrives as one daily
+            summary rather than a message per event.
           </p>
           {isDesktop ? (
             <table className="settings__matrix">
