@@ -144,3 +144,16 @@ enabled = true
 # Called by a database trigger with the service role key, not by a browser.
 verify_jwt = true
 
+[functions.invite-viewer]
+# The first function the browser itself calls — every other one here is invoked
+# by a trigger or a schedule. `verify_jwt` rejects an unauthenticated request at
+# the gateway, but it is not what protects this: the function re-checks the
+# caller against GoTrue and then reads their role out of the database, because a
+# role can be revoked after a session was issued and the token would not know.
+verify_jwt = true
+
+[functions.send-digest]
+# Runs on a schedule as nobody. Listed so `functions deploy` and the local stack
+# agree it exists — it is currently deployed nowhere, which is why club email has
+# never sent anything.
+verify_jwt = true
