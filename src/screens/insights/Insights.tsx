@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTasks } from '../../store/taskStore';
+import { useAuth } from '../../store/authStore';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { useClub, useDomainSlugs } from '../../store/ClubProvider';
 import {
@@ -25,6 +26,7 @@ const LEADERBOARD_MAX = 10;
  */
 export function Insights() {
   const { tasks } = useTasks();
+  const { session } = useAuth();
   const { people } = useClub();
   const domains = useDomainSlugs();
   const can = usePermissionCheck();
@@ -37,8 +39,38 @@ export function Insights() {
   );
   const board = useMemo(() => leaderboard(tasks, people), [tasks, people]);
 
+  /*
+    The two roles `tasks_read` lets through unconditionally. Read from the role
+    rather than from a permission, because this is not about what someone may
+    do — it is about how much of the board their queries return.
+  */
+  const role = session?.role;
+  const seesEverything = role === 'super-admin' || role === 'faculty';
+
   return (
     <div className="insights">
+      {/*
+        Whose numbers these are.
+
+        `20260922000000_task_visibility.sql` made a task visible to the people on
+        it, so every figure on this screen is now counted from the tasks the
+        reader can see rather than from the club's. For a member that is a much
+        smaller number than it was last week, and a total that quietly changed
+        meaning is exactly the kind of thing this app refuses to do elsewhere —
+        an unlabelled figure is a claim about the club, and for most people here
+        it is no longer true.
+
+        Absent for anyone who does see everything, because for them it says
+        nothing.
+      */}
+      {!seesEverything && (
+        <p className="body-sm insights__scope" role="note">
+          Your numbers, not the club's — a task belongs to the people on it, so
+          this counts what you are assigned, what you raised, and unclaimed work
+          on your board.
+        </p>
+      )}
+
       <div className="insights__stats">
         {/*
           No sparklines: a tile's trend needs seven days of history and nothing
