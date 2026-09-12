@@ -50,22 +50,21 @@ type ChannelId = (typeof CHANNELS)[number]['id'];
 type Matrix = Record<EventId, Record<ChannelId, boolean>>;
 
 /*
-  Mirrors `wants_notification` in 20260917000000_core_oversight_notifications.sql.
+  Everything on, for every event, until the person says otherwise.
+
+  Mirrors `wants_notification` in 20260924000000_notifications_on_by_default.sql.
   The two are one decision written twice — change them together, or the screen
   will show a default the database does not honour.
 
-  Meetings push by default because a meeting is the one event that needs the
-  whole club, and nobody should have to opt in to being told about it.
+  Note what the push column here does and does not mean. It is the second of two
+  gates, not the first: a browser only delivers push to a device whose owner has
+  clicked through its permission prompt, and no default of ours can grant that.
+  So `push: true` means "once you turn this device on, send me everything",
+  which is why the control above the matrix — the one that actually asks the
+  browser — is a separate thing and stays that way.
 */
-const PUSH_BY_DEFAULT: readonly string[] = [
-  'assigned', 'due', 'meeting', 'oversight', 'birthday',
-];
-
 const DEFAULT_MATRIX = Object.fromEntries(
-  EVENTS.map((event) => [
-    event.id,
-    { inApp: true, push: PUSH_BY_DEFAULT.includes(event.id), email: false },
-  ]),
+  EVENTS.map((event) => [event.id, { inApp: true, push: true, email: true }]),
 ) as Matrix;
 
 /** §9.14 — accordion sections, with sign-out behind a confirm at the bottom. */
@@ -270,11 +269,16 @@ export function Settings() {
           </div>
 
           {/*
-            Email still sends nothing, and the matrix should not imply otherwise.
+            Email still sends nothing, and the matrix should not imply otherwise
+            — which matters more now that every cell starts switched on. A row
+            of ticks is a promise, and this is the line that keeps it from being
+            a false one.
           */}
           <p className="body-sm settings__note">
-            In-app and push work now. Email remembers your choice but does not
-            send yet.
+            Everything starts switched on. In-app works now, and push works on
+            any device you turn it on for, below. Email has no sender configured
+            yet — those ticks record what you want and send nothing until it
+            does.
           </p>
           {isDesktop ? (
             <table className="settings__matrix">
