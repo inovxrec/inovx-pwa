@@ -528,6 +528,105 @@ $$);
 they will not add them, verify a single sender address in Brevo instead — it
 works without DNS, with weaker deliverability.
 
+## Birthdays and the poster chase
+
+The dates come from the club's own member-cards site —
+`https://adizzsk23.github.io/inovx-member-cards/data/members.json`, generated
+from the same Google Sheet the roster is — and are **matched on email, never on
+name**. The two rosters spell six people differently ("Mayank Sharm" against
+"Mayank Sharma", "K.S. Sree Vishal" against "Sree Vishal K S") and agree on all
+thirty addresses.
+
+```
+node scripts/import-birthdays.mjs      # regenerates 20260920000000_birthdays.sql
+```
+
+Re-run that rather than editing the SQL by hand; a birthday corrected on the
+sheet should be correctable here in one command.
+
+**Seven people and both super admins have no date** and are deliberately left
+NULL: they generate no occasion and no reminder. Nothing is guessed — a made-up
+date puts a stranger's name on a poster.
+
+### What fires, and when
+
+| Job | Cron (UTC) | Club time | Does |
+|---|---|---|---|
+| `birthday-morning` | `0 3 * * *` | 08:30 IST | Raises the poster task for tomorrow's and today's birthdays, then tells the output domain |
+| `birthday-evening` | `30 12 * * *` | 18:00 IST | Tells them again, but only where the poster is still not `done` |
+
+Every date is derived from `now() AT TIME ZONE 'Asia/Kolkata'` rather than
+`CURRENT_DATE`, because for the five and a half hours after midnight UTC those
+disagree about what day it is — which is exactly when the morning job runs.
+
+`occasion_reminders` is the ledger of what has already gone out: one row per
+occasion, per kind, per date, with a unique constraint. Running a job twice is
+therefore harmless, which matters because these are the first jobs in the
+product anyone will want to trigger by hand.
+
+### Why the job raises the task itself
+
+The evening chase has to answer "has the poster been made", and that needs
+something to point at. The Calendar used to work out which tasks an occasion
+produced by searching titles for the person's first name — which misses a poster
+called "bday banner" and double-counts a task that merely mentions someone. So
+`tasks.occasion_id` is a real column now, and the job that raises the poster is
+what sets it.
+
+The poster is raised **unassigned**, and this is worth understanding before
+changing it: under the visibility rules below, an assigned task belongs to its
+assignees. Handing the poster to the Design lead — which is what every birthday
+occasion's `assignment_strategy` says — would notify five people about a task
+four of them could not open. `lead_days` and `assignment_strategy` are therefore
+not consulted for auto-raised occasion tasks; `output_domain_id` is.
+
+## Who can see a task
+
+Since `20260922000000_task_visibility.sql`, the board is no longer the whole
+club's shared surface. A task is readable by:
+
+- **its assignees** — it is their work
+- **whoever raised it** — or they would lose it the moment they filed it
+- **super admins** — the President and Vice President run the club
+- **faculty and viewers** — read-only oversight is the whole point of that role
+
+and, when **nobody is assigned yet**, by everyone on its domain or committee, so
+that unclaimed work can still be claimed. The moment someone takes it, it
+narrows to them.
+
+The five child tables — `task_assignees`, `task_comments`, `task_checklist`,
+`task_links`, `task_activity` — ask the same question through `may_read_task()`.
+Leaving them at tenure scope would have made the whole change cosmetic: a task's
+title leaks through its own comments.
+
+**Two consequences to keep in mind.** Insights, the leaderboard and every board
+count now describe what the reader can see rather than what the club has done;
+Insights says so in a line at the top for anyone who is not a super admin or a
+viewer. And a domain lead cannot see their domain's board unless they are on the
+card, raised it, or nobody has claimed it — if that turns out to be wrong, the
+fix is a scoped `board.view` grant in §9.17, not a hole in the read policy.
+
+## Faculty coordinators and the support committee
+
+Both are read-only watchers: the college's faculty on one side, and last
+tenure's office-holders — who are not on this year's committee at all — on the
+other. They share the existing `role = 'faculty'`, which already means "reads
+everything, writes nothing" in twenty-odd policies, and differ only by
+`users.viewer_kind`.
+
+A second role with identical behaviour would have meant editing every one of
+those policies to say "or this one too", and the first one anybody forgot would
+be a support-committee member with a write they should not have.
+
+A super admin invites one from `/admin/members`. No password is generated or
+shown to anyone: the account is created with a throwaway secret and the invitee
+gets a reset link over the SMTP already configured for "Forgot password".
+
+```
+npx supabase functions deploy invite-viewer
+npx supabase secrets set APP_URL=https://inovx-ops.pages.dev
+```
+
 ## Who the server lets in
 
 `20260910000000_real_rls_policies.sql` replaced the foundation migration's
@@ -556,13 +655,12 @@ wanted it says it is not wired up instead of inventing a number:
   so the twelve-week activity chart on Insights and Oversight has no week axis
   to plot against, and no stat tile can draw a seven-point sparkline. The
   leaderboard is a standing all-year total for the same reason, and says so.
-- **No job runner behind the occasion engine or the syncs.** The tables landed
-  in `20260908000000_occasions_and_integrations.sql` — `occasions`,
-  `integrations`, `integration_conflicts` — so `/admin/occasions` and
-  `/admin/integrations` read and write real rows. Nothing yet turns an occasion
-  into a task at its lead time, and nothing runs a sync: "run now" records
+- **No job runner behind the syncs.** "Run now" on `/admin/integrations` records
   `sync_requested_at` and the card keeps showing how stale the last sync is
-  rather than turning green.
+  rather than turning green. *Birthdays are no longer in this bullet* — see
+  [Birthdays and the poster chase](#birthdays-and-the-poster-chase) — but no
+  other occasion type spawns anything, and festivals and lunar dates still wait
+  for a person.
 - **No archive figures.** `tenures` carries a name and its dates — not a head
   count, a completed total or a president — so the tenure cards show dates.
 - **`user_permissions` has no scope column.** A `task.assign` grant cannot yet
@@ -575,9 +673,13 @@ wanted it says it is not wired up instead of inventing a number:
   read back out by `toMeeting`; a real column would be better.
 - **No action items on `meetings`.** §9.11 turns each into a task in one tap;
   they are held for the session and not saved.
-- **No account provisioning from the browser.** Issuing an account needs the
-  service role, which must not be in the bundle, so "Add member" stops at the
-  form and points at the `bulk-import-members` function.
+- **No lifecycle for an existing member.** Deactivating someone, moving them
+  between domains, correcting a name, changing a lead — none of it has a screen.
+  "Edit" on `/admin/members` still says so, and `status` on `users` already
+  allows `inactive` and `suspended` that nothing ever sets. Issuing a *viewer*
+  now works (`invite-viewer`); issuing a committee member in bulk is still
+  `scripts/provision-roster.mjs`, and `bulk-import-members` still only stages
+  rows into `pending_imports` that no worker drains.
 
 ## Rules for building on this
 

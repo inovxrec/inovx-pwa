@@ -118,11 +118,36 @@ export function ClubProvider({ children }: { children: ReactNode }) {
 
       try {
         const directory = await fetchDirectory(tenure.id, domainRows);
-        setMembers(
-          directory.length > 0
-            ? directory.map((entry) => ({ ...entry, committees: committeesFor(entry.id) }))
-            : userRows.map((row) => toMember(row, committeesFor(row.id))),
-        );
+
+        if (directory.length === 0) {
+          setMembers(userRows.map((row) => toMember(row, committeesFor(row.id))));
+        } else {
+          /*
+            The roster, plus anyone holding an account who is not on it.
+
+            Faculty coordinators and the support committee are exactly that: they
+            have accounts and they are deliberately absent from the club's
+            roster, because they are not on the committee. Taking the directory
+            alone would mean a super admin could invite somebody and then never
+            see them again on the screen that invited them.
+
+            Reconciled on email rather than id — `member_directory.linked_user_id`
+            is unset for the whole roster, so the two lists share no identifier
+            until somebody fills it in.
+          */
+          const onTheRoster = new Set(
+            directory
+              .map((entry) => entry.email?.trim().toLowerCase())
+              .filter((email): email is string => Boolean(email)),
+          );
+
+          setMembers([
+            ...directory.map((entry) => ({ ...entry, committees: committeesFor(entry.id) })),
+            ...userRows
+              .filter((row) => !onTheRoster.has(row.email.trim().toLowerCase()))
+              .map((row) => toMember(row, committeesFor(row.id))),
+          ]);
+        }
       } catch {
         // The directory is optional; the account list is a fair stand-in.
         setMembers(userRows.map((row) => toMember(row, committeesFor(row.id))));

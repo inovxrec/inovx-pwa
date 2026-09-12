@@ -27,6 +27,11 @@ export interface UserRow {
   status: 'active' | 'inactive' | 'suspended';
   must_change_password: boolean;
   avatar_url: string | null;
+  /**
+   * Which kind of read-only watcher this is. Only ever set alongside
+   * `role: 'faculty'` — the database has a CHECK constraint saying so.
+   */
+  viewer_kind: 'faculty_coordinator' | 'support_committee' | null;
 }
 
 export interface DomainRow {

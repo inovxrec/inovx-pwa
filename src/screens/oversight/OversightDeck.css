@@ -9,6 +9,12 @@
 
 .oversight__hero p { color: var(--on-paper); }
 
+/* An eyebrow over the summary, not a heading competing with it. */
+.oversight__hero .oversight__who {
+  margin-bottom: var(--s-2);
+  color: var(--on-paper-mute);
+}
+
 .oversight__late { color: var(--st-blocked); font-weight: 700; }
 
 .oversight__list {

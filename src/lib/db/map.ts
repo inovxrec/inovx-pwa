@@ -58,6 +58,8 @@ export function toMember(row: UserRow, committees: string[] = [], birthday = '')
     role: toRole(row.role),
     committees,
     birthday,
+    email: row.email,
+    viewerKind: row.viewer_kind ?? undefined,
   };
 }
 
@@ -83,6 +85,7 @@ export function directoryToMember(
     domain: domainSlug?.(row.domain_id) ?? toDomain(row.domain_name),
     title: row.role_label ?? 'Member',
     committees: [],
+    email: row.email ?? undefined,
     // The schema stores a full date; the app only ever wants the day and month.
     birthday: row.birthday ? row.birthday.slice(5) : '',
   };

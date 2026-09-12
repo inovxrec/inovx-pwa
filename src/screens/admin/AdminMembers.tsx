@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTasks } from '../../store/taskStore';
 import { useToast } from '../../hooks/useToast';
-import { openCountFor, type Member } from '../../lib/club';
-import { useBoards, useClub } from '../../store/ClubProvider';
-import { DOMAIN_LABELS, type Domain } from '../../lib/tasks';
+import {
+  openCountFor, VIEWER_KIND_LABELS, type Member, type ViewerKind,
+} from '../../lib/club';
+import { useClub } from '../../store/ClubProvider';
+import { inviteViewer } from '../../lib/db/queries';
+import { describeError } from '../../lib/supabase';
+import { DOMAIN_LABELS } from '../../lib/tasks';
 import { Avatar } from '../../ui/primitives/Avatar';
 import { Button } from '../../ui/primitives/Button';
 import { Input } from '../../ui/primitives/Input';
@@ -20,14 +24,14 @@ const SCREEN = ADMIN_SCREENS.find((s) => s.id === 'members')!;
 /** §9.15 — the member list, and the provisioning flow behind it. */
 export function AdminMembers() {
   const { tasks } = useTasks();
-  const { members, loading, error } = useClub();
-  const boards = useBoards();
+  const { members, loading, error, reload } = useClub();
   const toast = useToast();
 
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [domain, setDomain] = useState<Domain>(boards[0]?.domain ?? 'design');
+  const [viewerKind, setViewerKind] = useState<ViewerKind>('faculty_coordinator');
+  const [inviting, setInviting] = useState(false);
 
   const columns: Column<Member>[] = useMemo(
     () => [
@@ -41,7 +45,18 @@ export function AdminMembers() {
           </span>
         ),
       },
-      { id: 'title', header: 'Position', render: (row) => row.title },
+      {
+        id: 'title',
+        header: 'Position',
+        /*
+          A viewer has no position in the club — that is what being a viewer
+          means — so the column says which kind of watcher they are instead of
+          falling through to the directory's "Member" default, which would read
+          as a claim that a faculty coordinator sits on the committee.
+        */
+        render: (row) =>
+          row.viewerKind ? VIEWER_KIND_LABELS[row.viewerKind] : row.title,
+      },
       {
         id: 'domain',
         header: 'Domain',
@@ -64,16 +79,40 @@ export function AdminMembers() {
   );
 
   /*
-    Issuing an account means creating an auth user and a temporary password,
-    which needs the service role — the browser must never hold that key. It
-    belongs to the bulk-import function, so this form stops here rather than
-    minting a password the server never saw.
+    Inviting a viewer, for real.
+
+    Issuing an account needs the service role and the browser must never hold
+    that key, so this is the one thing on the screen that goes through an edge
+    function. No password is minted here or shown to whoever pressed the button:
+    the invitee gets a reset link and chooses their own.
+
+    Committee members are still issued in bulk by scripts/provision-roster.mjs.
+    That is 39 accounts handed out on paper at the start of a tenure, which is a
+    different problem from adding one person, and this screen does not pretend
+    to solve it.
   */
-  function provision() {
-    setAdding(false);
-    setName('');
-    setEmail('');
-    toast.show('Issuing accounts runs on the server — that endpoint is not wired up yet.');
+  async function invite() {
+    setInviting(true);
+    try {
+      const result = await inviteViewer({ name: name.trim(), email: email.trim(), viewerKind });
+
+      setAdding(false);
+      setName('');
+      setEmail('');
+      await reload();
+
+      toast.show(
+        result.emailed
+          ? `${name.trim()} has been invited — they will get a link to set a password.`
+          : (result.warning ?? 'Account created, but the email did not send.'),
+        { tone: result.emailed ? 'success' : 'error' },
+      );
+    } catch (caught) {
+      // Left open, so the address can be corrected without retyping the name.
+      toast.show(describeError(caught), { tone: 'error' });
+    } finally {
+      setInviting(false);
+    }
   }
 
   return (
@@ -89,7 +128,7 @@ export function AdminMembers() {
             Import CSV
           </Button>
           <Button variant="brush" size="sm" onClick={() => setAdding(true)}>
-            Add member
+            Invite viewer
           </Button>
         </>
       }
@@ -126,16 +165,17 @@ export function AdminMembers() {
         open={adding}
         onClose={() => setAdding(false)}
         dirty={name.trim().length > 0 || email.trim().length > 0}
-        title="Add a member"
+        title="Invite a viewer"
         footer={
           <>
             <Button variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
             <Button
               variant="brush"
+              loading={inviting}
               disabled={!name.trim() || !email.trim()}
-              onClick={provision}
+              onClick={() => void invite()}
             >
-              Issue account
+              Send invite
             </Button>
           </>
         }
@@ -150,18 +190,18 @@ export function AdminMembers() {
             hint="This is the account. It cannot be changed by the member."
           />
           <Select
-            label="Domain"
-            value={domain}
-            options={boards.map((board) => ({
-              value: board.domain,
-              label: board.name,
-              dot: `var(--dom-${board.domain})`,
+            label="They are a"
+            value={viewerKind}
+            options={(Object.keys(VIEWER_KIND_LABELS) as ViewerKind[]).map((kind) => ({
+              value: kind,
+              label: VIEWER_KIND_LABELS[kind],
             }))}
-            onChange={(value) => setDomain(value as Domain)}
+            onChange={(value) => setViewerKind(value as ViewerKind)}
           />
           <p className="body-sm admin__note">
-            Accounts are issued by the server, which generates the temporary
-            password. That endpoint is not wired up yet.
+            A viewer reads everything the club is doing and changes none of it —
+            no boards to move, no approvals, no members. They will be emailed a
+            link to set their own password; nobody here sees it.
           </p>
         </div>
       </Modal>

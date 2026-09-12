@@ -3,10 +3,10 @@ import { useTasks } from '../../store/taskStore';
 import { usePermissionCheck } from '../../hooks/usePermission';
 import { useToast } from '../../hooks/useToast';
 import { useMeetings } from '../../hooks/useMeetings';
-import { useClub, useDomainSlugs } from '../../store/ClubProvider';
+import { useClub, useDomainSlugs, useMe } from '../../store/ClubProvider';
 import { domainRollups, oversightSummary } from '../../lib/analytics';
 import type { DomainRollup } from '../../lib/analytics';
-import { calendarEvents, eventIsLate } from '../../lib/club';
+import { calendarEvents, eventIsLate, VIEWER_KIND_LABELS } from '../../lib/club';
 import { formatDate, startOfToday } from '../../lib/tasks';
 import { Button } from '../../ui/primitives/Button';
 import { Card, DataView, type Column } from '../../ui/patterns';
@@ -25,6 +25,9 @@ export function OversightDeck() {
   const domains = useDomainSlugs();
   const can = usePermissionCheck();
   const toast = useToast();
+
+  const me = useMe();
+  const mine = members.find((member) => member.id === me?.id);
 
   const summary = useMemo(() => oversightSummary(tasks, domains), [tasks, domains]);
   const rollups = useMemo(() => domainRollups(tasks, domains), [tasks, domains]);
@@ -91,6 +94,16 @@ export function OversightDeck() {
         figures are the same ones every other screen reads, written out.
       */}
       <Card className="oversight__hero sleeve">
+        {/*
+          Named for what the reader actually is. The role is `faculty` for both
+          groups because they may do the same things, but greeting last year's
+          treasurer as faculty is simply wrong, and the support committee is the
+          larger of the two groups. Absent for anyone without a kind set — the
+          college's own faculty, invited before this column existed.
+        */}
+        {mine?.viewerKind && (
+          <p className="label oversight__who">{VIEWER_KIND_LABELS[mine.viewerKind]}</p>
+        )}
         <p className="body-lg read-width">{summary}</p>
       </Card>
 
