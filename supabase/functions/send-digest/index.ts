@@ -6,26 +6,51 @@
 // Collects each person's unread notifications and sends them one summary.
 //
 // Deliberately a digest. Per-event email to 39 people is how a club teaches its
-// members to filter it into a folder, and it would burn Brevo's 300/day on a
-// single busy afternoon. One email each, once a day, is 39 — which fits inside
-// the free tier with room to spare.
+// members to filter it into a folder. One email each, once a day, is 39.
 //
 // Only what the person asked for: `wants_notification(..., 'email')` reads the
-// same matrix the Settings screen writes, and email is off by default there, so
-// this sends to nobody until someone opts in.
+// same matrix the Settings screen writes.
+//
+// Why Gmail and not a relay
+// -------------------------
+// This used to post to Brevo's HTTP API, and it could never have delivered:
+//
+//   rajalakshmi.edu.in        v=spf1 include:_spf.google.com ~all
+//   _dmarc.rajalakshmi.edu.in v=DMARC1; p=reject; pct=100; adkim=s; aspf=s
+//
+// The college authorises only Google to send as the domain and publishes DMARC
+// at p=reject with strict alignment. Brevo would accept every message and every
+// recipient — all of them on Google Workspace — would refuse it. A relay is not
+// a thing we can choose here; the DNS already chose.
+//
+// So the digest goes out the same way a password reset does: authenticated SMTP
+// as the club's own mailbox, which satisfies SPF and DKIM without a DNS change.
+// The difference is only that Supabase Auth's mailer is configured in
+// config.toml and sends auth email, while this is our own code and has to open
+// the connection itself.
+//
+// The app password is NOT the mailbox password. It is issued per application at
+// https://myaccount.google.com/apppasswords and needs 2-Step Verification on
+// that account.
 //
 // Run it on a schedule (pg_cron, or Supabase's scheduler):
 //   select cron.schedule('nightly-digest', '0 18 * * *', $$ ... $$);
 //
 // Deploy:
 //   npx supabase functions deploy send-digest
-//   npx supabase secrets set BREVO_API_KEY=xkeysib-... \
-//     DIGEST_FROM_EMAIL=inovx@yourdomain.com DIGEST_FROM_NAME="INOVX Ops"
+//   npx supabase secrets set GMAIL_APP_PASSWORD=<16 chars> \
+//     GMAIL_USER=inovx@rajalakshmi.edu.in DIGEST_FROM_NAME="INOVX Ops"
 
-const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY') ?? '';
-const FROM_EMAIL = Deno.env.get('DIGEST_FROM_EMAIL') ?? '';
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+
+// A Deno-native module, not an npm one. `send-push` records why that matters:
+// pulling Node packages through the compatibility layer exceeded the edge
+// runtime's CPU budget before the function could send anything.
+
+const GMAIL_USER = Deno.env.get('GMAIL_USER') ?? 'inovx@rajalakshmi.edu.in';
+const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD') ?? '';
 const FROM_NAME = Deno.env.get('DIGEST_FROM_NAME') ?? 'INOVX Ops';
-const APP_URL = Deno.env.get('APP_URL') ?? 'https://inovx.example';
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://inovx-ops.pages.dev';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -91,11 +116,16 @@ function render(name: string, items: Row[]): { html: string; text: string } {
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  if (!BREVO_API_KEY || !FROM_EMAIL) {
-    // Named plainly: these cannot be inferred, and a quiet failure here means
+  if (!GMAIL_APP_PASSWORD) {
+    // Named plainly: this cannot be inferred, and a quiet failure here means
     // people silently stop being told things.
     return Response.json(
-      { error: 'BREVO_API_KEY and DIGEST_FROM_EMAIL are not set.' },
+      {
+        error:
+          'GMAIL_APP_PASSWORD is not set. Issue one at ' +
+          'https://myaccount.google.com/apppasswords for ' + GMAIL_USER +
+          ', then: supabase secrets set GMAIL_APP_PASSWORD=...',
+      },
       { status: 500 },
     );
   }
@@ -119,6 +149,25 @@ Deno.serve(async (request) => {
   const skipped: string[] = [];
   const failures: string[] = [];
   const emailed: string[] = [];
+
+  /*
+    One connection for the whole run, opened here rather than inside the loop.
+
+    Gmail counts connections as well as messages, and opening thirty-nine of
+    them in a few seconds is what a burst of authentication failures looks like
+    from Google's side — the account gets throttled and the digest starts
+    failing for reasons that have nothing to do with the mail. Implicit TLS on
+    465 rather than STARTTLS on 587, because there is no plaintext moment to get
+    wrong.
+  */
+  const mailer = new SMTPClient({
+    connection: {
+      hostname: 'smtp.gmail.com',
+      port: 465,
+      tls: true,
+      auth: { username: GMAIL_USER, password: GMAIL_APP_PASSWORD },
+    },
+  });
 
   for (const [userId, items] of byPerson) {
     const person = await db(`users?id=eq.${userId}&select=name,email,status`)
@@ -148,31 +197,41 @@ Deno.serve(async (request) => {
 
     const { html, text } = render(person.name, wanted);
 
-    const brevo = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sender: { email: FROM_EMAIL, name: FROM_NAME },
-        to: [{ email: person.email, name: person.name }],
+    /*
+      One failure does not end the run. A single bad address, or Google
+      throttling one message, must not cost the other thirty-eight people their
+      digest — so each send is caught and recorded, and the loop continues.
+    */
+    try {
+      await mailer.send({
+        from: `${FROM_NAME} <${GMAIL_USER}>`,
+        to: `${person.name} <${person.email}>`,
         subject:
           wanted.length === 1
             ? wanted[0].title
             : `${wanted.length} things waiting in INOVX`,
-        htmlContent: html,
-        textContent: text,
-      }),
-    });
+        content: text,
+        html,
+      });
 
-    if (brevo.ok) {
       sent += 1;
       emailed.push(...wanted.map((w) => w.id));
-    } else {
-      failures.push(`${person.email}: ${brevo.status} ${(await brevo.text()).slice(0, 120)}`);
+    } catch (caught) {
+      failures.push(
+        `${person.email}: ${caught instanceof Error ? caught.message.slice(0, 120) : 'send failed'}`,
+      );
     }
   }
 
   /*
-    Marked only after Brevo accepted it. A digest that marked first would go
+    The connection is closed before anything is marked, so a failure to flush
+    the last message is still a failure — closing after the PATCH would let a
+    dropped send be recorded as delivered.
+  */
+  await mailer.close();
+
+  /*
+    Marked only after Google accepted it. A digest that marked first would go
     quiet about everything it failed to send, which is the worst way to fail.
   */
   if (emailed.length > 0) {

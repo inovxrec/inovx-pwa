@@ -60,11 +60,15 @@ WITH incoming (email, dob) AS (
   ('visal.g.2025.mech@rajalakshmi.edu.in', DATE '2008-01-19'),  -- Visal G
   ('visshwajit.pr.2025.mech@rajalakshmi.edu.in', DATE '2007-11-20')   -- P.R. Visshwajit
 )
+-- No tenure filter, and no hardcoded tenure id. The seed's id is a fixture, and
+-- a migration that assumed it would match nothing at all against a database
+-- seeded any other way — silently, because an UPDATE touching zero rows is a
+-- success. An address identifies one person in this club regardless of which
+-- tenure's roster they are on.
 UPDATE member_directory md
 SET birthday = incoming.dob
 FROM incoming
 WHERE LOWER(md.email) = incoming.email
-  AND md.tenure_id = '11111111-1111-1111-1111-111111111111'
   AND md.birthday IS DISTINCT FROM incoming.dob;
 
 -- ------------------------------------------------------------------------------
@@ -97,13 +101,15 @@ SELECT
   md.name || ' — birthday',
   'birthday',
   TO_CHAR(md.birthday, 'MM-DD'),
-  '22222222-2222-2222-2222-000000000005',
+  -- Resolved by slug within the person's own tenure rather than by a fixture
+  -- id, for the same reason as above. A tenure with no design board yields NULL
+  -- here, and `occasion_audience` falls back to design at read time anyway.
+  (SELECT d.id FROM domains d WHERE d.tenure_id = md.tenure_id AND d.slug = 'design'),
   5,
   'domain-lead',
   md.id
 FROM member_directory md
-WHERE md.tenure_id = '11111111-1111-1111-1111-111111111111'
-  AND md.birthday IS NOT NULL
+WHERE md.birthday IS NOT NULL
 ON CONFLICT (tenure_id, name) DO NOTHING;
 
 -- A birthday corrected above should correct the occasion with it, rather than
